@@ -2,4 +2,23 @@
     <string name="app_name">Контроль расходов</string>
     <string name="notification_channel_name">Уведомления</string>
     <string name="notification_channel_description">Push-уведомления и напоминания приложения</string>
+
+    <string name="onboarding_skip">Пропустить</string>
+    <string name="onboarding_next">Далее</string>
+    <string name="onboarding_start">Начать</string>
+
+    <string name="onboarding_page1_title">Возьмите финансы под контроль</string>
+    <string name="onboarding_page1_subtitle">Видьте полную картину: баланс, траты и тенденции — в одном спокойном дашборде.</string>
+
+    <string name="onboarding_page2_title">Доходы и расходы — легко</string>
+    <string name="onboarding_page2_subtitle">Добавляйте операции за секунды. Категории с эмодзи и понятные суммы каждый день.</string>
+
+    <string name="onboarding_page3_title">Умные покупки</string>
+    <string name="onboarding_page3_subtitle">Купили термокружку? Узнайте, когда она окупится и сколько сэкономит за год.</string>
+
+    <string name="onboarding_page4_title">Готовы начать?</string>
+    <string name="onboarding_page4_subtitle">Отслеживайте траты без стресса и радуйтесь каждой сэкономленной сумме.</string>
+
+    <string name="home_placeholder_title">Главный экран</string>
+    <string name="home_placeholder_subtitle">Онбординг завершён. Здесь будет Dashboard.</string>
 </resources>

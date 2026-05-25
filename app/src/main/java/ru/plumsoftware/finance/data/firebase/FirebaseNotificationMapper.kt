@@ -50,7 +50,7 @@ object FirebaseNotificationMapper {
             campaignId = message.campaignMetadata?.campaignId,
             data = mapOf(
                 "campaignName" to (message.campaignMetadata?.campaignName.orEmpty()),
-                "messageType" to message.messageType.name,
+                "messageType" to message.messageType?.name.orEmpty(),
             ),
             receivedAtMillis = System.currentTimeMillis(),
             isRead = false,

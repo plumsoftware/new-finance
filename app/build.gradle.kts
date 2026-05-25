@@ -2,7 +2,13 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.google.services)
+}
+
+val googleServicesFile = file("google-services.json")
+val isFirebaseEnabled = googleServicesFile.exists()
+
+if (isFirebaseEnabled) {
+    apply(plugin = "com.google.gms.google-services")
 }
 
 android {
@@ -21,6 +27,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("boolean", "FIREBASE_ENABLED", isFirebaseEnabled.toString())
     }
 
     buildTypes {
@@ -45,6 +53,7 @@ android {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
@@ -68,11 +77,12 @@ dependencies {
     // KOIN
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.compose)
 
     // DataStore
     implementation(libs.androidx.datastore.preferences)
 
-    // Firebase
+    // Зависимости всегда (код FCM/In-App в проекте); плагин google-services — только при наличии json
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.inappmessaging.display)

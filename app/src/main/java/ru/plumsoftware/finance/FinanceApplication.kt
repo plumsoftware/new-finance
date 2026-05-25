@@ -8,9 +8,11 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.getKoin
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
+import ru.plumsoftware.finance.BuildConfig
 import ru.plumsoftware.finance.data.firebase.InAppMessagingHandler
 import ru.plumsoftware.finance.data.firebase.NotificationDisplayHelper
 import ru.plumsoftware.finance.di.dataModule
+import ru.plumsoftware.finance.di.presentationModule
 import ru.plumsoftware.finance.domain.repository.PushMessagingRepository
 
 class FinanceApplication : Application() {
@@ -21,14 +23,16 @@ class FinanceApplication : Application() {
         super.onCreate()
         startKoin {
             androidContext(this@FinanceApplication)
-            modules(dataModule)
+            modules(dataModule, presentationModule)
         }
 
         getKoin().get<NotificationDisplayHelper>().createNotificationChannel()
-        getKoin().get<InAppMessagingHandler>().register()
 
-        appScope.launch {
-            getKoin().get<PushMessagingRepository>().refreshFcmToken()
+        if (BuildConfig.FIREBASE_ENABLED) {
+            getKoin().get<InAppMessagingHandler>().register()
+            appScope.launch {
+                getKoin().get<PushMessagingRepository>().refreshFcmToken()
+            }
         }
     }
 }
