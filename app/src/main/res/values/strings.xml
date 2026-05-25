@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Контроль расходов</string>
+    <string name="notification_channel_name">Уведомления</string>
+    <string name="notification_channel_description">Push-уведомления и напоминания приложения</string>
 </resources>
