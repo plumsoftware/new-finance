@@ -69,6 +69,7 @@ private val onboardingPages = listOf(
 @Composable
 fun OnboardingScreen(
     viewModel: OnboardingViewModel = koinViewModel(),
+    onComplete: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val pagerState = rememberPagerState(pageCount = { onboardingPages.size })
@@ -87,7 +88,10 @@ fun OnboardingScreen(
                     .padding(horizontal = Dimens.paddingSmall),
             ) {
                 TextButton(
-                    onClick = { viewModel.completeOnboarding() },
+                    onClick = {
+                        viewModel.completeOnboarding()
+                        onComplete()
+                    },
                     modifier = Modifier.align(Alignment.CenterEnd),
                     enabled = !uiState.isCompleting,
                 ) {
@@ -139,6 +143,7 @@ fun OnboardingScreen(
                     onClick = {
                         if (isLastPage) {
                             viewModel.completeOnboarding()
+                            onComplete()
                         } else {
                             scope.launch {
                                 pagerState.animateScrollToPage(uiState.currentPage + 1)
@@ -173,6 +178,7 @@ private fun OnboardingPageContent(
                     mascotAlignment = Alignment.BottomEnd,
                 )
             }
+
             OnboardingIllustrationType.INCOME_EXPENSE -> {
                 OnboardingIllustrationWithMascot(
                     illustration = { OnboardingIncomeExpenseIllustration() },
@@ -180,6 +186,7 @@ private fun OnboardingPageContent(
                     mascotAlignment = Alignment.BottomStart,
                 )
             }
+
             OnboardingIllustrationType.SMART_SAVINGS -> {
                 OnboardingIllustrationWithMascot(
                     illustration = { OnboardingSmartSavingsIllustration() },
@@ -187,6 +194,7 @@ private fun OnboardingPageContent(
                     mascotAlignment = Alignment.BottomEnd,
                 )
             }
+
             OnboardingIllustrationType.WELCOME -> {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(Dimens.paddingMedium),
