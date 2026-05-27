@@ -108,4 +108,12 @@ class SmartSavingsDetailViewModel(
             }
         }
     }
+
+    // --- МЕТОД УДАЛЕНИЯ ---
+    fun deleteAsset(onDeleted: () -> Unit) {
+        viewModelScope.launch {
+            smartAssetRepository.deleteAssetWithUsages(assetId)
+            onDeleted()
+        }
+    }
 }

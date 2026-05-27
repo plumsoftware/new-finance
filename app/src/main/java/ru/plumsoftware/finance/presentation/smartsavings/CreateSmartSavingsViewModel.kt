@@ -3,12 +3,14 @@ package ru.plumsoftware.finance.presentation.smartsavings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.SmartAssetStatus
 import ru.plumsoftware.finance.domain.model.SmartAssetTrackingMode
@@ -32,6 +34,7 @@ data class CreateSmartSavingsUiState(
 )
 
 class CreateSmartSavingsViewModel(
+    private val editAssetId: Long? = null,
     private val smartAssetRepository: SmartAssetRepository,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
@@ -43,6 +46,21 @@ class CreateSmartSavingsViewModel(
         viewModelScope.launch {
             val currency = settingsRepository.settings.first().defaultCurrencyCode
             _uiState.update { it.copy(currencyCode = currency) }
+
+            // Если передали ID, значит это режим РЕДАКТИРОВАНИЯ - загружаем данные
+            if (editAssetId != null && editAssetId != 0L) {
+                smartAssetRepository.getById(editAssetId)?.let { asset ->
+                    _uiState.update {
+                        it.copy(
+                            name = asset.name,
+                            icon = asset.icon,
+                            note = asset.note ?: "",
+                            purchaseDigits = MoneyFormat.minorToMajorDigits(asset.purchaseCostMinor, currency),
+                            savingPerUseDigits = MoneyFormat.minorToMajorDigits(asset.alternativeCostMinor, currency)
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -64,41 +82,53 @@ class CreateSmartSavingsViewModel(
         val purchase = MoneyFormat.majorDigitsToMinor(state.purchaseDigits, currency)
         val savingDigits = state.savingPerUseDigits.ifBlank { state.purchaseDigits }
         val saving = MoneyFormat.majorDigitsToMinor(savingDigits, currency)
+
         when {
             state.name.isBlank() -> _uiState.update { it.copy(errorMessage = "Укажите название") }
             purchase <= 0 -> _uiState.update { it.copy(errorMessage = "Укажите стоимость покупки") }
             saving <= 0 -> _uiState.update { it.copy(errorMessage = "Укажите экономию за раз") }
             else -> viewModelScope.launch {
                 _uiState.update { it.copy(isSaving = true, errorMessage = null, saved = false) }
+
                 try {
-                    smartAssetRepository.create(
-                        asset = SmartAsset(
-                            name = state.name.trim(),
-                            icon = state.icon,
-                            purchaseCostMinor = purchase,
-                            alternativeCostMinor = saving,
-                            trackingMode = SmartAssetTrackingMode.MANUAL,
-                            status = SmartAssetStatus.PAYING_OFF,
-                            totalSavedMinor = 0,
-                            totalUses = 0,
-                            purchasedAtMillis = System.currentTimeMillis(),
-                            isActive = true,
-                            note = state.note.ifBlank { null },
-                            createdAtMillis = System.currentTimeMillis(),
-                        ),
-                        categoryId = null,
-                        createPurchaseExpense = state.recordPurchaseExpense,
-                    )
-                    _uiState.update { it.copy(isSaving = false, saved = true) }
-                } catch (e: CancellationException) {
-                    _uiState.update { it.copy(isSaving = false) }
-                    throw e
+                    withContext(Dispatchers.IO) {
+                        if (editAssetId != null && editAssetId != 0L) {
+                            val existing = smartAssetRepository.getById(editAssetId)
+                            if (existing != null) {
+                                val updated = existing.copy(
+                                    name = state.name.trim(),
+                                    icon = state.icon,
+                                    purchaseCostMinor = purchase,
+                                    alternativeCostMinor = saving,
+                                    note = state.note.ifBlank { null }
+                                )
+                                smartAssetRepository.update(updated)
+                            }
+                        } else {
+                            smartAssetRepository.create(
+                                asset = SmartAsset(
+                                    name = state.name.trim(),
+                                    icon = state.icon,
+                                    purchaseCostMinor = purchase,
+                                    alternativeCostMinor = saving,
+                                    trackingMode = SmartAssetTrackingMode.MANUAL,
+                                    status = SmartAssetStatus.PAYING_OFF,
+                                    totalSavedMinor = 0,
+                                    totalUses = 0,
+                                    purchasedAtMillis = System.currentTimeMillis(),
+                                    isActive = true,
+                                    note = state.note.ifBlank { null },
+                                    createdAtMillis = System.currentTimeMillis(),
+                                ),
+                                categoryId = null,
+                                createPurchaseExpense = state.recordPurchaseExpense,
+                            )
+                        }
+                    }
+                    _uiState.update { it.copy(saved = true, isSaving = false) }
                 } catch (e: Exception) {
-                    _uiState.update {
-                        it.copy(
-                            isSaving = false,
-                            errorMessage = e.message ?: "Ошибка сохранения",
-                        )
+                    if (e !is CancellationException) {
+                        _uiState.update { it.copy(errorMessage = e.message ?: "Ошибка", isSaving = false) }
                     }
                 }
             }

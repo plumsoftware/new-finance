@@ -77,4 +77,10 @@ interface SmartAssetDao {
         """,
     )
     suspend fun countUsagesOnDay(smartAssetId: Long, dayStartMillis: Long, dayEndMillis: Long): Int
+
+    @Query("DELETE FROM smart_assets WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("DELETE FROM smart_asset_usages WHERE smartAssetId = :smartAssetId")
+    suspend fun deleteUsages(smartAssetId: Long)
 }

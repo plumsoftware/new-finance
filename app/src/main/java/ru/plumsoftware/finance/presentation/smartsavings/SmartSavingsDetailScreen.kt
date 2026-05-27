@@ -11,11 +11,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -44,6 +50,7 @@ import ru.plumsoftware.finance.ui.components.ios.IosTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.IosBlue
 import ru.plumsoftware.finance.ui.theme.IosGreen
+import ru.plumsoftware.finance.ui.theme.IosRed
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -53,6 +60,8 @@ import java.util.Locale
 fun SmartSavingsDetailScreen(
     assetId: Long,
     onBack: () -> Unit,
+    onEdit: (Long) -> Unit,
+    onDeleteSuccess: () -> Unit,
     viewModel: SmartSavingsDetailViewModel = koinViewModel { parametersOf(assetId) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -111,6 +120,14 @@ fun SmartSavingsDetailScreen(
             IosTopBar(
                 title = asset?.name ?: "",
                 onBack = onBack,
+                actions = {
+                    IconButton(onClick = { onEdit(assetId) }) {
+                        Icon(Icons.Default.Edit, contentDescription = "Изменить", tint = IosBlue)
+                    }
+                    IconButton(onClick = { viewModel.deleteAsset(onDeleted = onDeleteSuccess) }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Удалить", tint = IosRed)
+                    }
+                }
             )
         },
     ) { padding ->

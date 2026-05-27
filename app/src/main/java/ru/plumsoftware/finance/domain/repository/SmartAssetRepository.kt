@@ -27,4 +27,5 @@ interface SmartAssetRepository {
     ): Long
     suspend fun applyAutoSavingsForWeekdays(dayMillis: Long = System.currentTimeMillis())
     suspend fun countActive(): Int
+    suspend fun deleteAssetWithUsages(id: Long)
 }

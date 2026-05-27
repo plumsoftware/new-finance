@@ -119,4 +119,9 @@ class SmartAssetRepositoryImpl(
     }
 
     override suspend fun countActive(): Int = smartAssetDao.countActive()
+
+    override suspend fun deleteAssetWithUsages(id: Long) = database.withTransaction {
+        smartAssetDao.deleteUsages(id)
+        smartAssetDao.delete(id)
+    }
 }

@@ -17,7 +17,7 @@ val presentationModule = module {
     viewModel { DashboardViewModel(get(), get(), get()) }
     viewModel { AddTransactionViewModel(get(), get(), get()) }
     viewModel { SmartSavingsViewModel(get(), get()) }
-    viewModel { CreateSmartSavingsViewModel(get(), get()) }
+    viewModel { CreateSmartSavingsViewModel(get(), get(), get()) }
     viewModel { (assetId: Long) ->
         SmartSavingsDetailViewModel(assetId, get(), get())
     }

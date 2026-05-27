@@ -47,6 +47,7 @@ import androidx.navigation.navArgument
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.ThemeMode
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
@@ -86,12 +87,15 @@ fun FinanceApp(
         val isOnboardingCompleted by onboardingFlow.collectAsStateWithLifecycle(initialValue = null)
 
         if (isOnboardingCompleted == null) {
-            Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+            Box(modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background))
             return@FinanceTheme
         }
 
         val navController = rememberNavController()
-        val startRoute = if (isOnboardingCompleted == true) AppRoute.Home.route else AppRoute.Onboarding.route
+        val startRoute =
+            if (isOnboardingCompleted == true) AppRoute.Home.route else AppRoute.Onboarding.route
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -142,8 +146,12 @@ fun FinanceApp(
                                         indicatorColor = MaterialTheme.colorScheme.background,
                                         selectedIconColor = IosBlue,
                                         selectedTextColor = IosBlue,
-                                        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
-                                        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(
+                                            alpha = 0.4f
+                                        ),
+                                        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(
+                                            alpha = 0.4f
+                                        ),
                                     ),
                                 )
                             }
@@ -178,7 +186,8 @@ fun FinanceApp(
                             .collectAsStateWithLifecycle()
                         SmartSavingsScreen(
                             onCreateClick = {
-                                navController.navigate(AppRoute.SmartSavingsCreate.route)
+                                // ИЗМЕНЕНО: Используем новую функцию-помощник
+                                navController.navigate(AppRoute.smartCreate(null))
                             },
                             onAssetClick = { id ->
                                 navController.navigate(AppRoute.smartDetail(id))
@@ -190,29 +199,53 @@ fun FinanceApp(
                         )
                     }
                     composable(
-                        route = AppRoute.SmartSavingsCreate.route,
+                        route = AppRoute.SMART_CREATE_WITH_ARGS,
+                        arguments = listOf(navArgument("assetId") {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        }),
                         enterTransition = {
-                            slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn(tween(280))
+                            slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn(
+                                tween(280)
+                            )
                         },
                         exitTransition = {
-                            slideOutHorizontally(animationSpec = tween(240)) { it } + fadeOut(tween(200))
+                            slideOutHorizontally(animationSpec = tween(240)) { it } + fadeOut(
+                                tween(200)
+                            )
                         },
                         popEnterTransition = {
-                            slideInHorizontally(animationSpec = tween(280)) { -it } + fadeIn(tween(280))
+                            slideInHorizontally(animationSpec = tween(280)) { -it } + fadeIn(
+                                tween(280)
+                            )
                         },
                         popExitTransition = {
-                            slideOutHorizontally(animationSpec = tween(240)) { -it } + fadeOut(tween(200))
+                            slideOutHorizontally(animationSpec = tween(240)) { -it } + fadeOut(
+                                tween(200)
+                            )
                         },
                     ) { createEntry ->
-                        val successMessage = stringResource(R.string.smart_created_success)
+                        // Достаем ID (если он есть, значит это Редактирование, если нет - Создание)
+                        val assetIdStr = createEntry.arguments?.getString("assetId")
+                        val assetId = assetIdStr?.toLongOrNull()
+
+                        // Динамическое сообщение для снэкбара
+                        val successMessage =
+                            if (assetId != null) "Экономия обновлена" else stringResource(R.string.smart_created_success)
+
                         CreateSmartSavingsScreen(
-                            viewModel = koinViewModel(viewModelStoreOwner = createEntry),
+
+                            viewModel = koinViewModel(viewModelStoreOwner = createEntry) {
+                                parametersOf(
+                                    assetId
+                                )
+                            },
                             onBack = { navController.popBackStack() },
                             onCreated = {
                                 navController.previousBackStackEntry
                                     ?.savedStateHandle
                                     ?.set(SmartSavingsSnackbar.KEY, successMessage)
-
                                 navController.popBackStack()
                             },
                         )
@@ -220,23 +253,26 @@ fun FinanceApp(
                     composable(
                         route = AppRoute.SMART_DETAIL,
                         arguments = listOf(navArgument("assetId") { type = NavType.LongType }),
-                        enterTransition = {
-                            slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn(tween(280))
-                        },
-                        exitTransition = {
-                            slideOutHorizontally(animationSpec = tween(240)) { it } + fadeOut(tween(200))
-                        },
-                        popEnterTransition = {
-                            slideInHorizontally(animationSpec = tween(280)) { -it } + fadeIn(tween(280))
-                        },
-                        popExitTransition = {
-                            slideOutHorizontally(animationSpec = tween(240)) { -it } + fadeOut(tween(200))
-                        },
+                        enterTransition = { slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn(tween(280)) },
+                        exitTransition = { slideOutHorizontally(animationSpec = tween(240)) { it } + fadeOut(tween(200)) },
+                        popEnterTransition = { slideInHorizontally(animationSpec = tween(280)) { -it } + fadeIn(tween(280)) },
+                        popExitTransition = { slideOutHorizontally(animationSpec = tween(240)) { -it } + fadeOut(tween(200)) },
                     ) { entry ->
                         val assetId = entry.arguments?.getLong("assetId") ?: 0L
                         SmartSavingsDetailScreen(
                             assetId = assetId,
                             onBack = { navController.popBackStack() },
+                            // ДОБАВИЛИ: Колбэк для редактирования (открывает экран создания с ID)
+                            onEdit = { id ->
+                                navController.navigate(AppRoute.smartCreate(id))
+                            },
+                            // ДОБАВИЛИ: Колбэк после успешного удаления (показывает снэкбар на предыдущем экране)
+                            onDeleteSuccess = {
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(SmartSavingsSnackbar.KEY, "Экономия удалена")
+                                navController.popBackStack()
+                            }
                         )
                     }
                     composable(AppRoute.Analytics.route) {
@@ -248,16 +284,32 @@ fun FinanceApp(
                     composable(
                         route = AppRoute.AddTransaction.route,
                         enterTransition = {
-                            slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn(tween(280))
+                            slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn(
+                                tween(
+                                    280
+                                )
+                            )
                         },
                         exitTransition = {
-                            slideOutHorizontally(animationSpec = tween(240)) { it } + fadeOut(tween(200))
+                            slideOutHorizontally(animationSpec = tween(240)) { it } + fadeOut(
+                                tween(
+                                    200
+                                )
+                            )
                         },
                         popEnterTransition = {
-                            slideInHorizontally(animationSpec = tween(280)) { -it } + fadeIn(tween(280))
+                            slideInHorizontally(animationSpec = tween(280)) { -it } + fadeIn(
+                                tween(
+                                    280
+                                )
+                            )
                         },
                         popExitTransition = {
-                            slideOutHorizontally(animationSpec = tween(240)) { -it } + fadeOut(tween(200))
+                            slideOutHorizontally(animationSpec = tween(240)) { -it } + fadeOut(
+                                tween(
+                                    200
+                                )
+                            )
                         },
                     ) {
                         AddTransactionScreen(
