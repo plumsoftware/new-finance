@@ -48,8 +48,9 @@ class SmartAssetRepositoryImpl(
         asset: SmartAsset,
         categoryId: Long?,
         createPurchaseExpense: Boolean,
-    ): Long {
+    ): Long = database.withTransaction {
         val assetId = smartAssetDao.insert(asset.toEntity().copy(id = 0))
+
         if (createPurchaseExpense) {
             val now = System.currentTimeMillis()
             transactionDao.insert(
@@ -64,7 +65,8 @@ class SmartAssetRepositoryImpl(
                 )
             )
         }
-        return assetId
+
+        assetId
     }
 
     override suspend fun update(asset: SmartAsset) {

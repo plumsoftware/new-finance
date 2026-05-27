@@ -6,6 +6,9 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import ru.plumsoftware.finance.data.local.converter.EnumConverters
 import ru.plumsoftware.finance.data.local.dao.CategoryDao
@@ -46,7 +49,7 @@ abstract class FinanceDatabase : RoomDatabase() {
                     object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
-                            runBlocking {
+                            CoroutineScope(Dispatchers.IO).launch {
                                 seed(database)
                             }
                         }
