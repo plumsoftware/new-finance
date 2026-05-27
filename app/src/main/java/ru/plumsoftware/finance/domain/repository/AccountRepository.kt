@@ -13,4 +13,6 @@ interface AccountRepository {
     suspend fun upsert(account: Account): Long
     suspend fun delete(id: Long)
     suspend fun count(): Int
+    suspend fun ensureDefaultAccounts(currencyCode: String = "RUB")
+    suspend fun getDefaultAccountId(currencyCode: String = "RUB"): Long
 }

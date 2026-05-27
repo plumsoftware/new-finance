@@ -16,5 +16,6 @@ object Dimens {
     val iconSizeLarge = 32.dp
 
     val mascotOnboarding = 114.dp
+    val mascotEmptyState = 120.dp
     val illustrationHeight = 220.dp
 }

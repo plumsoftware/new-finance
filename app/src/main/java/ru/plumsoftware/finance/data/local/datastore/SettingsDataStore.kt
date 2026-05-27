@@ -10,6 +10,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import ru.plumsoftware.finance.domain.model.AppSettings
+import ru.plumsoftware.finance.domain.model.ThemeMode
 
 private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(
     name = "app_settings",
@@ -25,6 +26,9 @@ class SettingsDataStore(
             defaultCurrencyCode = prefs[Keys.DEFAULT_CURRENCY] ?: "RUB",
             onboardingCompleted = prefs[Keys.ONBOARDING_COMPLETED] ?: false,
             biometricEnabled = prefs[Keys.BIOMETRIC_ENABLED] ?: false,
+            themeMode = ThemeMode.entries.getOrElse(
+                prefs[Keys.THEME_MODE]?.toIntOrNull() ?: 0,
+            ) { ThemeMode.SYSTEM },
         )
     }
 
@@ -34,11 +38,15 @@ class SettingsDataStore(
                 defaultCurrencyCode = prefs[Keys.DEFAULT_CURRENCY] ?: "RUB",
                 onboardingCompleted = prefs[Keys.ONBOARDING_COMPLETED] ?: false,
                 biometricEnabled = prefs[Keys.BIOMETRIC_ENABLED] ?: false,
+                themeMode = ThemeMode.entries.getOrElse(
+                    prefs[Keys.THEME_MODE]?.toIntOrNull() ?: 0,
+                ) { ThemeMode.SYSTEM },
             )
             val updated = transform(current)
             prefs[Keys.DEFAULT_CURRENCY] = updated.defaultCurrencyCode
             prefs[Keys.ONBOARDING_COMPLETED] = updated.onboardingCompleted
             prefs[Keys.BIOMETRIC_ENABLED] = updated.biometricEnabled
+            prefs[Keys.THEME_MODE] = updated.themeMode.ordinal.toString()
         }
     }
 
@@ -46,5 +54,6 @@ class SettingsDataStore(
         val DEFAULT_CURRENCY = stringPreferencesKey("default_currency")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
+        val THEME_MODE = stringPreferencesKey("theme_mode")
     }
 }

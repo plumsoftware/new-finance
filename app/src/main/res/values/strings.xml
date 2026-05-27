@@ -6,19 +6,101 @@
     <string name="onboarding_skip">Пропустить</string>
     <string name="onboarding_next">Далее</string>
     <string name="onboarding_start">Начать</string>
-
     <string name="onboarding_page1_title">Возьмите финансы под контроль</string>
     <string name="onboarding_page1_subtitle">Видьте полную картину: баланс, траты и тенденции — в одном спокойном дашборде.</string>
-
     <string name="onboarding_page2_title">Доходы и расходы — легко</string>
     <string name="onboarding_page2_subtitle">Добавляйте операции за секунды. Категории с эмодзи и понятные суммы каждый день.</string>
-
     <string name="onboarding_page3_title">Умные покупки</string>
     <string name="onboarding_page3_subtitle">Купили термокружку? Узнайте, когда она окупится и сколько сэкономит за год.</string>
-
     <string name="onboarding_page4_title">Готовы начать?</string>
     <string name="onboarding_page4_subtitle">Отслеживайте траты без стресса и радуйтесь каждой сэкономленной сумме.</string>
 
-    <string name="home_placeholder_title">Главный экран</string>
-    <string name="home_placeholder_subtitle">Онбординг завершён. Здесь будет Dashboard.</string>
+    <string name="dashboard_title">Главная</string>
+    <string name="income">Доходы</string>
+    <string name="expense">Расходы</string>
+    <string name="smart_savings_block">Умная экономия</string>
+    <string name="smart_record_usage">+ Я сэкономил сегодня</string>
+    <string name="smart_status_profit">Чистая прибыль</string>
+    <string name="smart_payback_percent">Окупаемость %1$d%%</string>
+    <string name="recent_transactions">Последние операции</string>
+    <string name="dashboard_smart_empty_short">Добавьте умную покупку во вкладке «Экономия»</string>
+    <string name="empty_transactions_title">Пока нет операций</string>
+    <string name="empty_transactions_subtitle">Нажмите + внизу, чтобы добавить расход или доход</string>
+    <string name="empty_smart_title">Пока нет умных покупок</string>
+    <string name="empty_smart_subtitle">Термокружка, фильтр, подписка — отслеживайте окупаемость и экономию</string>
+    <string name="empty_analytics_title">Нет данных за период</string>
+    <string name="empty_analytics_subtitle">Добавьте операции — здесь появятся графики и топ категорий</string>
+
+    <string name="add_transaction">Новая операция</string>
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="ok">ОК</string>
+    <string name="create">Создать</string>
+    <string name="type_expense">Расход</string>
+    <string name="type_income">Доход</string>
+    <string name="type_savings">Экономия</string>
+    <string name="note_placeholder">Заметка</string>
+    <string name="currency_label">Валюта</string>
+    <string name="account_label">Счёт</string>
+
+    <string name="smart_savings_title">Моя экономия</string>
+    <string name="total_saved">Всего сэкономлено</string>
+    <string name="smart_paying_off">В процессе окупаемости</string>
+    <string name="smart_profit">Приносят прибыль</string>
+    <string name="smart_list_empty">Пока нет активных умных покупок</string>
+    <string name="smart_profit_empty">Окупившиеся покупки появятся здесь</string>
+    <string name="smart_create_title">Умная покупка</string>
+    <string name="smart_add_button">Добавить умную покупку</string>
+    <string name="smart_created_success">Экопокупка успешно создана</string>
+    <string name="period_select_title">Выберите период</string>
+    <string name="smart_name">Название</string>
+    <string name="smart_icon">Эмодзи</string>
+    <string name="smart_purchase_cost">Стоимость покупки (₽)</string>
+    <string name="smart_alternative_cost">Альтернатива за раз (₽)</string>
+    <string name="smart_mode_manual">Вручную</string>
+    <string name="smart_mode_auto">Авто (будни)</string>
+    <string name="smart_list_hint">Покупки, которые окупаются за счёт экономии каждый день</string>
+    <string name="smart_saved_of">%1$s из %2$s</string>
+    <string name="smart_create_hint">Добавьте вещь, которая помогает экономить. Например, экосумка вместо пакетов в магазине.</string>
+    <string name="smart_name_example">Экосумка для магазина</string>
+    <string name="smart_note_example">Экономлю на пакетах</string>
+    <string name="smart_saving_per_use">Экономия за один раз</string>
+    <string name="smart_record_purchase">Учесть покупку как расход</string>
+    <string name="smart_record_amount_title">Сколько сэкономили?</string>
+    <string name="smart_record_confirm">Записать</string>
+    <string name="smart_total_saved_label">всего сэкономлено</string>
+    <string name="smart_stat_purchase">Стоимость</string>
+    <string name="smart_stat_per_use">За раз</string>
+    <string name="smart_history">История экономии</string>
+    <string name="smart_history_empty">Пока нет записей — нажмите «Записать экономию»</string>
+    <string name="smart_not_found">Покупка не найдена</string>
+
+    <string name="analytics_title">Аналитика</string>
+    <string name="period_day">День</string>
+    <string name="period_week">Неделя</string>
+    <string name="period_month">Месяц</string>
+    <string name="period_year">Год</string>
+    <string name="period_custom">Период</string>
+    <string name="net">Итого</string>
+    <string name="expense_chart">Расходы по дням</string>
+    <string name="top_categories">Топ категорий</string>
+    <string name="savings_index_title">Индекс умной экономии</string>
+    <string name="savings_index_monthly">≈ %1$s / мес. экономии</string>
+    <string name="no_data">Нет данных за период</string>
+
+    <string name="settings_title">Профиль</string>
+    <string name="settings_theme">Тема</string>
+    <string name="theme_system">Система</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="done">Готово</string>
+    <string name="settings_currency">Валюта</string>
+    <string name="settings_biometric">Биометрия</string>
+    <string name="settings_biometric_hint">Защита входа (локально)</string>
+    <string name="settings_accounts">Счета</string>
+    <string name="settings_categories_expense">Категории расходов</string>
+    <string name="settings_categories_income">Категории доходов</string>
+    <string name="settings_local_note">Все данные хранятся только на этом устройстве.</string>
+    <string name="category_visible">Вкл</string>
+    <string name="category_hidden">Скрыта</string>
 </resources>

@@ -82,6 +82,9 @@ dependencies {
     // DataStore
     implementation(libs.androidx.datastore.preferences)
 
+    // Biometric
+    implementation(libs.androidx.biometric)
+
     // Зависимости всегда (код FCM/In-App в проекте); плагин google-services — только при наличии json
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)

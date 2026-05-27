@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import ru.plumsoftware.finance.data.local.dao.AccountDao
 import ru.plumsoftware.finance.data.local.dao.TransactionDao
+import ru.plumsoftware.finance.data.local.database.DefaultAccounts
 import ru.plumsoftware.finance.data.mapper.toDomain
 import ru.plumsoftware.finance.data.mapper.toEntity
 import ru.plumsoftware.finance.domain.model.Account
@@ -71,6 +72,20 @@ class AccountRepositoryImpl(
     }
 
     override suspend fun count(): Int = accountDao.count()
+
+    override suspend fun ensureDefaultAccounts(currencyCode: String) {
+        if (accountDao.count() == 0) {
+            DefaultAccounts.initial(currencyCode).forEach { accountDao.insert(it) }
+        }
+    }
+
+    override suspend fun getDefaultAccountId(currencyCode: String): Long {
+        ensureDefaultAccounts(currencyCode)
+        val all = accountDao.getAll().map { it.toDomain() }
+        return all.filter { it.currencyCode == currencyCode }.firstOrNull()?.id
+            ?: all.firstOrNull()?.id
+            ?: error("No account available")
+    }
 
     private fun calculateBalance(
         initialBalanceMinor: Long,

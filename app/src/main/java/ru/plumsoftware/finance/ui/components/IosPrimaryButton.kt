@@ -2,6 +2,7 @@ package ru.plumsoftware.finance.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -10,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.IosBlue
 
 @Composable
@@ -37,8 +37,8 @@ fun IosPrimaryButton(
     ) {
         if (loading) {
             CircularProgressIndicator(
-                modifier = Modifier.height(Dimens.iconSizeStandard),
-                strokeWidth = 2.dp,
+                modifier = Modifier.size(24.dp),
+                strokeWidth = 2.5.dp,
                 color = MaterialTheme.colorScheme.surface,
             )
         } else {

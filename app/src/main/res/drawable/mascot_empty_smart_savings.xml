@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Замените на mascot_empty_smart_savings.webp -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    <path
+        android:fillColor="#007AFF"
+        android:pathData="M38,20h20c4,0 8,4 8,8v36c0,4 -4,8 -8,8h-20c-4,0 -8,-4 -8,-8v-36c0,-4 4,-8 8,-8z" />
+    <path
+        android:fillColor="#5AC8FA"
+        android:pathData="M34,16h28v8h-28z" />
+</vector>

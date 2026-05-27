@@ -7,16 +7,12 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import ru.plumsoftware.finance.presentation.FinanceApp
-import ru.plumsoftware.finance.ui.theme.FinanceTheme
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            FinanceTheme {
-                FinanceApp(modifier = Modifier.fillMaxSize())
-            }
+            FinanceApp(modifier = Modifier.fillMaxSize())
         }
     }
 }
