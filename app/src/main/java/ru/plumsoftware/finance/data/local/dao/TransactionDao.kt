@@ -29,15 +29,6 @@ interface TransactionDao {
     @Query(
         """
         SELECT * FROM transactions
-        WHERE accountId = :accountId
-        ORDER BY dateMillis DESC, id DESC
-        """,
-    )
-    fun observeByAccount(accountId: Long): Flow<List<TransactionEntity>>
-
-    @Query(
-        """
-        SELECT * FROM transactions
         WHERE dateMillis >= :startMillis AND dateMillis < :endMillis
         ORDER BY dateMillis DESC, id DESC
         """,
@@ -64,14 +55,12 @@ interface TransactionDao {
         SELECT COALESCE(SUM(amountMinor), 0) FROM transactions
         WHERE type = :type
         AND dateMillis >= :startMillis AND dateMillis < :endMillis
-        AND (:accountId IS NULL OR accountId = :accountId)
         """,
     )
     suspend fun sumByTypeInPeriod(
         type: TransactionType,
         startMillis: Long,
         endMillis: Long,
-        accountId: Long?,
     ): Long
 
     @Query(

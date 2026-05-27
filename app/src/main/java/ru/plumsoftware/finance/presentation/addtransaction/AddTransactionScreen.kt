@@ -36,13 +36,10 @@ import ru.plumsoftware.finance.ui.components.FinanceNumPad
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
 import ru.plumsoftware.finance.ui.components.ios.IosAlertDialog
 import ru.plumsoftware.finance.ui.components.ios.IosChip
-import ru.plumsoftware.finance.ui.components.ios.IosChipRow
 import ru.plumsoftware.finance.ui.components.ios.IosSegmentedControl
 import ru.plumsoftware.finance.ui.components.ios.IosTextField
 import ru.plumsoftware.finance.ui.components.ios.IosTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
-
-private val currencies = listOf("RUB", "USD", "EUR")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,18 +91,6 @@ fun AddTransactionScreen(
                         if (index == 1) TransactionType.INCOME else TransactionType.EXPENSE,
                     )
                 },
-            )
-            Spacer(modifier = Modifier.height(Dimens.paddingMedium))
-            Text(
-                text = stringResource(R.string.currency_label),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
-            )
-            Spacer(modifier = Modifier.height(Dimens.paddingSmall))
-            IosChipRow(
-                items = currencies,
-                selected = state.currencyCode,
-                onSelected = viewModel::setCurrency,
             )
             Spacer(modifier = Modifier.height(Dimens.paddingMedium))
             AnimatedContent(

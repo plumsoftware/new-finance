@@ -7,7 +7,6 @@ import ru.plumsoftware.finance.domain.model.TransactionType
 
 interface TransactionRepository {
     fun observeAll(): Flow<List<Transaction>>
-    fun observeByAccount(accountId: Long): Flow<List<Transaction>>
     fun observeByPeriod(startMillis: Long, endMillis: Long): Flow<List<Transaction>>
     fun observeDailySummaries(startMillis: Long, endMillis: Long): Flow<List<DailySummary>>
     suspend fun getById(id: Long): Transaction?
@@ -17,6 +16,5 @@ interface TransactionRepository {
         type: TransactionType,
         startMillis: Long,
         endMillis: Long,
-        accountId: Long? = null,
     ): Long
 }

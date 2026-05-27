@@ -12,7 +12,6 @@ import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.domain.model.Transaction
 import ru.plumsoftware.finance.domain.model.TransactionType
-import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.domain.repository.TransactionRepository
@@ -32,7 +31,6 @@ data class AddTransactionUiState(
 
 class AddTransactionViewModel(
     private val transactionRepository: TransactionRepository,
-    private val accountRepository: AccountRepository,
     private val categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
@@ -40,13 +38,10 @@ class AddTransactionViewModel(
     private val _uiState = MutableStateFlow(AddTransactionUiState())
     val uiState: StateFlow<AddTransactionUiState> = _uiState.asStateFlow()
 
-    private var defaultAccountId: Long? = null
-
     init {
         viewModelScope.launch {
             val settings = settingsRepository.settings.first()
             val currency = settings.defaultCurrencyCode
-            defaultAccountId = accountRepository.getDefaultAccountId(currency)
             val categories = categoryRepository.observeByType(CategoryType.EXPENSE, false).first()
             _uiState.update {
                 it.copy(
@@ -74,13 +69,6 @@ class AddTransactionViewModel(
                     selectedCategoryId = categories.firstOrNull()?.id,
                 )
             }
-        }
-    }
-
-    fun setCurrency(code: String) {
-        _uiState.update { it.copy(currencyCode = code, errorMessage = null) }
-        viewModelScope.launch {
-            defaultAccountId = accountRepository.getDefaultAccountId(code)
         }
     }
 
@@ -127,17 +115,12 @@ class AddTransactionViewModel(
                 _uiState.update { it.copy(errorMessage = "Укажите сумму") }
             }
             else -> viewModelScope.launch {
-                val accountId = defaultAccountId
-                    ?: accountRepository.getDefaultAccountId(state.currencyCode).also {
-                        defaultAccountId = it
-                    }
                 _uiState.update { it.copy(isSaving = true, errorMessage = null) }
                 runCatching {
                     transactionRepository.upsert(
                         Transaction(
                             type = state.type,
                             amountMinor = amount,
-                            accountId = accountId,
                             categoryId = state.selectedCategoryId,
                             smartAssetId = null,
                             note = state.note.ifBlank { null },

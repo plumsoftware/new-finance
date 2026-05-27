@@ -14,13 +14,13 @@ import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsViewModel
 
 val presentationModule = module {
     viewModel { OnboardingViewModel(get()) }
-    viewModel { DashboardViewModel(get(), get(), get(), get()) }
-    viewModel { AddTransactionViewModel(get(), get(), get(), get()) }
+    viewModel { DashboardViewModel(get(), get(), get()) }
+    viewModel { AddTransactionViewModel(get(), get(), get()) }
     viewModel { SmartSavingsViewModel(get(), get()) }
-    viewModel { CreateSmartSavingsViewModel(get(), get(), get()) }
+    viewModel { CreateSmartSavingsViewModel(get(), get()) }
     viewModel { (assetId: Long) ->
         SmartSavingsDetailViewModel(assetId, get(), get())
     }
     viewModel { AnalyticsViewModel(get(), get(), get(), get()) }
-    viewModel { SettingsViewModel(get(), get(), get(), androidContext()) }
+    viewModel { SettingsViewModel(get(), get(), androidContext()) }
 }

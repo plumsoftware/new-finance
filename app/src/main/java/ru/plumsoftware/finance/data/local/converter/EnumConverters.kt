@@ -1,7 +1,6 @@
 package ru.plumsoftware.finance.data.local.converter
 
 import androidx.room.TypeConverter
-import ru.plumsoftware.finance.domain.model.AccountType
 import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.domain.model.NotificationSource
 import ru.plumsoftware.finance.domain.model.SmartAssetStatus
@@ -14,12 +13,6 @@ class EnumConverters {
 
     @TypeConverter
     fun toTransactionType(value: String): TransactionType = TransactionType.valueOf(value)
-
-    @TypeConverter
-    fun fromAccountType(value: AccountType): String = value.name
-
-    @TypeConverter
-    fun toAccountType(value: String): AccountType = AccountType.valueOf(value)
 
     @TypeConverter
     fun fromCategoryType(value: CategoryType): String = value.name

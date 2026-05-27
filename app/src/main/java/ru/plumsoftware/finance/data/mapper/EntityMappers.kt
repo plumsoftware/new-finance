@@ -2,12 +2,10 @@ package ru.plumsoftware.finance.data.mapper
 
 import ru.plumsoftware.finance.data.local.dao.CategorySpendingRow
 import ru.plumsoftware.finance.data.local.dao.DailySummaryRow
-import ru.plumsoftware.finance.data.local.entity.AccountEntity
 import ru.plumsoftware.finance.data.local.entity.CategoryEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetUsageEntity
 import ru.plumsoftware.finance.data.local.entity.TransactionEntity
-import ru.plumsoftware.finance.domain.model.Account
 import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.CategorySpending
 import ru.plumsoftware.finance.domain.model.DailySummary
@@ -19,7 +17,6 @@ fun TransactionEntity.toDomain(): Transaction = Transaction(
     id = id,
     type = type,
     amountMinor = amountMinor,
-    accountId = accountId,
     categoryId = categoryId,
     smartAssetId = smartAssetId,
     note = note,
@@ -31,32 +28,11 @@ fun Transaction.toEntity(): TransactionEntity = TransactionEntity(
     id = id,
     type = type,
     amountMinor = amountMinor,
-    accountId = accountId,
     categoryId = categoryId,
     smartAssetId = smartAssetId,
     note = note,
     dateMillis = dateMillis,
     createdAtMillis = createdAtMillis,
-)
-
-fun AccountEntity.toDomain(): Account = Account(
-    id = id,
-    name = name,
-    type = type,
-    currencyCode = currencyCode,
-    initialBalanceMinor = initialBalanceMinor,
-    isHidden = isHidden,
-    sortOrder = sortOrder,
-)
-
-fun Account.toEntity(): AccountEntity = AccountEntity(
-    id = id,
-    name = name,
-    type = type,
-    currencyCode = currencyCode,
-    initialBalanceMinor = initialBalanceMinor,
-    isHidden = isHidden,
-    sortOrder = sortOrder,
 )
 
 fun CategoryEntity.toDomain(): Category = Category(

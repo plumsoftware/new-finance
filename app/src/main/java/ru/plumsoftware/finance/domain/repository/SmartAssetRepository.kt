@@ -14,7 +14,6 @@ interface SmartAssetRepository {
     suspend fun getWithUsages(id: Long): SmartAssetWithUsages?
     suspend fun create(
         asset: SmartAsset,
-        accountId: Long,
         categoryId: Long?,
         createPurchaseExpense: Boolean = true,
     ): Long

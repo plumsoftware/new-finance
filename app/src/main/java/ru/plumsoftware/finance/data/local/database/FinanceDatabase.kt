@@ -8,12 +8,10 @@ import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.runBlocking
 import ru.plumsoftware.finance.data.local.converter.EnumConverters
-import ru.plumsoftware.finance.data.local.dao.AccountDao
 import ru.plumsoftware.finance.data.local.dao.CategoryDao
 import ru.plumsoftware.finance.data.local.dao.NotificationDao
 import ru.plumsoftware.finance.data.local.dao.SmartAssetDao
 import ru.plumsoftware.finance.data.local.dao.TransactionDao
-import ru.plumsoftware.finance.data.local.entity.AccountEntity
 import ru.plumsoftware.finance.data.local.entity.CategoryEntity
 import ru.plumsoftware.finance.data.local.entity.NotificationEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetEntity
@@ -22,19 +20,17 @@ import ru.plumsoftware.finance.data.local.entity.TransactionEntity
 
 @Database(
     entities = [
-        AccountEntity::class,
         CategoryEntity::class,
         TransactionEntity::class,
         SmartAssetEntity::class,
         SmartAssetUsageEntity::class,
         NotificationEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = false,
 )
 @TypeConverters(EnumConverters::class)
 abstract class FinanceDatabase : RoomDatabase() {
-    abstract fun accountDao(): AccountDao
     abstract fun categoryDao(): CategoryDao
     abstract fun transactionDao(): TransactionDao
     abstract fun smartAssetDao(): SmartAssetDao
@@ -65,10 +61,6 @@ abstract class FinanceDatabase : RoomDatabase() {
             val categoryDao = database.categoryDao()
             if (categoryDao.count() == 0) {
                 categoryDao.insertAll(DefaultCategories.all())
-            }
-            val accountDao = database.accountDao()
-            if (accountDao.count() == 0) {
-                DefaultAccounts.initial().forEach { accountDao.insert(it) }
             }
         }
     }

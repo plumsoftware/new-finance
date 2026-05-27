@@ -4,7 +4,6 @@ data class Transaction(
     val id: Long = 0,
     val type: TransactionType,
     val amountMinor: Long,
-    val accountId: Long,
     val categoryId: Long?,
     val smartAssetId: Long?,
     val note: String?,

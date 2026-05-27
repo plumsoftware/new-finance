@@ -15,7 +15,6 @@ import ru.plumsoftware.finance.data.util.startOfDayMillis
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.Transaction
 import ru.plumsoftware.finance.domain.model.TransactionType
-import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.domain.repository.SmartAssetRepository
 import ru.plumsoftware.finance.domain.repository.TransactionRepository
@@ -32,7 +31,6 @@ data class DashboardUiState(
 )
 
 class DashboardViewModel(
-    private val accountRepository: AccountRepository,
     private val transactionRepository: TransactionRepository,
     private val smartAssetRepository: SmartAssetRepository,
     private val settingsRepository: SettingsRepository,
@@ -41,17 +39,23 @@ class DashboardViewModel(
     private val _snackbar = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<DashboardUiState> = combine(
-        accountRepository.observeVisibleWithBalances(),
         transactionRepository.observeAll(),
         smartAssetRepository.observeActive(),
         settingsRepository.settings,
         _snackbar,
-    ) { accounts, transactions, assets, settings, snackbar ->
+    ) { transactions, assets, settings, snackbar ->
         val todayStart = startOfDayMillis(System.currentTimeMillis())
         val todayEnd = endOfDayMillis(System.currentTimeMillis())
         val todayTx = transactions.filter { it.dateMillis in todayStart until todayEnd }
+        val totalBalance = transactions.sumOf { tx ->
+            when (tx.type) {
+                TransactionType.INCOME -> tx.amountMinor
+                TransactionType.EXPENSE -> -tx.amountMinor
+                TransactionType.SAVINGS -> 0L
+            }
+        }
         DashboardUiState(
-            totalBalanceMinor = accounts.sumOf { it.balanceMinor },
+            totalBalanceMinor = totalBalance,
             currencyCode = settings.defaultCurrencyCode,
             todayIncomeMinor = todayTx.filter { it.type == TransactionType.INCOME }.sumOf { it.amountMinor },
             todayExpenseMinor = todayTx.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amountMinor },
@@ -76,9 +80,5 @@ class DashboardViewModel(
 
     fun clearSnackbar() {
         _snackbar.value = null
-    }
-
-    suspend fun refreshBalances() {
-        accountRepository.getTotalBalanceMinor()
     }
 }

@@ -10,12 +10,6 @@ import ru.plumsoftware.finance.domain.model.TransactionType
     tableName = "transactions",
     foreignKeys = [
         ForeignKey(
-            entity = AccountEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["accountId"],
-            onDelete = ForeignKey.CASCADE,
-        ),
-        ForeignKey(
             entity = CategoryEntity::class,
             parentColumns = ["id"],
             childColumns = ["categoryId"],
@@ -29,7 +23,6 @@ import ru.plumsoftware.finance.domain.model.TransactionType
         ),
     ],
     indices = [
-        Index("accountId"),
         Index("categoryId"),
         Index("smartAssetId"),
         Index("dateMillis"),
@@ -41,7 +34,6 @@ data class TransactionEntity(
     val id: Long = 0,
     val type: TransactionType,
     val amountMinor: Long,
-    val accountId: Long,
     val categoryId: Long?,
     val smartAssetId: Long?,
     val note: String?,

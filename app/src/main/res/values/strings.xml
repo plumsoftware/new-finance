@@ -40,8 +40,6 @@
     <string name="type_income">Доход</string>
     <string name="type_savings">Экономия</string>
     <string name="note_placeholder">Заметка</string>
-    <string name="currency_label">Валюта</string>
-    <string name="account_label">Счёт</string>
 
     <string name="smart_savings_title">Моя экономия</string>
     <string name="total_saved">Всего сэкономлено</string>
@@ -94,10 +92,8 @@
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Тёмная</string>
     <string name="done">Готово</string>
-    <string name="settings_currency">Валюта</string>
     <string name="settings_biometric">Биометрия</string>
     <string name="settings_biometric_hint">Защита входа (локально)</string>
-    <string name="settings_accounts">Счета</string>
     <string name="settings_categories_expense">Категории расходов</string>
     <string name="settings_categories_income">Категории доходов</string>
     <string name="settings_local_note">Все данные хранятся только на этом устройстве.</string>

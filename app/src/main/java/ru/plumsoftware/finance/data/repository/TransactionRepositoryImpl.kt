@@ -17,9 +17,6 @@ class TransactionRepositoryImpl(
     override fun observeAll(): Flow<List<Transaction>> =
         transactionDao.observeAll().map { rows -> rows.map { it.toDomain() } }
 
-    override fun observeByAccount(accountId: Long): Flow<List<Transaction>> =
-        transactionDao.observeByAccount(accountId).map { rows -> rows.map { it.toDomain() } }
-
     override fun observeByPeriod(startMillis: Long, endMillis: Long): Flow<List<Transaction>> =
         transactionDao.observeByPeriod(startMillis, endMillis).map { rows -> rows.map { it.toDomain() } }
 
@@ -48,6 +45,5 @@ class TransactionRepositoryImpl(
         type: TransactionType,
         startMillis: Long,
         endMillis: Long,
-        accountId: Long?,
-    ): Long = transactionDao.sumByTypeInPeriod(type, startMillis, endMillis, accountId)
+    ): Long = transactionDao.sumByTypeInPeriod(type, startMillis, endMillis)
 }

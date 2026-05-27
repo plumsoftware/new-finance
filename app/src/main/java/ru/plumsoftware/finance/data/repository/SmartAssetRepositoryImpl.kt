@@ -15,7 +15,6 @@ import ru.plumsoftware.finance.data.util.isWeekday
 import ru.plumsoftware.finance.data.util.startOfDayMillis
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.SmartAssetStatus
-import ru.plumsoftware.finance.domain.model.SmartAssetTrackingMode
 import ru.plumsoftware.finance.domain.model.SmartAssetUsage
 import ru.plumsoftware.finance.domain.model.SmartAssetWithUsages
 import ru.plumsoftware.finance.domain.model.TransactionType
@@ -47,7 +46,6 @@ class SmartAssetRepositoryImpl(
 
     override suspend fun create(
         asset: SmartAsset,
-        accountId: Long,
         categoryId: Long?,
         createPurchaseExpense: Boolean,
     ): Long {
@@ -58,13 +56,12 @@ class SmartAssetRepositoryImpl(
                 TransactionEntity(
                     type = TransactionType.EXPENSE,
                     amountMinor = asset.purchaseCostMinor,
-                    accountId = accountId,
                     categoryId = categoryId,
                     smartAssetId = assetId,
                     note = asset.note ?: asset.name,
                     dateMillis = asset.purchasedAtMillis,
                     createdAtMillis = now,
-                ),
+                )
             )
         }
         return assetId

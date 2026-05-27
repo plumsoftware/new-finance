@@ -30,7 +30,6 @@ import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.ThemeMode
-import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.ui.components.IosCard
 import ru.plumsoftware.finance.ui.components.ios.IosChip
 import ru.plumsoftware.finance.ui.components.ios.IosSwitch
@@ -113,18 +112,6 @@ fun SettingsScreen(
                             )
                         }
                     }
-                }
-            }
-            item {
-                Text(stringResource(R.string.settings_accounts), fontWeight = FontWeight.SemiBold)
-            }
-            items(state.accounts) { account ->
-                IosCard {
-                    Text(account.account.name, style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        MoneyFormat.format(account.balanceMinor, account.account.currencyCode),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
                 }
             }
             item {

@@ -209,18 +209,11 @@ fun FinanceApp(
                             viewModel = koinViewModel(viewModelStoreOwner = createEntry),
                             onBack = { navController.popBackStack() },
                             onCreated = {
-                                runCatching {
-                                    navController.getBackStackEntry(AppRoute.SmartSavings.route)
-                                        .savedStateHandle[SmartSavingsSnackbar.KEY] = successMessage
-                                }.onFailure {
-                                    navController.previousBackStackEntry
-                                        ?.savedStateHandle
-                                        ?.set(SmartSavingsSnackbar.KEY, successMessage)
-                                }
-                                navController.navigate(AppRoute.SmartSavings.route) {
-                                    popUpTo(AppRoute.SmartSavingsCreate.route) { inclusive = true }
-                                    launchSingleTop = true
-                                }
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set(SmartSavingsSnackbar.KEY, successMessage)
+
+                                navController.popBackStack()
                             },
                         )
                     }
