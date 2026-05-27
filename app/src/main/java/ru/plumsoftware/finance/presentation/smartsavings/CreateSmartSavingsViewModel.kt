@@ -1,5 +1,6 @@
 package ru.plumsoftware.finance.presentation.smartsavings
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
@@ -34,10 +35,11 @@ data class CreateSmartSavingsUiState(
 )
 
 class CreateSmartSavingsViewModel(
-    private val editAssetId: Long? = null,
+    savedStateHandle: SavedStateHandle,
     private val smartAssetRepository: SmartAssetRepository,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
+    private val editAssetId: Long? = savedStateHandle.get<String>("assetId")?.toLongOrNull()
 
     private val _uiState = MutableStateFlow(CreateSmartSavingsUiState())
     val uiState: StateFlow<CreateSmartSavingsUiState> = _uiState.asStateFlow()

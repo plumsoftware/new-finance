@@ -77,20 +77,6 @@ fun SmartSavingsScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHost) },
-        topBar = {
-            IosTopBar(
-                title = stringResource(R.string.smart_savings_title),
-                actions = {
-                    IconButton(onClick = onCreateClick) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = stringResource(R.string.smart_create_title),
-                            tint = IosBlue,
-                        )
-                    }
-                },
-            )
-        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onCreateClick,
@@ -114,10 +100,9 @@ fun SmartSavingsScreen(
             item {
                 Text(
                     text = stringResource(R.string.smart_savings_title),
-                    style = MaterialTheme.typography.displaySmall,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(bottom = Dimens.paddingMedium)
                 )
             }
             item {
@@ -189,7 +174,11 @@ private fun SmartAssetRow(
                 modifier = Modifier.padding(end = Dimens.paddingMedium),
             )
             Column(modifier = Modifier.weight(1f)) {
-                Text(asset.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(
+                    asset.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
                 Text(
                     stringResource(
                         R.string.smart_saved_of,
@@ -212,7 +201,10 @@ private fun SmartAssetRow(
                     text = if (asset.status == SmartAssetStatus.PROFIT) {
                         stringResource(R.string.smart_status_profit)
                     } else {
-                        stringResource(R.string.smart_payback_percent, (asset.paybackProgress * 100).toInt())
+                        stringResource(
+                            R.string.smart_payback_percent,
+                            (asset.paybackProgress * 100).toInt()
+                        )
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),

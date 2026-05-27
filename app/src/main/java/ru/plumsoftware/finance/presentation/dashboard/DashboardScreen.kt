@@ -80,7 +80,6 @@ fun DashboardScreen(
                 start = Dimens.paddingLarge,
                 end = Dimens.paddingLarge,
                 top = Dimens.paddingSmall,
-                bottom = 100.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(Dimens.paddingLarge),
         ) {
