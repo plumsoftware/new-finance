@@ -1,8 +1,15 @@
 package ru.plumsoftware.finance.presentation.analytics
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.border
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,7 +30,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,6 +42,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -43,6 +51,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -56,7 +66,7 @@ import ru.plumsoftware.finance.presentation.common.StatsPeriod
 import ru.plumsoftware.finance.ui.components.IosCard
 import ru.plumsoftware.finance.ui.components.ios.IosChip
 import ru.plumsoftware.finance.ui.components.ios.IosDateRangeSheet
-import ru.plumsoftware.finance.ui.theme.Dimens
+import ru.plumsoftware.finance.ui.components.ios.IosSegmentedControl
 import ru.plumsoftware.finance.ui.theme.IosBlue
 import ru.plumsoftware.finance.ui.theme.IosGreen
 import ru.plumsoftware.finance.ui.theme.IosRed
@@ -91,15 +101,16 @@ fun AnalyticsScreen(
         StatsPeriod.WEEK to stringResource(R.string.period_week),
         StatsPeriod.MONTH to stringResource(R.string.period_month),
         StatsPeriod.YEAR to stringResource(R.string.period_year),
-        StatsPeriod.CUSTOM to (state.periodLabel ?: stringResource(R.string.period_custom)),
     )
     var disabledExpense by rememberSaveable { mutableStateOf(setOf<Long>()) }
     var disabledIncome by rememberSaveable { mutableStateOf(setOf<Long>()) }
 
-    val expenseCategories = state.expenseCategories.filterNot { it.category.id in disabledExpense }
-    val incomeCategories = state.incomeCategories.filterNot { it.category.id in disabledIncome }
-    val expenseTotal = expenseCategories.sumOf { it.amountMinor }
-    val incomeTotal = incomeCategories.sumOf { it.amountMinor }
+    val expenseCategories = state.expenseCategories
+    val incomeCategories = state.incomeCategories
+    val activeExpenseCategories = expenseCategories.filterNot { it.category.id in disabledExpense }
+    val activeIncomeCategories = incomeCategories.filterNot { it.category.id in disabledIncome }
+    val expenseTotal = activeExpenseCategories.sumOf { it.amountMinor }
+    val incomeTotal = activeIncomeCategories.sumOf { it.amountMinor }
     val savingsTotal = state.savingsIndex.totalSmartSavingsMinor
     val net = incomeTotal - expenseTotal
     val savingsPercent =
@@ -133,47 +144,94 @@ fun AnalyticsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 0.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
                 Text(
                     text = stringResource(R.string.analytics_title),
-                    style = MaterialTheme.typography.titleLarge,
+                    fontSize = 34.sp,
                     fontWeight = FontWeight.Bold,
                 )
             }
             item {
-                IosCard {
+                IosSegmentedControl(
+                    labels = periodLabels.map { it.second },
+                    selectedIndex = periodLabels.indexOfFirst { it.first == state.period }.let { if (it >= 0) it else 2 },
+                    onSelectIndex = { idx -> viewModel.selectPeriod(periodLabels[idx].first) },
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+            }
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                color = Color(0xFFE5E5EA),
-                                shape = RoundedCornerShape(10.dp),
-                            )
-                            .padding(4.dp)
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        periodLabels.forEach { (period, label) ->
-                            val selected = period == state.period
-                            Box(
-                                modifier = Modifier
-                                    .background(
-                                        color = if (selected) Color.White else Color.Transparent,
-                                        shape = RoundedCornerShape(10.dp),
-                                    )
-                                    .clickable { viewModel.selectPeriod(period) }
-                                    .padding(horizontal = 14.dp, vertical = 8.dp),
-                            ) {
-                                Text(
-                                    text = label,
-                                    color = if (selected) Color.Black else Color(0xFF6B6B72),
-                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                                )
-                            }
+                        IconButton(
+                            onClick = viewModel::navigatePeriodBack,
+                            modifier = Modifier.size(24.dp),
+                        ) {
+                            Text(text = "‹", fontSize = 20.sp, color = Color(0xFF007AFF))
                         }
+                        AnimatedContent(
+                            targetState = state.periodLabel.orEmpty(),
+                            transitionSpec = {
+                                (slideInHorizontally(animationSpec = tween(250)) { fullWidth -> fullWidth / 2 } + fadeIn(
+                                    animationSpec = tween(250)
+                                )).togetherWith(
+                                    slideOutHorizontally(animationSpec = tween(250)) { fullWidth -> -fullWidth / 2 } + fadeOut(
+                                        animationSpec = tween(250)
+                                    )
+                                )
+                            },
+                            label = "period_label_transition",
+                        ) { label ->
+                            Text(
+                                text = label,
+                                color = Color(0xFF8E8E93),
+                                fontSize = 15.sp,
+                                maxLines = 1,
+                            )
+                        }
+                        IconButton(
+                            onClick = viewModel::navigatePeriodForward,
+                            enabled = state.canNavigateForward,
+                            modifier = Modifier.size(24.dp),
+                        ) {
+                            Text(
+                                text = "›",
+                                fontSize = 20.sp,
+                                color = if (state.canNavigateForward) Color(0xFF007AFF) else Color(0xFFC7C7CC),
+                            )
+                        }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(15.dp))
+                            .background(
+                                color = if (state.period == StatsPeriod.CUSTOM) IosBlue else IosBlue.copy(alpha = 0.12f),
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = if (state.period == StatsPeriod.CUSTOM) Color.Transparent else IosBlue.copy(alpha = 0.25f),
+                                shape = RoundedCornerShape(15.dp),
+                            )
+                            .clickable { viewModel.selectPeriod(StatsPeriod.CUSTOM) }
+                            .padding(horizontal = 12.dp, vertical = 5.dp),
+                    ) {
+                        Text(
+                            text = state.periodChipLabel,
+                            color = if (state.period == StatsPeriod.CUSTOM) Color.White else IosBlue,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
                     }
                 }
             }
@@ -184,21 +242,61 @@ fun AnalyticsScreen(
                         text = MoneyFormat.format(net, state.currencyCode, showSign = true),
                         style = MaterialTheme.typography.displayLarge,
                         fontWeight = FontWeight.Bold,
-                        color = if (net >= 0) IosGreen else IosRed,
+                        color = when {
+                            net > 0L -> IosGreen
+                            net < 0L -> IosRed
+                            else -> Color.Black
+                        },
                     )
                     Spacer(Modifier.height(8.dp))
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                        Text(
-                            "↑ Доходы ${MoneyFormat.format(incomeTotal, state.currencyCode)}",
-                            color = IosGreen
-                        )
-                        Text(
-                            "↓ Расходы ${MoneyFormat.format(expenseTotal, state.currencyCode)}",
-                            color = IosRed
-                        )
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(text = "↑", color = IosGreen, fontSize = 14.sp)
+                            Text(
+                                text = "Доходы",
+                                color = Color(0xFF8E8E93),
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                            )
+                            Text(
+                                text = MoneyFormat.format(incomeTotal, state.currencyCode),
+                                color = IosGreen,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Text(text = "↓", color = IosRed, fontSize = 14.sp)
+                            Text(
+                                text = "Расходы",
+                                color = Color(0xFF8E8E93),
+                                fontSize = 13.sp,
+                                maxLines = 1,
+                            )
+                            Text(
+                                text = MoneyFormat.format(expenseTotal, state.currencyCode),
+                                color = IosRed,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                     Spacer(Modifier.height(16.dp))
                     DonutChart(
@@ -213,11 +311,14 @@ fun AnalyticsScreen(
                     Spacer(Modifier.height(12.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        LegendDot("Доходы", IosGreen)
-                        LegendDot("Расходы", IosRed)
-                        LegendDot("Переводы", IosBlue)
+                        LegendItem(color = IosGreen, label = "Доходы")
+                        Spacer(Modifier.size(16.dp))
+                        LegendItem(color = IosRed, label = "Расходы")
+                        Spacer(Modifier.size(16.dp))
+                        LegendItem(color = IosBlue, label = "Переводы")
                     }
                 }
             }
@@ -274,13 +375,23 @@ private fun SectionLabel(text: String) {
 }
 
 @Composable
-private fun LegendDot(text: String, color: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(modifier = Modifier
-            .size(8.dp)
-            .background(color, CircleShape))
-        Spacer(Modifier.size(6.dp))
-        Text(text = text, color = Color(0xFF8E8E93))
+private fun LegendItem(color: Color, label: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(color),
+        )
+        Text(
+            text = label,
+            fontSize = 13.sp,
+            color = Color(0xFF8E8E93),
+            maxLines = 1,
+        )
     }
 }
 

@@ -10,10 +10,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import ru.plumsoftware.finance.domain.model.Category
-import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.domain.model.ThemeMode
-import ru.plumsoftware.finance.domain.repository.CategoryRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.presentation.common.BiometricUtils
 
@@ -22,13 +19,10 @@ data class SettingsUiState(
     val biometricEnabled: Boolean = false,
     val biometricAvailable: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val expenseCategories: List<Category> = emptyList(),
-    val incomeCategories: List<Category> = emptyList(),
 )
 
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
-    private val categoryRepository: CategoryRepository,
     context: Context,
 ) : ViewModel() {
 
@@ -38,16 +32,12 @@ class SettingsViewModel(
     val uiState: StateFlow<SettingsUiState> = combine(
         settingsRepository.settings,
         themeModeOverride,
-        categoryRepository.observeByType(CategoryType.EXPENSE, true),
-        categoryRepository.observeByType(CategoryType.INCOME, true),
-    ) { settings, themeOverride, expense, income ->
+    ) { settings, themeOverride ->
         SettingsUiState(
             currencyCode = settings.defaultCurrencyCode,
             biometricEnabled = settings.biometricEnabled,
             biometricAvailable = biometricAvailable,
             themeMode = themeOverride ?: settings.themeMode,
-            expenseCategories = expense,
-            incomeCategories = income,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
@@ -65,9 +55,4 @@ class SettingsViewModel(
         }
     }
 
-    fun toggleCategoryHidden(id: Long, hidden: Boolean) {
-        viewModelScope.launch {
-            categoryRepository.setHidden(id, hidden)
-        }
-    }
 }

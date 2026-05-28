@@ -46,6 +46,9 @@ data class AnalyticsUiState(
     val customStartMillis: Long? = null,
     val customEndMillis: Long? = null,
     val periodLabel: String? = null,
+    val periodChipLabel: String = "📅 Период",
+    val periodOffset: Int = 0,
+    val canNavigateForward: Boolean = false,
 )
 
 class AnalyticsViewModel(
@@ -66,6 +69,7 @@ class AnalyticsViewModel(
         if (period == StatsPeriod.CUSTOM) {
             _uiState.update { it.copy(showDateRangePicker = true, period = StatsPeriod.CUSTOM) }
         } else {
+            _uiState.update { it.copy(periodOffset = 0) }
             load(period)
         }
     }
@@ -84,6 +88,7 @@ class AnalyticsViewModel(
                 customStartMillis = startMillis,
                 customEndMillis = endMillis,
                 showDateRangePicker = false,
+                periodOffset = 0,
             )
         }
         load(StatsPeriod.CUSTOM)
@@ -96,12 +101,27 @@ class AnalyticsViewModel(
         }
     }
 
+    fun navigatePeriodBack() {
+        if (_uiState.value.period == StatsPeriod.CUSTOM) return
+        _uiState.update { it.copy(periodOffset = it.periodOffset - 1) }
+        load(_uiState.value.period)
+    }
+
+    fun navigatePeriodForward() {
+        val current = _uiState.value
+        if (current.period == StatsPeriod.CUSTOM || current.periodOffset >= 0) return
+        _uiState.update { it.copy(periodOffset = (it.periodOffset + 1).coerceAtMost(0)) }
+        load(_uiState.value.period)
+    }
+
     private fun load(period: StatsPeriod) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, period = period, showDateRangePicker = false) }
             val state = _uiState.value
             val currency = settingsRepository.settings.first().defaultCurrencyCode
-            val range = period.resolveRange(
+            val range = resolveRangeWithOffset(
+                period = period,
+                offset = state.periodOffset,
                 customStartMillis = state.customStartMillis,
                 customEndMillis = state.customEndMillis,
             )
@@ -113,10 +133,23 @@ class AnalyticsViewModel(
             val incomeCats = categoryRepository.observeByType(CategoryType.INCOME, true).first()
             val formatter = SimpleDateFormat("dd.MM", Locale("ru"))
             val rangeFormatter = SimpleDateFormat("d MMM yyyy", Locale("ru"))
-            val periodLabel = if (period == StatsPeriod.CUSTOM) {
-                "${rangeFormatter.format(Date(range.startMillis))} – ${rangeFormatter.format(Date(range.endMillis))}"
+            val periodLabel = when (period) {
+                StatsPeriod.DAY -> SimpleDateFormat("d MMMM yyyy", Locale("ru")).format(Date(range.startMillis))
+                StatsPeriod.WEEK -> {
+                    val left = SimpleDateFormat("d MMM", Locale("ru")).format(Date(range.startMillis))
+                    val right = SimpleDateFormat("d MMM", Locale("ru")).format(Date(range.endMillis))
+                    "$left – $right"
+                }
+                StatsPeriod.MONTH -> SimpleDateFormat("LLLL yyyy", Locale("ru")).format(Date(range.startMillis))
+                StatsPeriod.YEAR -> SimpleDateFormat("yyyy", Locale("ru")).format(Date(range.startMillis))
+                StatsPeriod.CUSTOM -> "${rangeFormatter.format(Date(range.startMillis))} – ${rangeFormatter.format(Date(range.endMillis))}"
+            }
+            val periodChipLabel = if (period == StatsPeriod.CUSTOM) {
+                val startDay = SimpleDateFormat("d", Locale("ru")).format(Date(range.startMillis))
+                val endDayMonth = SimpleDateFormat("d MMM", Locale("ru")).format(Date(range.endMillis))
+                "$startDay–$endDayMonth"
             } else {
-                null
+                "📅 Период"
             }
             val expenseBreakdown = buildCategoryBreakdown(
                 transactions = transactions,
@@ -147,9 +180,34 @@ class AnalyticsViewModel(
                     currencyCode = currency,
                     isLoading = false,
                     periodLabel = periodLabel,
+                    periodChipLabel = periodChipLabel,
+                    canNavigateForward = period != StatsPeriod.CUSTOM && state.periodOffset < 0,
                 )
             }
         }
+    }
+
+    private fun resolveRangeWithOffset(
+        period: StatsPeriod,
+        offset: Int,
+        customStartMillis: Long?,
+        customEndMillis: Long?,
+    ): ru.plumsoftware.finance.presentation.common.PeriodRange {
+        if (period == StatsPeriod.CUSTOM) {
+            return period.resolveRange(
+                customStartMillis = customStartMillis,
+                customEndMillis = customEndMillis,
+            )
+        }
+        val cal = java.util.Calendar.getInstance()
+        when (period) {
+            StatsPeriod.DAY -> cal.add(java.util.Calendar.DAY_OF_YEAR, offset)
+            StatsPeriod.WEEK -> cal.add(java.util.Calendar.WEEK_OF_YEAR, offset)
+            StatsPeriod.MONTH -> cal.add(java.util.Calendar.MONTH, offset)
+            StatsPeriod.YEAR -> cal.add(java.util.Calendar.YEAR, offset)
+            StatsPeriod.CUSTOM -> Unit
+        }
+        return period.resolveRange(nowMillis = cal.timeInMillis)
     }
 
     private fun buildCategoryBreakdown(

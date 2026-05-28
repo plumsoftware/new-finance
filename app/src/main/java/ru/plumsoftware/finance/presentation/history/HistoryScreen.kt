@@ -111,6 +111,13 @@ fun HistoryScreen(
         ) {
             item {
                 Text(
+                    text = "последние 90 операций",
+                    color = Color(0xFF8E8E93),
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            item {
+                Text(
                     text = "История",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
@@ -213,7 +220,7 @@ private fun HistoryRow(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TransactionDetailSheet(
+fun TransactionDetailSheet(
     transaction: Transaction,
     category: Category?,
     currencyCode: String,

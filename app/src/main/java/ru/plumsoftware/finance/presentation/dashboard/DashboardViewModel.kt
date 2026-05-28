@@ -93,6 +93,13 @@ class DashboardViewModel(
         _snackbar.value = null
     }
 
+    fun deleteTransaction(id: Long) {
+        viewModelScope.launch {
+            transactionRepository.delete(id)
+            _snackbar.value = "Операция удалена"
+        }
+    }
+
     private fun currentMonthRange(): Pair<Long, Long> {
         val now = Calendar.getInstance()
         val start = now.clone() as Calendar

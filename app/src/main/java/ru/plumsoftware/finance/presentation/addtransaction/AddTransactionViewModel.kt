@@ -27,6 +27,7 @@ data class AddTransactionUiState(
     val isSaving: Boolean = false,
     val saved: Boolean = false,
     val errorMessage: String? = null,
+    val quickCategorySaving: Boolean = false,
 )
 
 class AddTransactionViewModel(
@@ -151,6 +152,56 @@ class AddTransactionViewModel(
                             errorMessage = e.message ?: "Ошибка сохранения",
                         )
                     }
+                }
+            }
+        }
+    }
+
+    fun createQuickCategory(
+        name: String,
+        icon: String,
+        colorArgb: Long,
+        onCreated: () -> Unit = {},
+    ) {
+        if (name.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Укажите название категории") }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(quickCategorySaving = true, errorMessage = null) }
+            val categoryType = when (_uiState.value.type) {
+                TransactionType.INCOME -> CategoryType.INCOME
+                else -> CategoryType.EXPENSE
+            }
+            runCatching {
+                val existing = categoryRepository.observeByType(categoryType, includeHidden = true).first()
+                val newId = categoryRepository.upsert(
+                    Category(
+                        name = name.trim().take(30),
+                        type = categoryType,
+                        icon = icon,
+                        colorArgb = colorArgb,
+                        isHidden = false,
+                        isSystem = false,
+                        sortOrder = (existing.maxOfOrNull { it.sortOrder } ?: -1) + 1,
+                    )
+                )
+                val updatedCategories = categoryRepository.observeByType(categoryType, false).first()
+                _uiState.update {
+                    it.copy(
+                        categories = updatedCategories,
+                        selectedCategoryId = newId,
+                    )
+                }
+            }.onSuccess {
+                _uiState.update { it.copy(quickCategorySaving = false) }
+                onCreated()
+            }.onFailure { e ->
+                _uiState.update {
+                    it.copy(
+                        quickCategorySaving = false,
+                        errorMessage = e.message ?: "Ошибка создания категории",
+                    )
                 }
             }
         }

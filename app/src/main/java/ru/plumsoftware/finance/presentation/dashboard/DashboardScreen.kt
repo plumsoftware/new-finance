@@ -28,7 +28,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -57,7 +56,7 @@ import ru.plumsoftware.finance.domain.model.SmartAssetStatus
 import ru.plumsoftware.finance.domain.model.Transaction
 import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
-import ru.plumsoftware.finance.ui.components.IosCard
+import ru.plumsoftware.finance.presentation.history.TransactionDetailSheet
 import ru.plumsoftware.finance.ui.theme.IosBlue
 import ru.plumsoftware.finance.ui.theme.IosGreen
 import ru.plumsoftware.finance.ui.theme.IosRed
@@ -86,11 +85,15 @@ fun DashboardScreen(
     }
 
     selectedTransaction?.let { tx ->
-        TransactionPreviewSheet(
+        TransactionDetailSheet(
             transaction = tx,
             category = state.categoryMap[tx.categoryId],
             currencyCode = state.currencyCode,
             onDismiss = { selectedTransaction = null },
+            onDelete = {
+                viewModel.deleteTransaction(tx.id)
+                selectedTransaction = null
+            },
         )
     }
 
@@ -107,7 +110,7 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 56.dp, bottom = 16.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 0.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             item {
@@ -395,45 +398,6 @@ private fun TransactionListRow(
                 fontWeight = FontWeight.SemiBold,
             )
             Text(relativeDayLabel(transaction.dateMillis), fontSize = 12.sp, color = Color(0xFF8E8E93))
-        }
-    }
-}
-
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-@Composable
-private fun TransactionPreviewSheet(
-    transaction: Transaction,
-    category: Category?,
-    currencyCode: String,
-    onDismiss: () -> Unit,
-) {
-    val amountColor = if (transaction.type == TransactionType.INCOME) IosGreen else IosRed
-    val amountPrefix = if (transaction.type == TransactionType.INCOME) "+" else "−"
-    val dateLabel = SimpleDateFormat("d MMMM yyyy, HH:mm", Locale("ru")).format(Date(transaction.dateMillis))
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = Color.White) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Text(
-                text = category?.name ?: "Операция",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-            Text(
-                text = "$amountPrefix${MoneyFormat.format(transaction.amountMinor, currencyCode)}",
-                fontSize = 34.sp,
-                color = amountColor,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-            IosCard {
-                Text("Дата: $dateLabel", color = Color(0xFF8E8E93))
-                Text("Заметка: ${transaction.note ?: "—"}", color = Color(0xFF8E8E93))
-            }
         }
     }
 }

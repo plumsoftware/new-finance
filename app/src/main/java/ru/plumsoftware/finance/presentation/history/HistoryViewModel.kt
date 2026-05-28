@@ -2,6 +2,7 @@ package ru.plumsoftware.finance.presentation.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +26,9 @@ class HistoryViewModel(
     categoryRepository: CategoryRepository,
     settingsRepository: SettingsRepository,
 ) : ViewModel() {
+    init {
+        pruneOldTransactions()
+    }
 
     val uiState: StateFlow<HistoryUiState> = combine(
         transactionRepository.observeAll(),
@@ -32,8 +36,15 @@ class HistoryViewModel(
         categoryRepository.observeByType(CategoryType.INCOME, includeHidden = true),
         settingsRepository.settings,
     ) { transactions, expenseCategories, incomeCategories, settings ->
+        val cutoffMillis = System.currentTimeMillis() - NINETY_DAYS_MILLIS
+        val latestTransactions = transactions
+            .asSequence()
+            .filter { it.dateMillis >= cutoffMillis }
+            .sortedByDescending { it.dateMillis }
+            .take(90)
+            .toList()
         HistoryUiState(
-            transactions = transactions.sortedByDescending { it.dateMillis },
+            transactions = latestTransactions,
             categoryMap = (expenseCategories + incomeCategories).associateBy { it.id },
             currencyCode = settings.defaultCurrencyCode,
         )
@@ -47,5 +58,22 @@ class HistoryViewModel(
         viewModelScope.launch {
             transactionRepository.delete(id)
         }
+    }
+
+    private fun pruneOldTransactions() {
+        viewModelScope.launch {
+            val cutoffMillis = System.currentTimeMillis() - NINETY_DAYS_MILLIS
+            val oldTransactionIds = transactionRepository.observeAll()
+                .first()
+                .asSequence()
+                .filter { it.dateMillis < cutoffMillis }
+                .map { it.id }
+                .toList()
+            oldTransactionIds.forEach { id -> transactionRepository.delete(id) }
+        }
+    }
+
+    private companion object {
+        const val NINETY_DAYS_MILLIS = 90L * 24L * 60L * 60L * 1000L
     }
 }

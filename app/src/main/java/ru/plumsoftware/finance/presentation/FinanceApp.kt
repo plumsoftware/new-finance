@@ -54,6 +54,8 @@ import ru.plumsoftware.finance.domain.model.ThemeMode
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.presentation.addtransaction.AddTransactionScreen
 import ru.plumsoftware.finance.presentation.analytics.AnalyticsScreen
+import ru.plumsoftware.finance.presentation.categories.CategoriesScreen
+import ru.plumsoftware.finance.presentation.categories.CategoryEditorScreen
 import ru.plumsoftware.finance.presentation.dashboard.DashboardScreen
 import ru.plumsoftware.finance.presentation.history.HistoryScreen
 import ru.plumsoftware.finance.presentation.onboarding.OnboardingScreen
@@ -342,7 +344,39 @@ fun FinanceApp(
                         AnalyticsScreen()
                     }
                     composable(AppRoute.Settings.route) {
-                        SettingsScreen()
+                        SettingsScreen(
+                            onOpenCategories = { navController.navigate(AppRoute.Categories.route) },
+                        )
+                    }
+                    composable(AppRoute.Categories.route) {
+                        CategoriesScreen(
+                            onBack = { navController.popBackStack() },
+                            onAdd = { type ->
+                                navController.navigate(AppRoute.categoryEdit(type = type.name))
+                            },
+                            onEdit = { id ->
+                                navController.navigate(AppRoute.categoryEdit(categoryId = id))
+                            },
+                        )
+                    }
+                    composable(
+                        route = AppRoute.CATEGORY_EDIT,
+                        arguments = listOf(
+                            navArgument("categoryId") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            },
+                            navArgument("type") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            },
+                        ),
+                    ) {
+                        CategoryEditorScreen(
+                            onBack = { navController.popBackStack() },
+                        )
                     }
                     composable(
                         route = AppRoute.AddTransaction.route,

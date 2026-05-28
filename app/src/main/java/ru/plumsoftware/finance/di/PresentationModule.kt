@@ -5,6 +5,8 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import ru.plumsoftware.finance.presentation.addtransaction.AddTransactionViewModel
 import ru.plumsoftware.finance.presentation.analytics.AnalyticsViewModel
+import ru.plumsoftware.finance.presentation.categories.CategoriesViewModel
+import ru.plumsoftware.finance.presentation.categories.CategoryEditorViewModel
 import ru.plumsoftware.finance.presentation.dashboard.DashboardViewModel
 import ru.plumsoftware.finance.presentation.history.HistoryViewModel
 import ru.plumsoftware.finance.presentation.onboarding.OnboardingViewModel
@@ -17,6 +19,8 @@ val presentationModule = module {
     viewModel { OnboardingViewModel(get()) }
     viewModel { DashboardViewModel(get(), get(), get(), get()) }
     viewModel { HistoryViewModel(get(), get(), get()) }
+    viewModel { CategoriesViewModel(get()) }
+    viewModel { CategoryEditorViewModel(get(), get()) }
     viewModel { AddTransactionViewModel(get(), get(), get()) }
     viewModel { SmartSavingsViewModel(get(), get()) }
     viewModel { CreateSmartSavingsViewModel(get(), get(), get()) }
@@ -24,5 +28,5 @@ val presentationModule = module {
         SmartSavingsDetailViewModel(assetId, get(), get())
     }
     viewModel { AnalyticsViewModel(get(), get(), get(), get()) }
-    viewModel { SettingsViewModel(get(), get(), androidContext()) }
+    viewModel { SettingsViewModel(get(), androidContext()) }
 }

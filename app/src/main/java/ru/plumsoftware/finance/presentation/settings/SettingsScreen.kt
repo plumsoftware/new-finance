@@ -1,5 +1,6 @@
 package ru.plumsoftware.finance.presentation.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,9 +10,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,13 +30,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
-import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.ThemeMode
 import ru.plumsoftware.finance.ui.components.IosCard
-import ru.plumsoftware.finance.ui.components.ios.IosChip
 import ru.plumsoftware.finance.ui.components.ios.IosSwitch
 import ru.plumsoftware.finance.ui.components.ios.IosThemePicker
 import ru.plumsoftware.finance.ui.theme.Dimens
@@ -41,6 +46,7 @@ import ru.plumsoftware.finance.ui.theme.Dimens
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    onOpenCategories: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -68,8 +74,10 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(padding),
             contentPadding = PaddingValues(
-                horizontal = Dimens.paddingLarge,
-                vertical = 20.dp,
+                start = Dimens.paddingLarge,
+                end = Dimens.paddingLarge,
+                top = 20.dp,
+                bottom = 0.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(Dimens.paddingLarge),
         ) {
@@ -97,6 +105,23 @@ fun SettingsScreen(
                     },
                 )
             }
+            item {
+                Text(
+                    text = "ДАННЫЕ",
+                    color = Color(0xFF8E8E93),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 0.5.sp,
+                )
+                Spacer(Modifier.height(8.dp))
+                IosCard {
+                    SettingsRow(
+                        icon = Icons.Outlined.Category,
+                        label = "Категории",
+                        onClick = onOpenCategories,
+                    )
+                }
+            }
             if (state.biometricAvailable) {
                 item {
                     IosCard {
@@ -122,18 +147,6 @@ fun SettingsScreen(
                 }
             }
             item {
-                Text(stringResource(R.string.settings_categories_expense), fontWeight = FontWeight.SemiBold)
-            }
-            items(state.expenseCategories, key = { "e${it.id}" }) { cat ->
-                CategoryRow(cat) { viewModel.toggleCategoryHidden(cat.id, !cat.isHidden) }
-            }
-            item {
-                Text(stringResource(R.string.settings_categories_income), fontWeight = FontWeight.SemiBold)
-            }
-            items(state.incomeCategories, key = { "i${it.id}" }) { cat ->
-                CategoryRow(cat) { viewModel.toggleCategoryHidden(cat.id, !cat.isHidden) }
-            }
-            item {
                 Text(
                     stringResource(R.string.settings_local_note),
                     style = MaterialTheme.typography.bodySmall,
@@ -145,23 +158,30 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun CategoryRow(category: Category, onToggle: () -> Unit) {
-    IosCard {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("${category.icon} ${category.name}")
-            IosChip(
-                text = if (category.isHidden) {
-                    stringResource(R.string.category_hidden)
-                } else {
-                    stringResource(R.string.category_visible)
-                },
-                selected = !category.isHidden,
-                onClick = onToggle,
+private fun SettingsRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = Color(0xFF8E8E93),
+                modifier = Modifier
+                    .size(24.dp)
+                    .padding(end = 8.dp),
             )
+            Text(label, fontSize = 17.sp, color = Color.Black)
         }
+        Icon(Icons.Outlined.KeyboardArrowRight, contentDescription = null, tint = Color(0xFFC7C7CC))
     }
 }
