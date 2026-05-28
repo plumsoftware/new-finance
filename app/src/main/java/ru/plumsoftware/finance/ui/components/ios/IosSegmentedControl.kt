@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,7 +19,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import ru.plumsoftware.finance.ui.theme.IosBlue
 
 @Composable
 fun IosSegmentedControl(
@@ -28,7 +28,7 @@ fun IosSegmentedControl(
     modifier: Modifier = Modifier,
 ) {
     val safeIndex = selectedIndex.coerceIn(0, labels.lastIndex.coerceAtLeast(0))
-    val trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
+    val trackColor = Color(0xFFE5E5EA)
     val shape = RoundedCornerShape(10.dp)
 
     Box(
@@ -50,26 +50,31 @@ fun IosSegmentedControl(
                     modifier = Modifier
                         .weight(1f)
                         .height(32.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(
-                            if (isSelected) IosBlue.copy(alpha = 0.2f) else Color.Transparent,
-                        )
                         .clickable(
                             interactionSource = MutableInteractionSource(),
                             indication = null,
                         ) { onSelectIndex(index) },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                        color = if (isSelected) {
-                            IosBlue
-                        } else {
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
-                        },
-                    )
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = if (isSelected) Color.White else Color.Transparent,
+                        shadowElevation = if (isSelected) 2.dp else 0.dp,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(32.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                                color = if (isSelected) Color.Black else Color(0xFF6B6B72),
+                            )
+                        }
+                    }
                 }
             }
         }

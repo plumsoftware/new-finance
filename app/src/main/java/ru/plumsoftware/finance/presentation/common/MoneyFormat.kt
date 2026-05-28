@@ -5,6 +5,7 @@ import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
+import kotlin.math.roundToLong
 import kotlin.math.pow
 
 object MoneyFormat {
@@ -28,19 +29,20 @@ object MoneyFormat {
     /** Отображение суммы при вводе (крупные цифры, iOS Calculator). */
     fun formatEntryDisplay(majorAmountDigits: String, currencyCode: String): String {
         if (majorAmountDigits.isBlank()) return "0 ${symbol(currencyCode)}"
-        val major = majorAmountDigits.toLongOrNull() ?: 0L
+        val major = majorAmountDigits.toDoubleOrNull() ?: 0.0
         val symbols = DecimalFormatSymbols(ruLocale).apply {
             groupingSeparator = ' '
+            decimalSeparator = ','
         }
-        val pattern = if (fractionDigits(currencyCode) > 0) "#,##0" else "#,##0"
+        val pattern = if (fractionDigits(currencyCode) > 0) "#,##0.##" else "#,##0"
         val formatted = DecimalFormat(pattern, symbols).format(major)
         return "$formatted ${symbol(currencyCode)}"
     }
 
     fun majorDigitsToMinor(majorDigits: String, currencyCode: String): Long {
-        val major = majorDigits.toLongOrNull() ?: 0L
+        val major = majorDigits.replace(',', '.').toDoubleOrNull() ?: 0.0
         val exp = fractionDigits(currencyCode)
-        return major * 10.0.pow(exp.toDouble()).toLong()
+        return (major * 10.0.pow(exp.toDouble())).roundToLong()
     }
 
     fun minorToMajorDigits(amountMinor: Long, currencyCode: String): String {

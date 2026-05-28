@@ -24,7 +24,7 @@ private val keys = listOf(
     listOf("1", "2", "3"),
     listOf("4", "5", "6"),
     listOf("7", "8", "9"),
-    listOf("", "0", "⌫"),
+    listOf(".", "0", "⌫"),
 )
 
 @Composable
@@ -45,7 +45,7 @@ fun FinanceNumPad(
                 row.forEach { key ->
                     val cellModifier = Modifier
                         .weight(1f)
-                        .height(56.dp)
+                        .height(72.dp)
                     when (key) {
                         "" -> Spacer(modifier = cellModifier)
                         "⌫" -> NumPadKey(
@@ -84,6 +84,7 @@ private fun NumPadKey(
         modifier = modifier,
         shape = MaterialTheme.shapes.small,
         color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 6.dp,
         content = {
             androidx.compose.foundation.layout.Box(
                 modifier = Modifier.fillMaxWidth(),

@@ -88,7 +88,7 @@ fun OnboardingIncomeExpenseIllustration(modifier: Modifier = Modifier) {
         )
         FinanceSummaryRow(
             label = "Расходы",
-            amount = "−28 150 ₽",
+            amount = "–28 150 ₽",
             accentColor = IosRed,
         )
     }

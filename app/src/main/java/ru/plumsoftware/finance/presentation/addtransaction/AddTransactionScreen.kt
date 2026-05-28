@@ -8,6 +8,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,10 +25,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
@@ -48,9 +52,14 @@ fun AddTransactionScreen(
     viewModel: AddTransactionViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val haptic = LocalHapticFeedback.current
+    val canSave = MoneyFormat.majorDigitsToMinor(state.amountMajorDigits, state.currencyCode) > 0L && !state.isSaving
 
     LaunchedEffect(state.saved) {
-        if (state.saved) onBack()
+        if (state.saved) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            onBack()
+        }
     }
 
     state.errorMessage?.let { message ->
@@ -68,6 +77,21 @@ fun AddTransactionScreen(
                 title = stringResource(R.string.add_transaction),
                 onBack = onBack,
             )
+        },
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Dimens.paddingLarge)
+                    .padding(bottom = Dimens.paddingLarge),
+            ) {
+                IosPrimaryButton(
+                    text = stringResource(R.string.save),
+                    onClick = viewModel::save,
+                    loading = state.isSaving,
+                    enabled = canSave,
+                )
+            }
         },
     ) { padding ->
         Column(
@@ -108,6 +132,8 @@ fun AddTransactionScreen(
                     textAlign = TextAlign.Center,
                 )
             }
+            Spacer(modifier = Modifier.height(Dimens.paddingSmall))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
             Spacer(modifier = Modifier.height(Dimens.paddingMedium))
             Row(
                 modifier = Modifier
@@ -129,18 +155,12 @@ fun AddTransactionScreen(
                 onValueChange = viewModel::setNote,
                 placeholder = stringResource(R.string.note_placeholder),
             )
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(Dimens.paddingMedium))
             FinanceNumPad(
                 onDigit = viewModel::appendDigit,
                 onBackspace = viewModel::backspace,
+                modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(modifier = Modifier.height(Dimens.paddingMedium))
-            IosPrimaryButton(
-                text = stringResource(R.string.save),
-                onClick = viewModel::save,
-                loading = state.isSaving,
-            )
-            Spacer(modifier = Modifier.height(Dimens.paddingLarge))
         }
     }
 }

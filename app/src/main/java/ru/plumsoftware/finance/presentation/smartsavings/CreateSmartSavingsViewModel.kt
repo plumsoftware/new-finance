@@ -23,6 +23,7 @@ val SMART_EMOJI_PRESETS = listOf("🛍️", "☕", "🎒", "🧴", "🚰", "🔌
 
 data class CreateSmartSavingsUiState(
     val currencyCode: String = "RUB",
+    val isEditMode: Boolean = false,
     val name: String = "",
     val icon: String = "🛍️",
     val purchaseDigits: String = "",
@@ -47,7 +48,12 @@ class CreateSmartSavingsViewModel(
     init {
         viewModelScope.launch {
             val currency = settingsRepository.settings.first().defaultCurrencyCode
-            _uiState.update { it.copy(currencyCode = currency) }
+            _uiState.update {
+                it.copy(
+                    currencyCode = currency,
+                    isEditMode = editAssetId != null && editAssetId != 0L,
+                )
+            }
 
             // Если передали ID, значит это режим РЕДАКТИРОВАНИЯ - загружаем данные
             if (editAssetId != null && editAssetId != 0L) {
@@ -138,9 +144,22 @@ class CreateSmartSavingsViewModel(
     }
 
     private fun normalizeDigits(raw: String): String {
-        val combined = raw.filter { it.isDigit() }
-        if (combined.isEmpty()) return ""
-        val t = combined.trimStart('0')
-        return if (t.isEmpty()) "0" else t.take(9)
+        val filtered = raw.filter { it.isDigit() || it == '.' }
+        if (filtered.isEmpty()) return ""
+        if (filtered == ".") return "0."
+        val dotIndex = filtered.indexOf('.')
+        val normalized = if (dotIndex >= 0) {
+            val intPart = filtered.substring(0, dotIndex).filter { it.isDigit() }
+            val fracPart = filtered.substring(dotIndex + 1).filter { it.isDigit() }.take(2)
+            val safeInt = intPart.ifEmpty { "0" }.trimStart('0').ifEmpty { "0" }.take(9)
+            "$safeInt.$fracPart"
+        } else {
+            filtered.filter { it.isDigit() }.trimStart('0').ifEmpty { "0" }.take(9)
+        }
+        return if (normalized.count { it == '.' } > 1) {
+            normalized.substringBefore('.') + "." + normalized.substringAfter('.').replace(".", "")
+        } else {
+            normalized
+        }
     }
 }

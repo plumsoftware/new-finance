@@ -74,22 +74,36 @@ class AddTransactionViewModel(
 
     fun appendDigit(digit: String) {
         _uiState.update {
-            val combined = (it.amountMajorDigits + digit).filter { c -> c.isDigit() }
-            val normalized = when {
-                combined.isEmpty() -> ""
+            val current = it.amountMajorDigits
+            val next = when (digit) {
+                "." -> {
+                    when {
+                        current.isEmpty() -> "0."
+                        current.contains(".") -> current
+                        else -> "$current."
+                    }
+                }
                 else -> {
-                    val withoutLeadingZeros = combined.trimStart('0')
-                    if (withoutLeadingZeros.isEmpty()) "0" else withoutLeadingZeros.take(9)
+                    if (!digit.first().isDigit()) current
+                    else if (current.contains(".")) {
+                        val fractional = current.substringAfter(".", "")
+                        if (fractional.length >= 2) current else current + digit
+                    } else {
+                        val normalized = (current + digit).trimStart('0')
+                        if (normalized.isEmpty()) "0" else normalized.take(9)
+                    }
                 }
             }
-            it.copy(amountMajorDigits = normalized, errorMessage = null)
+            it.copy(amountMajorDigits = next, errorMessage = null)
         }
     }
 
     fun backspace() {
         _uiState.update {
             it.copy(
-                amountMajorDigits = it.amountMajorDigits.dropLast(1),
+                amountMajorDigits = it.amountMajorDigits.dropLast(1).let { value ->
+                    if (value == "0") "" else value
+                },
                 errorMessage = null,
             )
         }

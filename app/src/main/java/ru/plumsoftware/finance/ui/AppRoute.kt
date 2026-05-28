@@ -3,6 +3,7 @@ package ru.plumsoftware.finance.ui
 sealed class AppRoute(val route: String) {
     object Onboarding : AppRoute("onboarding")
     object Home : AppRoute("home")
+    object History : AppRoute("history")
     object SmartSavings : AppRoute("smart_savings")
     object SmartSavingsCreate : AppRoute("smart_savings/create") // Базовый роут
     object Analytics : AppRoute("analytics")

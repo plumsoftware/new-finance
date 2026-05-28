@@ -68,14 +68,7 @@ class SmartSavingsDetailViewModel(
 
     fun appendDigit(d: String) {
         _uiState.update {
-            val combined = (it.amountDigits + d).filter { c -> c.isDigit() }
-            val normalized = when {
-                combined.isEmpty() -> ""
-                else -> {
-                    val t = combined.trimStart('0')
-                    if (t.isEmpty()) "0" else t.take(9)
-                }
-            }
+            val normalized = normalizeDigits(it.amountDigits + d)
             it.copy(amountDigits = normalized)
         }
     }
@@ -114,6 +107,21 @@ class SmartSavingsDetailViewModel(
         viewModelScope.launch {
             smartAssetRepository.deleteAssetWithUsages(assetId)
             onDeleted()
+        }
+    }
+
+    private fun normalizeDigits(raw: String): String {
+        val filtered = raw.filter { it.isDigit() || it == '.' }
+        if (filtered.isEmpty()) return ""
+        if (filtered == ".") return "0."
+        val dotIndex = filtered.indexOf('.')
+        return if (dotIndex >= 0) {
+            val intPart = filtered.substring(0, dotIndex).filter { c -> c.isDigit() }
+            val fracPart = filtered.substring(dotIndex + 1).filter { c -> c.isDigit() }.take(2)
+            val safeInt = intPart.ifEmpty { "0" }.trimStart('0').ifEmpty { "0" }.take(9)
+            "$safeInt.$fracPart"
+        } else {
+            filtered.filter { c -> c.isDigit() }.trimStart('0').ifEmpty { "0" }.take(9)
         }
     }
 }

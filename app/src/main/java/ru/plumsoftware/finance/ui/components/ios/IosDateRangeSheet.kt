@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -66,24 +64,19 @@ fun IosDateRangeSheet(
                     .padding(horizontal = Dimens.paddingLarge),
             )
             Spacer(modifier = Modifier.height(Dimens.paddingSmall))
-            Column(
+            DateRangePicker(
+                state = pickerState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(420.dp)
-                    .verticalScroll(rememberScrollState()),
-            ) {
-                DateRangePicker(
-                    state = pickerState,
-                    modifier = Modifier.fillMaxWidth(),
-                    title = null,
-                    headline = null,
-                    showModeToggle = false,
-                    colors = DatePickerDefaults.colors(
-                        selectedDayContainerColor = IosBlue,
-                        dayInSelectionRangeContainerColor = IosBlue.copy(alpha = 0.2f),
-                    ),
-                )
-            }
+                    .height(420.dp),
+                title = null,
+                headline = null,
+                showModeToggle = false,
+                colors = DatePickerDefaults.colors(
+                    selectedDayContainerColor = IosBlue,
+                    dayInSelectionRangeContainerColor = IosBlue.copy(alpha = 0.2f),
+                ),
+            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

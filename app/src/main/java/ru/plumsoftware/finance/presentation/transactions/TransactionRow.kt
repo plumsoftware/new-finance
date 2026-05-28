@@ -39,7 +39,7 @@ fun TransactionRow(
     }
     val prefix = when (transaction.type) {
         TransactionType.INCOME -> "+"
-        TransactionType.EXPENSE -> "−"
+        TransactionType.EXPENSE -> "–"
         TransactionType.SAVINGS -> "+"
     }
 
@@ -57,7 +57,7 @@ fun TransactionRow(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "${categoryIcon.orEmpty()} ${categoryName ?: transaction.note ?: "—"}".trim(),
+                    text = "${categoryIcon.orEmpty()} ${categoryName ?: transaction.note ?: "–"}".trim(),
                     style = MaterialTheme.typography.bodyLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

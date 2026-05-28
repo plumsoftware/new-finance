@@ -23,8 +23,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
@@ -34,7 +36,6 @@ import ru.plumsoftware.finance.ui.components.IosCard
 import ru.plumsoftware.finance.ui.components.ios.IosChip
 import ru.plumsoftware.finance.ui.components.ios.IosSwitch
 import ru.plumsoftware.finance.ui.components.ios.IosThemePicker
-import ru.plumsoftware.finance.ui.components.ios.IosTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,8 +61,7 @@ fun SettingsScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = { IosTopBar(title = stringResource(R.string.settings_title)) },
+        containerColor = Color(0xFFF2F2F7),
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -69,10 +69,17 @@ fun SettingsScreen(
                 .padding(padding),
             contentPadding = PaddingValues(
                 horizontal = Dimens.paddingLarge,
-                vertical = Dimens.paddingSmall,
+                vertical = 20.dp,
             ),
             verticalArrangement = Arrangement.spacedBy(Dimens.paddingLarge),
         ) {
+            item {
+                Text(
+                    text = stringResource(R.string.settings_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
             item(key = "theme_$selectedThemeIndex") {
                 Text(stringResource(R.string.settings_theme), fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(Dimens.paddingSmall))
