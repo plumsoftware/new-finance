@@ -22,7 +22,14 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = DarkTextPrimary,
     surface = DarkSurface,
     onSurface = DarkTextPrimary,
-    error = IosRed
+    error = IosRed,
+    secondary = IosBlue,
+    onSecondary = LightSurface,
+    tertiary = IosGreen,
+    onSurfaceVariant = DarkTextSecondary,
+    outline = DarkSeparator,
+    outlineVariant = DarkChevron,
+    surfaceVariant = DarkSurfaceMuted,
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -32,7 +39,14 @@ private val LightColorScheme = lightColorScheme(
     onBackground = LightTextPrimary,
     surface = LightSurface,
     onSurface = LightTextPrimary,
-    error = IosRed
+    error = IosRed,
+    secondary = IosBlue,
+    onSecondary = LightSurface,
+    tertiary = IosGreen,
+    onSurfaceVariant = LightTextSecondary,
+    outline = LightSeparator,
+    outlineVariant = LightChevron,
+    surfaceVariant = LightSurfaceMuted,
 )
 
 @Composable

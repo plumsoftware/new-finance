@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import ru.plumsoftware.finance.ui.theme.IosBlue
+import ru.plumsoftware.finance.ui.theme.Dimens
 
 @Composable
 fun IosPrimaryButton(
@@ -21,30 +21,32 @@ fun IosPrimaryButton(
     enabled: Boolean = true,
     loading: Boolean = false,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     Button(
         onClick = onClick,
         enabled = enabled && !loading,
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp),
+            .height(Dimens.buttonHeightPrimary),
         shape = MaterialTheme.shapes.small,
         colors = ButtonDefaults.buttonColors(
-            containerColor = IosBlue,
-            contentColor = MaterialTheme.colorScheme.surface,
-            disabledContainerColor = IosBlue.copy(alpha = 0.4f),
+            containerColor = colors.secondary,
+            contentColor = colors.onSecondary,
+            disabledContainerColor = colors.secondary.copy(alpha = 0.4f),
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
     ) {
         if (loading) {
             CircularProgressIndicator(
-                modifier = Modifier.size(24.dp),
-                strokeWidth = 2.5.dp,
-                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.size(Dimens.iconSizeStandard),
+                strokeWidth = Dimens.borderThin + 1.5.dp,
+                color = colors.onSecondary,
             )
         } else {
             Text(
                 text = text,
-                style = MaterialTheme.typography.labelLarge,
+                style = typography.labelLarge,
             )
         }
     }

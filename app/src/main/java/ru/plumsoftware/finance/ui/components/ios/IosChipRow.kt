@@ -5,16 +5,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.plumsoftware.finance.ui.theme.Dimens
-import ru.plumsoftware.finance.ui.theme.IosBlue
 
 @Composable
 fun IosChip(
@@ -23,18 +20,19 @@ fun IosChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-  Surface(
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    Surface(
         onClick = onClick,
         modifier = modifier,
-        shape = RoundedCornerShape(Dimens.cornerRadiusButton),
-        color = if (selected) IosBlue.copy(alpha = 0.14f) else MaterialTheme.colorScheme.surface,
+        shape = MaterialTheme.shapes.small,
+        color = if (selected) colors.secondary.copy(alpha = 0.14f) else colors.surface,
     ) {
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            color = if (selected) IosBlue else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+            modifier = Modifier.padding(horizontal = Dimens.spacingRow + 4.dp, vertical = Dimens.spacingRow),
+            style = typography.bodyMedium,
+            color = if (selected) colors.secondary else colors.onSurfaceVariant,
         )
     }
 }
@@ -49,7 +47,7 @@ fun IosChipRow(
     Row(
         modifier = modifier
             .horizontalScroll(rememberScrollState())
-            .padding(vertical = 4.dp),
+            .padding(vertical = Dimens.paddingMicro),
         horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
     ) {
         items.forEach { item ->

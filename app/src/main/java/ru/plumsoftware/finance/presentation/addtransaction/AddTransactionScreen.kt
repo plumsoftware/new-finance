@@ -1,14 +1,23 @@
 package ru.plumsoftware.finance.presentation.addtransaction
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -17,17 +26,31 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,29 +58,60 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
-import ru.plumsoftware.finance.ui.components.FinanceNumPad
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
 import ru.plumsoftware.finance.ui.components.ios.IosAlertDialog
-import ru.plumsoftware.finance.ui.components.ios.IosChip
-import ru.plumsoftware.finance.ui.components.ios.IosSegmentedControl
 import ru.plumsoftware.finance.ui.components.ios.IosTextField
-import ru.plumsoftware.finance.ui.components.ios.IosTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
-import ru.plumsoftware.finance.ui.theme.IosBlue
+import ru.plumsoftware.finance.ui.theme.Inter28Family
+
+private object AddTransactionLayout {
+    val horizontalPadding = 20.dp
+    val sectionGap = 11.dp
+    val segmentHeight = 28.dp
+    val segmentInnerPadding = 2.dp
+    val segmentThumbRadius = 8.dp
+    val chipHeight = 36.dp
+    val chipRadius = 18.dp
+    val chipPaddingH = 16.dp
+    val noteRadius = 12.dp
+    val notePadding = 14.dp
+    val saveHeight = 56.dp
+    val saveRadius = 16.dp
+    val numpadGap = 8.dp
+    val numpadKeyHeight = 72.dp
+    val numpadKeyRadius = 14.dp
+    val amountSize = 56.sp
+}
+
+private val numPadKeys = listOf(
+    listOf("1", "2", "3"),
+    listOf("4", "5", "6"),
+    listOf("7", "8", "9"),
+    listOf(".", "0", "⌫"),
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,6 +121,8 @@ fun AddTransactionScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val haptic = LocalHapticFeedback.current
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     val canSave = MoneyFormat.majorDigitsToMinor(state.amountMajorDigits, state.currencyCode) > 0L && !state.isSaving
     var showQuickCategorySheet by remember { mutableStateOf(false) }
     var quickName by remember { mutableStateOf("") }
@@ -90,22 +146,28 @@ fun AddTransactionScreen(
     if (showQuickCategorySheet) {
         ModalBottomSheet(
             onDismissRequest = { showQuickCategorySheet = false },
-            containerColor = Color.White,
+            containerColor = colors.surface,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = Dimens.paddingMedium, vertical = Dimens.paddingSmall),
             ) {
-                Text("Новая категория", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(12.dp))
+                Text(
+                    stringResource(R.string.new_category_title),
+                    style = typography.titleLarge,
+                )
+                Spacer(Modifier.height(Dimens.spacingList))
                 IosTextField(
                     value = quickName,
                     onValueChange = { quickName = it.take(30) },
-                    placeholder = "Название",
+                    placeholder = stringResource(R.string.category_name),
                 )
-                Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                Spacer(Modifier.height(Dimens.spacingRow))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                ) {
                     val emojis = if (state.type == TransactionType.INCOME) {
                         listOf("💼", "💻", "📈", "🎓", "💰", "🏆", "🚀", "🎤")
                     } else {
@@ -113,41 +175,45 @@ fun AddTransactionScreen(
                     }
                     emojis.forEach { emoji ->
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = if (quickIcon == emoji) Color(quickColor.toInt()).copy(alpha = 0.2f) else Color(0xFFF2F2F7),
+                            shape = RoundedCornerShape(Dimens.cornerRadiusChip),
+                            color = if (quickIcon == emoji) Color(quickColor.toInt()).copy(alpha = 0.2f) else colors.surfaceVariant,
                             modifier = Modifier
-                                .size(44.dp)
+                                .size(Dimens.emojiPickerSize)
                                 .clickable { quickIcon = emoji },
                         ) {
-                            Box(contentAlignment = androidx.compose.ui.Alignment.Center) {
-                                Text(emoji, fontSize = 20.sp)
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(emoji, style = typography.titleMedium)
                             }
                         }
                     }
                 }
-                Spacer(Modifier.height(10.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Spacer(Modifier.height(Dimens.spacingRow))
+                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spacingRow)) {
                     listOf(
                         0xFFFF3B30, 0xFFFF9500, 0xFF34C759, 0xFF007AFF, 0xFF5856D6,
                     ).forEach { color ->
                         Surface(
-                            shape = androidx.compose.foundation.shape.CircleShape,
+                            shape = CircleShape,
                             color = Color(color.toInt()),
                             modifier = Modifier
-                                .size(30.dp)
+                                .size(Dimens.colorSwatchSize)
                                 .clickable { quickColor = color },
                         ) {
                             if (quickColor == color) {
-                                Box(contentAlignment = androidx.compose.ui.Alignment.Center) {
-                                    Text("✓", color = Color.White, fontWeight = FontWeight.Bold)
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        stringResource(R.string.checkmark),
+                                        color = colors.surface,
+                                        style = typography.labelLarge,
+                                    )
                                 }
                             }
                         }
                     }
                 }
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(Dimens.spacingRow + 4.dp))
                 IosPrimaryButton(
-                    text = "Создать",
+                    text = stringResource(R.string.create),
                     onClick = {
                         viewModel.createQuickCategory(
                             name = quickName,
@@ -162,16 +228,16 @@ fun AddTransactionScreen(
                     enabled = quickName.isNotBlank(),
                     loading = state.quickCategorySaving,
                 )
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(Dimens.paddingLarge))
             }
         }
     }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = colors.background,
         topBar = {
-            IosTopBar(
+            AddTransactionTopBar(
                 title = stringResource(R.string.add_transaction),
                 onBack = onBack,
             )
@@ -180,11 +246,11 @@ fun AddTransactionScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Dimens.paddingLarge)
+                    .padding(horizontal = AddTransactionLayout.horizontalPadding)
                     .navigationBarsPadding()
-                    .padding(bottom = Dimens.paddingLarge),
+                    .padding(bottom = Dimens.paddingMedium),
             ) {
-                IosPrimaryButton(
+                AddTransactionSaveButton(
                     text = stringResource(R.string.save),
                     onClick = viewModel::save,
                     loading = state.isSaving,
@@ -197,13 +263,13 @@ fun AddTransactionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = Dimens.paddingLarge),
+                .padding(horizontal = AddTransactionLayout.horizontalPadding),
         ) {
             val segmentType = when (state.type) {
                 TransactionType.INCOME -> TransactionType.INCOME
                 else -> TransactionType.EXPENSE
             }
-            IosSegmentedControl(
+            AddTransactionTypeToggle(
                 labels = listOf(
                     stringResource(R.string.type_expense),
                     stringResource(R.string.type_income),
@@ -215,25 +281,12 @@ fun AddTransactionScreen(
                     )
                 },
             )
-            Spacer(modifier = Modifier.height(Dimens.paddingMedium))
-            AnimatedContent(
-                targetState = state.amountMajorDigits,
-                transitionSpec = {
-                    fadeIn(tween(180)) togetherWith fadeOut(tween(120))
-                },
-                label = "amount",
-            ) { digits ->
-                Text(
-                    text = MoneyFormat.formatEntryDisplay(digits, state.currencyCode),
-                    modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.displayLarge.copy(fontSize = 44.sp),
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            Spacer(modifier = Modifier.height(Dimens.paddingSmall))
-            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
-            Spacer(modifier = Modifier.height(Dimens.paddingMedium))
+            Spacer(modifier = Modifier.height(AddTransactionLayout.sectionGap))
+            AddTransactionAmountDisplay(
+                digits = state.amountMajorDigits,
+                currencyCode = state.currencyCode,
+            )
+            Spacer(modifier = Modifier.height(AddTransactionLayout.sectionGap))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -241,35 +294,406 @@ fun AddTransactionScreen(
                 horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
             ) {
                 state.categories.forEach { cat ->
-                    IosChip(
+                    AddTransactionCategoryChip(
                         text = "${cat.icon} ${cat.name}",
                         selected = state.selectedCategoryId == cat.id,
                         onClick = { viewModel.selectCategory(cat.id) },
                     )
                 }
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFFF2F2F7),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFC7C7CC)),
-                    modifier = Modifier.clickable { showQuickCategorySheet = true },
-                ) {
-                    Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                        Text("+", color = IosBlue, fontWeight = FontWeight.SemiBold)
-                        Text(" Новая", color = IosBlue, fontSize = 12.sp)
-                    }
-                }
+                AddTransactionCategoryChip(
+                    text = stringResource(R.string.plus_sign) + stringResource(R.string.new_category_chip),
+                    selected = false,
+                    onClick = { showQuickCategorySheet = true },
+                )
             }
-            Spacer(modifier = Modifier.height(Dimens.paddingMedium))
-            IosTextField(
+            Spacer(modifier = Modifier.height(AddTransactionLayout.sectionGap))
+            AddTransactionNoteField(
                 value = state.note,
                 onValueChange = viewModel::setNote,
                 placeholder = stringResource(R.string.note_placeholder),
             )
-            Spacer(modifier = Modifier.height(Dimens.paddingMedium))
-            FinanceNumPad(
+            Spacer(modifier = Modifier.height(AddTransactionLayout.sectionGap))
+            AddTransactionNumPad(
                 onDigit = viewModel::appendDigit,
                 onBackspace = viewModel::backspace,
                 modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddTransactionTopBar(
+    title: String,
+    onBack: () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    CenterAlignedTopAppBar(
+        title = {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 17.sp,
+                ),
+                color = colors.onSurface,
+            )
+        },
+        navigationIcon = {
+            IconButton(
+                onClick = onBack,
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                ),
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowLeft,
+                    contentDescription = null,
+                    tint = colors.secondary,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+        },
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+            containerColor = colors.background,
+        ),
+    )
+}
+
+@Composable
+private fun AddTransactionTypeToggle(
+    labels: List<String>,
+    selectedIndex: Int,
+    onSelectIndex: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (labels.isEmpty()) return
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val safeIndex = selectedIndex.coerceIn(0, labels.lastIndex)
+    val animatedIndex by animateFloatAsState(
+        targetValue = safeIndex.toFloat(),
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "add_tx_segment_offset",
+    )
+    val density = LocalDensity.current
+    val trackShape = RoundedCornerShape(AddTransactionLayout.segmentHeight / 2)
+    val thumbShape = RoundedCornerShape(AddTransactionLayout.segmentThumbRadius)
+
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(AddTransactionLayout.segmentHeight)
+            .clip(trackShape)
+            .background(colors.outline),
+    ) {
+        val innerWidth = maxWidth - AddTransactionLayout.segmentInnerPadding * 2
+        val segmentWidth = innerWidth / labels.size
+        val indicatorOffsetPx = with(density) { (segmentWidth * animatedIndex).toPx() }
+
+        Box(
+            modifier = Modifier
+                .padding(AddTransactionLayout.segmentInnerPadding)
+                .offset { IntOffset(indicatorOffsetPx.roundToInt(), 0) }
+                .width(segmentWidth)
+                .height(AddTransactionLayout.segmentHeight - AddTransactionLayout.segmentInnerPadding * 2)
+                .shadow(
+                    elevation = 1.dp,
+                    shape = thumbShape,
+                    clip = false,
+                    ambientColor = Color.Black.copy(alpha = 0.12f),
+                    spotColor = Color.Black.copy(alpha = 0.12f),
+                )
+                .clip(thumbShape)
+                .background(colors.surface),
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AddTransactionLayout.segmentInnerPadding),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            labels.forEachIndexed { index, label ->
+                val isSelected = index == safeIndex
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(AddTransactionLayout.segmentHeight - AddTransactionLayout.segmentInnerPadding * 2)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                        ) { onSelectIndex(index) },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = label,
+                        style = typography.bodyMedium.copy(fontSize = 15.sp),
+                        color = if (isSelected) colors.onSurface else colors.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddTransactionAmountDisplay(
+    digits: String,
+    currencyCode: String,
+) {
+    val colors = MaterialTheme.colorScheme
+    val symbol = MoneyFormat.symbol(currencyCode)
+    val display = MoneyFormat.formatEntryDisplay(digits, currencyCode)
+    val amountText = if (display.endsWith(symbol)) {
+        display.dropLast(symbol.length).trimEnd()
+    } else {
+        display
+    }
+
+    AnimatedContent(
+        targetState = amountText,
+        transitionSpec = {
+            (scaleIn(
+                initialScale = 0.95f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium,
+                ),
+            ) + fadeIn(tween(120))).togetherWith(
+                scaleOut(targetScale = 0.95f, animationSpec = tween(100)) + fadeOut(tween(80)),
+            )
+        },
+        label = "add_tx_amount",
+        modifier = Modifier.fillMaxWidth(),
+    ) { amount ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = amount,
+                style = TextStyle(
+                    fontFamily = Inter28Family,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = AddTransactionLayout.amountSize,
+                    letterSpacing = (-1).sp,
+                ),
+                color = colors.onSurface,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = " $symbol",
+                style = TextStyle(
+                    fontFamily = Inter28Family,
+                    fontWeight = FontWeight.Light,
+                    fontSize = AddTransactionLayout.amountSize,
+                    letterSpacing = (-1).sp,
+                ),
+                color = colors.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AddTransactionCategoryChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    val chipShape = RoundedCornerShape(AddTransactionLayout.chipRadius)
+    Box(
+        modifier = Modifier
+            .height(AddTransactionLayout.chipHeight)
+            .clip(chipShape)
+            .background(if (selected) colors.secondary else colors.outline)
+            .clickable(onClick = onClick)
+            .padding(horizontal = AddTransactionLayout.chipPaddingH),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
+            color = if (selected) colors.onSecondary else colors.onSurface,
+        )
+    }
+}
+
+@Composable
+private fun AddTransactionNoteField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val shape = RoundedCornerShape(AddTransactionLayout.noteRadius)
+    val textStyle = typography.bodyMedium.copy(
+        fontSize = 14.sp,
+        color = colors.onSurface,
+    )
+
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        textStyle = textStyle,
+        singleLine = true,
+        cursorBrush = SolidColor(colors.secondary),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(colors.surface)
+            .padding(
+                horizontal = AddTransactionLayout.notePadding,
+                vertical = AddTransactionLayout.notePadding,
+            ),
+        decorationBox = { inner ->
+            Box(contentAlignment = Alignment.CenterStart) {
+                if (value.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        style = textStyle,
+                        color = colors.outlineVariant,
+                    )
+                }
+                inner()
+            }
+        },
+    )
+}
+
+@Composable
+private fun AddTransactionNumPad(
+    onDigit: (String) -> Unit,
+    onBackspace: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    val keyStyle = TextStyle(
+        fontFamily = Inter28Family,
+        fontWeight = FontWeight.Normal,
+        fontSize = 28.sp,
+    )
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(AddTransactionLayout.numpadGap),
+    ) {
+        numPadKeys.forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AddTransactionLayout.numpadGap),
+            ) {
+                row.forEach { key ->
+                    val cellModifier = Modifier
+                        .weight(1f)
+                        .height(AddTransactionLayout.numpadKeyHeight)
+                    when (key) {
+                        "⌫" -> AddTransactionNumPadKey(
+                            modifier = cellModifier,
+                            onClick = onBackspace,
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Backspace,
+                                contentDescription = null,
+                                tint = colors.onSurface,
+                                modifier = Modifier.size(22.dp),
+                            )
+                        }
+                        else -> AddTransactionNumPadKey(
+                            modifier = cellModifier,
+                            onClick = { onDigit(key) },
+                        ) {
+                            Text(text = key, style = keyStyle, color = colors.onSurface)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddTransactionNumPadKey(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val backgroundColor by animateFloatAsState(
+        targetValue = if (isPressed) 1f else 0f,
+        animationSpec = tween(durationMillis = 80),
+        label = "numpad_press",
+    )
+    val keyShape = RoundedCornerShape(AddTransactionLayout.numpadKeyRadius)
+    val pressedBg = colors.outline
+    val normalBg = colors.surface
+
+    Box(
+        modifier = modifier
+            .clip(keyShape)
+            .background(lerp(normalBg, pressedBg, backgroundColor))
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun AddTransactionSaveButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    loading: Boolean = false,
+) {
+    val colors = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(AddTransactionLayout.saveRadius)
+    Button(
+        onClick = onClick,
+        enabled = enabled && !loading,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(AddTransactionLayout.saveHeight),
+        shape = shape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = colors.secondary,
+            contentColor = colors.onSecondary,
+            disabledContainerColor = colors.secondary.copy(alpha = 0.3f),
+            disabledContentColor = colors.onSecondary.copy(alpha = 0.9f),
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            disabledElevation = 0.dp,
+            focusedElevation = 0.dp,
+            hoveredElevation = 0.dp,
+        ),
+    ) {
+        if (loading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(Dimens.iconSizeStandard),
+                strokeWidth = Dimens.borderThin + 1.5.dp,
+                color = colors.onSecondary,
+            )
+        } else {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 17.sp,
+                ),
             )
         }
     }

@@ -1,5 +1,6 @@
 package ru.plumsoftware.finance.presentation.settings
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,8 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -26,15 +29,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Category
-import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.ThemeMode
@@ -43,6 +39,7 @@ import ru.plumsoftware.finance.ui.components.ios.IosSwitch
 import ru.plumsoftware.finance.ui.components.ios.IosThemePicker
 import ru.plumsoftware.finance.ui.theme.Dimens
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -50,6 +47,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     val themeLabels = listOf(
         stringResource(R.string.theme_system),
         stringResource(R.string.theme_light),
@@ -67,29 +66,29 @@ fun SettingsScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = Color(0xFFF2F2F7),
-    ) { padding ->
+        containerColor = colors.background,
+    ) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = Dimens.paddingLarge,
                 end = Dimens.paddingLarge,
-                top = 20.dp,
-                bottom = 0.dp,
+                top = Dimens.statusBarInset,
+                bottom = Dimens.paddingMicro,
             ),
-            verticalArrangement = Arrangement.spacedBy(Dimens.paddingLarge),
+            verticalArrangement = Arrangement.spacedBy(Dimens.paddingMedium),
         ) {
             item {
                 Text(
                     text = stringResource(R.string.settings_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
+                    style = typography.headlineLarge,
                 )
             }
             item(key = "theme_$selectedThemeIndex") {
-                Text(stringResource(R.string.settings_theme), fontWeight = FontWeight.SemiBold)
+                Text(
+                    text = stringResource(R.string.settings_theme),
+                    style = typography.titleMedium,
+                )
                 Spacer(modifier = Modifier.height(Dimens.paddingSmall))
                 IosThemePicker(
                     labels = themeLabels,
@@ -107,17 +106,15 @@ fun SettingsScreen(
             }
             item {
                 Text(
-                    text = "ДАННЫЕ",
-                    color = Color(0xFF8E8E93),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.5.sp,
+                    text = stringResource(R.string.settings_data_section),
+                    style = typography.labelSmall,
+                    color = colors.onSurfaceVariant,
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(Dimens.paddingSmall))
                 IosCard {
                     SettingsRow(
                         icon = Icons.Outlined.Category,
-                        label = "Категории",
+                        label = stringResource(R.string.settings_categories),
                         onClick = onOpenCategories,
                     )
                 }
@@ -131,11 +128,14 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column {
-                                Text(stringResource(R.string.settings_biometric))
                                 Text(
-                                    stringResource(R.string.settings_biometric_hint),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                                    text = stringResource(R.string.settings_biometric),
+                                    style = typography.bodyLarge,
+                                )
+                                Text(
+                                    text = stringResource(R.string.settings_biometric_hint),
+                                    style = typography.bodySmall,
+                                    color = colors.onSurfaceVariant,
                                 )
                             }
                             IosSwitch(
@@ -148,9 +148,9 @@ fun SettingsScreen(
             }
             item {
                 Text(
-                    stringResource(R.string.settings_local_note),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    text = stringResource(R.string.settings_local_note),
+                    style = typography.bodySmall,
+                    color = colors.onSurfaceVariant,
                 )
             }
         }
@@ -163,11 +163,13 @@ private fun SettingsRow(
     label: String,
     onClick: () -> Unit,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = Dimens.paddingMedium, vertical = Dimens.spacingList + Dimens.paddingMicro),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -175,13 +177,21 @@ private fun SettingsRow(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = Color(0xFF8E8E93),
+                tint = colors.onSurfaceVariant,
                 modifier = Modifier
-                    .size(24.dp)
-                    .padding(end = 8.dp),
+                    .size(Dimens.iconSizeStandard)
+                    .padding(end = Dimens.paddingSmall),
             )
-            Text(label, fontSize = 17.sp, color = Color.Black)
+            Text(
+                text = label,
+                style = typography.bodyLarge,
+                color = colors.onSurface,
+            )
         }
-        Icon(Icons.Outlined.KeyboardArrowRight, contentDescription = null, tint = Color(0xFFC7C7CC))
+        Icon(
+            Icons.Outlined.KeyboardArrowRight,
+            contentDescription = null,
+            tint = colors.outlineVariant,
+        )
     }
 }

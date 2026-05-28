@@ -14,7 +14,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,8 +34,8 @@ import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingPage
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingSmartSavingsIllustration
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingWelcomeIllustration
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
+import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
-import ru.plumsoftware.finance.ui.theme.IosBlue
 
 private val onboardingPages = listOf(
     OnboardingPage(
@@ -76,6 +75,7 @@ fun OnboardingScreen(
     val scope = rememberCoroutineScope()
 
     val isLastPage = uiState.currentPage == onboardingPages.lastIndex
+    val colors = MaterialTheme.colorScheme
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -87,20 +87,15 @@ fun OnboardingScreen(
                     .statusBarsPadding()
                     .padding(horizontal = Dimens.paddingSmall),
             ) {
-                TextButton(
+                IosTextButton(
+                    text = stringResource(R.string.onboarding_skip),
                     onClick = {
                         viewModel.completeOnboarding()
                         onComplete()
                     },
                     modifier = Modifier.align(Alignment.CenterEnd),
                     enabled = !uiState.isCompleting,
-                ) {
-                    Text(
-                        text = stringResource(R.string.onboarding_skip),
-                        color = IosBlue,
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
+                )
             }
         },
     ) { padding ->

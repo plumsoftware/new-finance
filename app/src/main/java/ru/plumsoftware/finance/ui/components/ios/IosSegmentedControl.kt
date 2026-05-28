@@ -17,6 +17,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,13 +26,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
+import ru.plumsoftware.finance.ui.theme.Dimens
 
 @Composable
 fun IosSegmentedControl(
@@ -41,6 +39,8 @@ fun IosSegmentedControl(
     modifier: Modifier = Modifier,
 ) {
     if (labels.isEmpty()) return
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     val safeIndex = selectedIndex.coerceIn(0, labels.lastIndex.coerceAtLeast(0))
     val animatedIndex by animateFloatAsState(
         targetValue = safeIndex.toFloat(),
@@ -48,35 +48,35 @@ fun IosSegmentedControl(
         label = "ios_segmented_offset",
     )
     val density = LocalDensity.current
-    val shape = RoundedCornerShape(10.dp)
-    val activeShape = RoundedCornerShape(8.dp)
+    val shape = RoundedCornerShape(Dimens.cornerRadiusSegment)
+    val activeShape = RoundedCornerShape(Dimens.cornerRadiusSegmentInner)
 
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .height(36.dp)
+            .height(Dimens.segmentedHeight)
             .clip(shape)
-            .background(Color(0xFFE5E5EA)),
+            .background(colors.outline),
     ) {
-        val innerWidth = maxWidth - 4.dp
+        val innerWidth = maxWidth - Dimens.paddingMicro
         val segmentWidth = innerWidth / labels.size
         val indicatorOffsetPx = with(density) { (segmentWidth * animatedIndex).toPx() }
 
         Box(
             modifier = Modifier
-                .padding(2.dp)
+                .padding(Dimens.paddingMicro / 2)
                 .offset { IntOffset(indicatorOffsetPx.roundToInt(), 0) }
                 .width(segmentWidth)
-                .height(32.dp)
-                .shadow(elevation = 2.dp, shape = activeShape, clip = false)
+                .height(Dimens.segmentedThumbHeight)
+                .shadow(elevation = Dimens.paddingMicro / 2, shape = activeShape, clip = false)
                 .clip(activeShape)
-                .background(Color.White),
+                .background(colors.surface),
         )
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(2.dp),
+                .padding(Dimens.paddingMicro / 2),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             labels.forEachIndexed { index, label ->
@@ -91,7 +91,7 @@ fun IosSegmentedControl(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(32.dp)
+                        .height(Dimens.segmentedThumbHeight)
                         .scale(scale)
                         .clickable(
                             interactionSource = interactionSource,
@@ -101,9 +101,8 @@ fun IosSegmentedControl(
                 ) {
                     Text(
                         text = label,
-                        fontSize = 14.sp,
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (isSelected) Color.Black else Color(0xFF8E8E93),
+                        style = if (isSelected) typography.labelMedium else typography.bodyMedium,
+                        color = if (isSelected) colors.onSurface else colors.onSurfaceVariant,
                     )
                 }
             }

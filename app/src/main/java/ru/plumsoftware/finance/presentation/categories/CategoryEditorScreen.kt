@@ -2,7 +2,6 @@ package ru.plumsoftware.finance.presentation.categories
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,13 +15,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBackIos
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -32,15 +32,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
+import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
-import ru.plumsoftware.finance.ui.theme.IosBlue
+import ru.plumsoftware.finance.ui.components.ios.IosNavigationTextButton
+import ru.plumsoftware.finance.ui.components.ios.IosTextButton
+import ru.plumsoftware.finance.ui.theme.Dimens
 
 @Composable
 fun CategoryEditorScreen(
@@ -48,6 +49,9 @@ fun CategoryEditorScreen(
     viewModel: CategoryEditorViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val listCardShape = RoundedCornerShape(Dimens.cornerRadiusList)
 
     LaunchedEffect(state.saved) {
         if (state.saved) onBack()
@@ -55,7 +59,7 @@ fun CategoryEditorScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = Color(0xFFF2F2F7),
+        containerColor = colors.background,
     ) { padding ->
         Column(
             modifier = Modifier
@@ -65,90 +69,97 @@ fun CategoryEditorScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .padding(horizontal = Dimens.spacingList, vertical = Dimens.spacingRow),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable(onClick = onBack),
-                    verticalAlignment = Alignment.CenterVertically,
+                IosNavigationTextButton(
+                    text = stringResource(R.string.categories_title),
+                    onClick = onBack,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = if (state.isEdit) {
+                        stringResource(R.string.category_editor_title_edit)
+                    } else {
+                        stringResource(R.string.category_editor_title_new)
+                    },
+                    style = typography.bodyLarge,
+                )
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.CenterEnd,
                 ) {
-                    androidx.compose.material3.Icon(
-                        Icons.AutoMirrored.Outlined.ArrowBackIos,
-                        contentDescription = null,
-                        tint = IosBlue,
-                        modifier = Modifier.size(16.dp),
+                    IosTextButton(
+                        text = stringResource(R.string.done),
+                        onClick = viewModel::save,
+                        enabled = state.canSave,
+                        color = if (state.canSave) colors.secondary else colors.outlineVariant,
+                        contentPadding = PaddingValues(end = Dimens.paddingMicro),
                     )
-                    Text("Категории", color = IosBlue, fontSize = 17.sp)
                 }
-                Text(
-                    text = if (state.isEdit) "Изменить" else "Новая категория",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = "Готово",
-                    color = if (state.canSave) IosBlue else Color(0xFFC7C7CC),
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable(enabled = state.canSave, onClick = viewModel::save)
-                        .padding(end = 4.dp),
-                )
             }
 
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = Dimens.paddingMedium),
             ) {
                 HeroPreview(state)
-                SectionTitle("НАЗВАНИЕ")
-                Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                SectionTitle(stringResource(R.string.category_editor_section_name))
+                Surface(shape = listCardShape, color = colors.surface) {
                     BasicTextField(
                         value = state.name,
                         onValueChange = viewModel::setName,
-                        textStyle = TextStyle(color = Color.Black, fontSize = 17.sp),
+                        textStyle = typography.bodyLarge.copy(color = colors.onSurface),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(Dimens.paddingMedium),
                         decorationBox = { inner ->
-                            if (state.name.isEmpty()) Text("Напр. Продукты", color = Color(0xFFC7C7CC), fontSize = 17.sp)
+                            if (state.name.isEmpty()) {
+                                Text(
+                                    stringResource(R.string.category_editor_name_placeholder),
+                                    color = colors.outlineVariant,
+                                    style = typography.bodyLarge,
+                                )
+                            }
                             inner()
                         },
                     )
                 }
                 Text(
                     text = "${state.name.length}/30",
-                    color = Color(0xFF8E8E93),
-                    fontSize = 12.sp,
+                    color = colors.onSurfaceVariant,
+                    style = typography.labelSmall,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 4.dp),
+                        .padding(top = Dimens.paddingMicro),
                 )
 
                 if (!state.isEdit) {
-                    Spacer(Modifier.size(16.dp))
-                    SectionTitle("ТИП")
-                    Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                    Spacer(Modifier.size(Dimens.paddingMedium))
+                    SectionTitle(stringResource(R.string.category_editor_section_type))
+                    Surface(shape = listCardShape, color = colors.surface) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(16.dp),
+                                .padding(Dimens.paddingMedium),
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
-                            Text("Тип операции", fontSize = 17.sp)
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text(
+                                stringResource(R.string.category_editor_type_label),
+                                style = typography.bodyLarge,
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spacingList)) {
                                 Text(
-                                    text = "Расход",
-                                    color = if (state.type == CategoryType.EXPENSE) IosBlue else Color(0xFF8E8E93),
+                                    text = stringResource(R.string.type_expense),
+                                    color = if (state.type == CategoryType.EXPENSE) colors.secondary else colors.onSurfaceVariant,
+                                    style = typography.bodyLarge,
                                     modifier = Modifier.clickable { viewModel.setType(CategoryType.EXPENSE) },
                                 )
                                 Text(
-                                    text = "Доход",
-                                    color = if (state.type == CategoryType.INCOME) IosBlue else Color(0xFF8E8E93),
+                                    text = stringResource(R.string.type_income),
+                                    color = if (state.type == CategoryType.INCOME) colors.secondary else colors.onSurfaceVariant,
+                                    style = typography.bodyLarge,
                                     modifier = Modifier.clickable { viewModel.setType(CategoryType.INCOME) },
                                 )
                             }
@@ -156,51 +167,60 @@ fun CategoryEditorScreen(
                     }
                 }
 
-                Spacer(Modifier.size(16.dp))
-                SectionTitle("ИКОНКА")
-                Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                Spacer(Modifier.size(Dimens.paddingMedium))
+                SectionTitle(stringResource(R.string.category_editor_section_icon))
+                Surface(shape = listCardShape, color = colors.surface) {
                     LazyHorizontalGrid(
                         rows = GridCells.Fixed(2),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                            .padding(Dimens.spacingList),
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
                     ) {
                         items(state.availableEmojis) { emoji ->
                             val isSelected = emoji == state.icon
                             Box(
                                 modifier = Modifier
-                                    .size(48.dp)
+                                    .size(Dimens.emojiPickerSize + 4.dp)
                                     .background(
-                                        color = if (isSelected) Color(state.colorArgb.toInt()).copy(alpha = 0.2f) else Color(0xFFF2F2F7),
-                                        shape = RoundedCornerShape(12.dp),
+                                        color = if (isSelected) Color(state.colorArgb.toInt()).copy(alpha = 0.2f) else colors.surfaceVariant,
+                                        shape = RoundedCornerShape(Dimens.cornerRadiusChip),
                                     )
                                     .clickable { viewModel.setIcon(emoji) },
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Text(emoji, fontSize = 22.sp)
+                                Text(emoji, style = typography.headlineMedium)
                             }
                         }
                     }
                 }
 
-                Spacer(Modifier.size(16.dp))
-                SectionTitle("ЦВЕТ")
-                Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
-                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Spacer(Modifier.size(Dimens.paddingMedium))
+                SectionTitle(stringResource(R.string.category_editor_section_color))
+                Surface(shape = listCardShape, color = colors.surface) {
+                    Column(
+                        modifier = Modifier.padding(Dimens.paddingMedium),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.spacingList),
+                    ) {
                         categoryColors.chunked(5).forEach { row ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spacingList)) {
                                 row.forEach { colorValue ->
                                     val isSelected = colorValue == state.colorArgb
                                     Box(
                                         modifier = Modifier
-                                            .size(36.dp)
+                                            .size(Dimens.colorSwatchSize + 6.dp)
                                             .background(Color(colorValue.toInt()), CircleShape)
                                             .clickable { viewModel.setColor(colorValue) },
                                         contentAlignment = Alignment.Center,
                                     ) {
-                                        if (isSelected) Text("✓", color = Color.White, fontWeight = FontWeight.Bold)
+                                        if (isSelected) {
+                                            Text(
+                                                stringResource(R.string.checkmark),
+                                                color = colors.surface,
+                                                style = typography.titleMedium,
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -210,11 +230,11 @@ fun CategoryEditorScreen(
 
                 Spacer(Modifier.weight(1f))
                 IosPrimaryButton(
-                    text = "Сохранить",
+                    text = stringResource(R.string.save),
                     onClick = viewModel::save,
                     enabled = state.canSave,
                     loading = state.isSaving,
-                    modifier = Modifier.padding(bottom = 34.dp),
+                    modifier = Modifier.padding(bottom = Dimens.bottomSheetBottomPadding),
                 )
             }
         }
@@ -223,39 +243,39 @@ fun CategoryEditorScreen(
 
 @Composable
 private fun HeroPreview(state: CategoryEditorUiState) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     val color = Color(state.colorArgb.toInt())
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 24.dp, bottom = 20.dp),
+            .padding(top = Dimens.paddingLarge, bottom = Dimens.paddingLarge),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
             modifier = Modifier
-                .size(80.dp)
+                .size(Dimens.avatarSizeLarge)
                 .background(color.copy(alpha = 0.2f), CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(text = state.icon, fontSize = 40.sp)
+            Text(text = state.icon, style = typography.displayMedium)
         }
         Text(
-            text = state.name.ifBlank { "Название категории" },
-            color = if (state.name.isBlank()) Color(0xFFC7C7CC) else Color.Black,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(top = 10.dp),
+            text = state.name.ifBlank { stringResource(R.string.category_editor_preview) },
+            color = if (state.name.isBlank()) colors.outlineVariant else colors.onSurface,
+            style = typography.titleMedium,
+            modifier = Modifier.padding(top = Dimens.spacingRow),
         )
     }
 }
 
 @Composable
 private fun SectionTitle(text: String) {
+    val colors = MaterialTheme.colorScheme
     Text(
         text = text,
-        color = Color(0xFF8E8E93),
-        fontSize = 12.sp,
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
+        color = colors.onSurfaceVariant,
+        style = MaterialTheme.typography.labelSmall,
+        modifier = Modifier.padding(start = Dimens.paddingMedium, bottom = Dimens.paddingSmall),
     )
 }
-

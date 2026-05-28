@@ -26,6 +26,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -37,32 +38,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
+import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.SmartAssetStatus
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
-import ru.plumsoftware.finance.ui.theme.IosBlue
+import ru.plumsoftware.finance.ui.components.ios.IosTopBar
+import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.MascotAssets
 import ru.plumsoftware.finance.ui.components.MascotEmptyState
-
-private val SmartBg = Color(0xFFF2F2F7)
-private val SmartCard = Color.White
-private val SmartTextPrimary = Color(0xFF000000)
-private val SmartTextSecondary = Color(0xFF8E8E93)
-private val SmartSeparator = Color(0xFFE5E5EA)
-private val SmartGreen = Color(0xFF34C759)
-private val SmartChevron = Color(0xFFC7C7CC)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SmartSavingsScreen(
+    onBack: () -> Unit,
     onCreateClick: () -> Unit,
     onAssetClick: (Long) -> Unit,
     snackbarMessage: String? = null,
@@ -72,6 +66,9 @@ fun SmartSavingsScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val allAssets = state.payingOff + state.profit
     val snackbarHost = remember { SnackbarHostState() }
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val listCardShape = RoundedCornerShape(Dimens.cornerRadiusList)
 
     LaunchedEffect(snackbarMessage) {
         snackbarMessage?.let {
@@ -82,16 +79,22 @@ fun SmartSavingsScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = SmartBg,
+        containerColor = colors.background,
+        topBar = {
+            IosTopBar(
+                title = stringResource(R.string.smart_savings_block),
+                onBack = onBack,
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHost) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onCreateClick,
-                containerColor = IosBlue,
-                contentColor = Color.White,
-                modifier = Modifier.size(56.dp),
+                containerColor = colors.secondary,
+                contentColor = colors.onSecondary,
+                modifier = Modifier.size(Dimens.fabSize),
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Добавить актив")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_asset))
             }
         },
     ) { padding ->
@@ -99,29 +102,23 @@ fun SmartSavingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 0.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(
+                start = Dimens.paddingMedium,
+                end = Dimens.paddingMedium,
+                top = Dimens.paddingMicro,
+                bottom = Dimens.paddingMicro,
+            ),
+            verticalArrangement = Arrangement.spacedBy(Dimens.paddingMedium),
         ) {
-            item {
-                Text(
-                    text = "Умная экономия",
-                    fontSize = 34.sp,
-                    lineHeight = 38.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = SmartTextPrimary,
-                )
-            }
             item {
                 HeroCard(totalSaved = MoneyFormat.format(state.totalSavedMinor, state.currencyCode))
             }
             item {
                 Text(
-                    text = "МОИ АКТИВЫ",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.5.sp,
-                    color = SmartTextSecondary,
-                    modifier = Modifier.padding(start = 4.dp, top = 6.dp),
+                    text = stringResource(R.string.smart_my_assets),
+                    style = typography.labelSmall,
+                    color = colors.onSurfaceVariant,
+                    modifier = Modifier.padding(start = Dimens.paddingMicro, top = Dimens.paddingMicro + 2.dp),
                 )
             }
 
@@ -130,19 +127,19 @@ fun SmartSavingsScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 44.dp),
+                            .padding(top = Dimens.paddingExtraLarge + 12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         MascotEmptyState(
                             mascotRes = MascotAssets.emptySmartSavings,
-                            title = "Ещё нет активов",
-                            subtitle = "Добавьте первый предмет и следите, как он окупается",
+                            title = stringResource(R.string.smart_empty_assets_title),
+                            subtitle = stringResource(R.string.smart_empty_assets_subtitle),
                         )
-                        Spacer(Modifier.height(24.dp))
+                        Spacer(Modifier.height(Dimens.paddingLarge))
                         IosPrimaryButton(
-                            text = "Добавить актив",
+                            text = stringResource(R.string.smart_add_asset),
                             onClick = onCreateClick,
-                            modifier = Modifier.padding(horizontal = 12.dp),
+                            modifier = Modifier.padding(horizontal = Dimens.spacingList),
                         )
                     }
                 }
@@ -152,6 +149,7 @@ fun SmartSavingsScreen(
                         asset = asset,
                         currencyCode = state.currencyCode,
                         onClick = { onAssetClick(asset.id) },
+                        listCardShape = listCardShape,
                     )
                 }
             }
@@ -161,29 +159,34 @@ fun SmartSavingsScreen(
 
 @Composable
 private fun HeroCard(totalSaved: String) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val shapes = MaterialTheme.shapes
     Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = SmartCard,
-        shadowElevation = 8.dp,
+        shape = shapes.medium,
+        color = colors.surface,
+        shadowElevation = Dimens.elevationCard,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(Dimens.paddingLarge - 4.dp),
+            verticalArrangement = Arrangement.spacedBy(Dimens.spacingList),
         ) {
-            Text(text = "💰  Всего сэкономлено", fontSize = 13.sp, color = SmartTextSecondary)
+            Text(
+                text = stringResource(R.string.smart_total_saved_header),
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
+            )
             Text(
                 text = "+$totalSaved",
-                fontSize = 38.sp,
-                lineHeight = 42.sp,
-                fontWeight = FontWeight.Bold,
-                color = SmartGreen,
+                style = typography.headlineSmall,
+                color = colors.tertiary,
             )
-            HorizontalDivider(color = SmartSeparator, thickness = 0.5.dp)
+            HorizontalDivider(color = colors.outline, thickness = Dimens.dividerThickness)
             Text(
-                text = "💡 Каждое использование вместо кофе-автомата экономит деньги",
-                fontSize = 13.sp,
-                color = SmartTextSecondary,
+                text = stringResource(R.string.smart_hero_tip),
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
             )
         }
     }
@@ -194,12 +197,15 @@ private fun SmartAssetRow(
     asset: SmartAsset,
     currencyCode: String,
     onClick: () -> Unit,
+    listCardShape: RoundedCornerShape,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     val progress = asset.paybackProgress.coerceIn(0f, 1f)
     val isProfit = asset.status == SmartAssetStatus.PROFIT
     Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = SmartCard,
+        shape = listCardShape,
+        color = colors.surface,
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
@@ -207,60 +213,72 @@ private fun SmartAssetRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(Dimens.paddingMedium),
             verticalAlignment = Alignment.Top,
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .background(SmartBg, CircleShape),
+                    .size(Dimens.emojiPickerSize)
+                    .background(colors.surfaceVariant, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = asset.icon, fontSize = 26.sp)
+                Text(text = asset.icon, style = typography.headlineMedium)
             }
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(Dimens.spacingList))
             Column(modifier = Modifier.weight(1f)) {
-                Text(asset.name, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = SmartTextPrimary)
                 Text(
-                    text = "${MoneyFormat.format(asset.totalSavedMinor, currencyCode)} из ${MoneyFormat.format(asset.purchaseCostMinor, currencyCode)}",
-                    fontSize = 14.sp,
-                    color = SmartGreen,
+                    asset.name,
+                    style = typography.titleMedium,
+                    color = colors.onSurface,
+                )
+                Text(
+                    text = stringResource(
+                        R.string.smart_saved_of,
+                        MoneyFormat.format(asset.totalSavedMinor, currencyCode),
+                        MoneyFormat.format(asset.purchaseCostMinor, currencyCode),
+                    ),
+                    style = typography.labelMedium,
+                    color = colors.tertiary,
                     modifier = Modifier.padding(top = 2.dp),
                 )
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(Dimens.spacingRow))
                 if (isProfit) {
                     Box(
                         modifier = Modifier
-                            .background(SmartGreen.copy(alpha = 0.12f), RoundedCornerShape(10.dp))
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                            .background(colors.tertiary.copy(alpha = 0.12f), RoundedCornerShape(Dimens.cornerRadiusSegment))
+                            .padding(horizontal = Dimens.spacingRow, vertical = Dimens.paddingMicro),
                     ) {
-                        Text("✓ Окупился", fontSize = 12.sp, color = SmartGreen, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            stringResource(R.string.smart_paid_off_badge),
+                            style = typography.labelSmall,
+                            color = colors.tertiary,
+                        )
                     }
                 } else {
                     LinearProgressIndicator(
                         progress = { progress },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(6.dp),
-                        color = IosBlue,
-                        trackColor = SmartSeparator,
+                            .height(Dimens.progressHeightThin + 1.dp),
+                        color = colors.secondary,
+                        trackColor = colors.outline,
                         strokeCap = StrokeCap.Round,
                     )
                     Text(
-                        text = "${(progress * 100).toInt()}%",
-                        fontSize = 12.sp,
-                        color = SmartTextSecondary,
-                        modifier = Modifier.padding(top = 4.dp),
+                        text = stringResource(R.string.percent_short, (progress * 100).toInt()),
+                        style = typography.labelSmall,
+                        color = colors.onSurfaceVariant,
+                        modifier = Modifier.padding(top = Dimens.paddingMicro),
                     )
                 }
             }
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = SmartChevron,
+                tint = colors.outlineVariant,
                 modifier = Modifier
                     .padding(top = 2.dp)
-                    .size(20.dp),
+                    .size(Dimens.dragIconSize),
             )
         }
     }

@@ -20,23 +20,26 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.data.util.endOfDayMillis
 import ru.plumsoftware.finance.data.util.startOfDayMillis
 import ru.plumsoftware.finance.ui.theme.Dimens
-import ru.plumsoftware.finance.ui.theme.IosBlue
 import java.util.Calendar
+
+private enum class QuickRangePreset {
+    THIS_WEEK,
+    THIS_MONTH,
+    LAST_MONTH,
+    THIS_YEAR,
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +49,9 @@ fun IosDateRangeSheet(
     initialStartMillis: Long? = null,
     initialEndMillis: Long? = null,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val shapes = MaterialTheme.shapes
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val pickerState = rememberDateRangePickerState(
         initialSelectedStartDateMillis = initialStartMillis,
@@ -59,7 +65,7 @@ fun IosDateRangeSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color.White,
+        containerColor = colors.surface,
     ) {
         Column(
             modifier = Modifier
@@ -69,18 +75,17 @@ fun IosDateRangeSheet(
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .padding(top = 8.dp)
-                    .height(4.dp)
+                    .padding(top = Dimens.paddingSmall)
+                    .height(Dimens.bottomSheetHandleHeight)
                     .fillMaxWidth(0.14f)
-                    .background(Color(0xFFC7C7CC), RoundedCornerShape(2.dp)),
+                    .background(colors.outlineVariant, RoundedCornerShape(Dimens.cornerRadiusHandle)),
             )
             Text(
-                text = "Выберите период",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+                text = stringResource(R.string.period_select_title),
+                style = typography.titleLarge,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Dimens.paddingLarge, vertical = 10.dp),
+                    .padding(horizontal = Dimens.paddingLarge, vertical = Dimens.spacingRow),
             )
             QuickRanges(
                 onRange = { start, end ->
@@ -89,19 +94,23 @@ fun IosDateRangeSheet(
                 },
             )
             Spacer(modifier = Modifier.height(Dimens.paddingSmall))
-            HorizontalDivider(color = Color(0xFFE5E5EA), thickness = 0.5.dp, modifier = Modifier.padding(horizontal = 16.dp))
-            Spacer(modifier = Modifier.height(6.dp))
+            HorizontalDivider(
+                color = colors.outline,
+                thickness = Dimens.dividerThickness,
+                modifier = Modifier.padding(horizontal = Dimens.paddingMedium),
+            )
+            Spacer(modifier = Modifier.height(Dimens.paddingMicro + 2.dp))
             DateRangePicker(
                 state = pickerState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(420.dp),
+                    .height(Dimens.dateRangeCalendarHeight),
                 title = null,
                 headline = null,
                 showModeToggle = false,
                 colors = DatePickerDefaults.colors(
-                    selectedDayContainerColor = IosBlue,
-                    dayInSelectionRangeContainerColor = IosBlue.copy(alpha = 0.2f),
+                    selectedDayContainerColor = colors.secondary,
+                    dayInSelectionRangeContainerColor = colors.secondary.copy(alpha = 0.2f),
                 ),
             )
             Row(
@@ -110,11 +119,15 @@ fun IosDateRangeSheet(
                     .padding(horizontal = Dimens.paddingLarge),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.cancel), color = IosBlue)
-                }
+                IosTextButton(
+                    text = stringResource(R.string.cancel),
+                    onClick = onDismiss,
+                )
                 Spacer(modifier = Modifier.weight(1f))
-                TextButton(
+                val canConfirm = pickerState.selectedStartDateMillis != null &&
+                    pickerState.selectedEndDateMillis != null
+                IosTextButton(
+                    text = stringResource(R.string.done),
                     onClick = {
                         val start = pickerState.selectedStartDateMillis
                         val end = pickerState.selectedEndDateMillis
@@ -122,17 +135,10 @@ fun IosDateRangeSheet(
                             onConfirm(startOfDayMillis(start), endOfDayMillis(end))
                         }
                     },
-                    enabled = pickerState.selectedStartDateMillis != null &&
-                        pickerState.selectedEndDateMillis != null,
-                ) {
-                    Text(
-                        stringResource(R.string.done),
-                        color = if (pickerState.selectedStartDateMillis != null &&
-                            pickerState.selectedEndDateMillis != null
-                        ) IosBlue else Color(0xFFC7C7CC),
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
+                    enabled = canConfirm,
+                    color = if (canConfirm) colors.secondary else colors.outlineVariant,
+                    style = typography.labelLarge,
+                )
             }
         }
     }
@@ -142,24 +148,31 @@ fun IosDateRangeSheet(
 private fun QuickRanges(
     onRange: (Long, Long) -> Unit,
 ) {
-    val items = listOf("Эта неделя", "Этот месяц", "Прошлый месяц", "Этот год")
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val items = listOf(
+        QuickRangePreset.THIS_WEEK to stringResource(R.string.period_this_week),
+        QuickRangePreset.THIS_MONTH to stringResource(R.string.period_this_month),
+        QuickRangePreset.LAST_MONTH to stringResource(R.string.period_last_month),
+        QuickRangePreset.THIS_YEAR to stringResource(R.string.period_this_year),
+    )
     Column(
-        modifier = Modifier.padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(horizontal = Dimens.paddingMedium),
+        verticalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
     ) {
         items.chunked(2).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                row.forEach { label ->
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall)) {
+                row.forEach { (preset, label) ->
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFFF2F2F7),
+                        shape = RoundedCornerShape(Dimens.cornerRadiusChip),
+                        color = colors.surfaceVariant,
                         modifier = Modifier
                             .weight(1f)
-                            .height(40.dp)
+                            .height(Dimens.dateRangePresetHeight)
                             .clickable {
                                 val cal = Calendar.getInstance()
-                                when (label) {
-                                    "Эта неделя" -> {
+                                when (preset) {
+                                    QuickRangePreset.THIS_WEEK -> {
                                         cal.firstDayOfWeek = Calendar.MONDAY
                                         cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
                                         val start = startOfDayMillis(cal.timeInMillis)
@@ -167,20 +180,20 @@ private fun QuickRanges(
                                         val end = endOfDayMillis(cal.timeInMillis)
                                         onRange(start, end)
                                     }
-                                    "Этот месяц" -> {
+                                    QuickRangePreset.THIS_MONTH -> {
                                         cal.set(Calendar.DAY_OF_MONTH, 1)
                                         val start = startOfDayMillis(cal.timeInMillis)
                                         cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
                                         onRange(start, endOfDayMillis(cal.timeInMillis))
                                     }
-                                    "Прошлый месяц" -> {
+                                    QuickRangePreset.LAST_MONTH -> {
                                         cal.add(Calendar.MONTH, -1)
                                         cal.set(Calendar.DAY_OF_MONTH, 1)
                                         val start = startOfDayMillis(cal.timeInMillis)
                                         cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
                                         onRange(start, endOfDayMillis(cal.timeInMillis))
                                     }
-                                    "Этот год" -> {
+                                    QuickRangePreset.THIS_YEAR -> {
                                         cal.set(Calendar.DAY_OF_YEAR, 1)
                                         val start = startOfDayMillis(cal.timeInMillis)
                                         cal.set(Calendar.DAY_OF_YEAR, cal.getActualMaximum(Calendar.DAY_OF_YEAR))
@@ -190,7 +203,7 @@ private fun QuickRanges(
                             },
                     ) {
                         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                            Text(label, color = Color.Black)
+                            Text(label, color = colors.onSurface, style = typography.bodyMedium)
                         }
                     }
                 }

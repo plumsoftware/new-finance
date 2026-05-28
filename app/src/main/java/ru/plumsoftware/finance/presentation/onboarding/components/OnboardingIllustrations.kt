@@ -21,22 +21,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.ui.theme.Dimens
-import ru.plumsoftware.finance.ui.theme.IosBlue
-import ru.plumsoftware.finance.ui.theme.IosGreen
-import ru.plumsoftware.finance.ui.theme.IosRed
-import ru.plumsoftware.finance.ui.theme.LightTextSecondary
 
 @Composable
 fun OnboardingControlChartIllustration(modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val shapes = MaterialTheme.shapes
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .height(Dimens.illustrationHeight),
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface,
+        shape = shapes.medium,
+        color = colors.surface,
         shadowElevation = 0.dp,
         tonalElevation = 0.dp,
     ) {
@@ -45,14 +45,13 @@ fun OnboardingControlChartIllustration(modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = "Баланс",
-                style = MaterialTheme.typography.bodyMedium,
-                color = LightTextSecondary,
+                text = stringResource(R.string.onboarding_demo_balance),
+                style = typography.bodyMedium,
+                color = colors.onSurfaceVariant,
             )
             Text(
-                text = "120 000 ₽",
-                style = MaterialTheme.typography.displayLarge,
-                fontWeight = FontWeight.Bold,
+                text = stringResource(R.string.onboarding_demo_amount),
+                style = typography.displayLarge,
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -64,8 +63,13 @@ fun OnboardingControlChartIllustration(modifier: Modifier = Modifier) {
                         modifier = Modifier
                             .weight(1f)
                             .height((Dimens.illustrationHeight.value * fraction * 0.35f).dp)
-                            .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
-                            .background(IosBlue.copy(alpha = 0.85f)),
+                            .clip(
+                                RoundedCornerShape(
+                                    topStart = Dimens.illustrationBarRadius,
+                                    topEnd = Dimens.illustrationBarRadius,
+                                ),
+                            )
+                            .background(colors.secondary.copy(alpha = 0.85f)),
                     )
                 }
             }
@@ -75,6 +79,7 @@ fun OnboardingControlChartIllustration(modifier: Modifier = Modifier) {
 
 @Composable
 fun OnboardingIncomeExpenseIllustration(modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -82,14 +87,14 @@ fun OnboardingIncomeExpenseIllustration(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(Dimens.paddingMedium),
     ) {
         FinanceSummaryRow(
-            label = "Доходы",
+            label = stringResource(R.string.income),
             amount = "+45 200 ₽",
-            accentColor = IosGreen,
+            accentColor = colors.tertiary,
         )
         FinanceSummaryRow(
-            label = "Расходы",
+            label = stringResource(R.string.expense),
             amount = "–28 150 ₽",
-            accentColor = IosRed,
+            accentColor = colors.error,
         )
     }
 }
@@ -100,10 +105,13 @@ private fun FinanceSummaryRow(
     amount: String,
     accentColor: androidx.compose.ui.graphics.Color,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val shapes = MaterialTheme.shapes
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface,
+        shape = shapes.medium,
+        color = colors.surface,
     ) {
         Row(
             modifier = Modifier
@@ -114,13 +122,12 @@ private fun FinanceSummaryRow(
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.titleMedium,
+                style = typography.titleMedium,
             )
             Text(
                 text = amount,
-                style = MaterialTheme.typography.titleMedium,
+                style = typography.titleMedium,
                 color = accentColor,
-                fontWeight = FontWeight.SemiBold,
             )
         }
     }
@@ -128,35 +135,37 @@ private fun FinanceSummaryRow(
 
 @Composable
 fun OnboardingSmartSavingsIllustration(modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val shapes = MaterialTheme.shapes
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .height(Dimens.illustrationHeight),
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface,
+        shape = shapes.medium,
+        color = colors.surface,
     ) {
         Column(
             modifier = Modifier.padding(Dimens.paddingLarge),
             verticalArrangement = Arrangement.spacedBy(Dimens.paddingMedium),
         ) {
             Text(
-                text = "Термокружка",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                text = stringResource(R.string.onboarding_demo_mug),
+                style = typography.titleMedium,
             )
             Text(
-                text = "Окупаемость 80%",
-                style = MaterialTheme.typography.bodyMedium,
-                color = LightTextSecondary,
+                text = stringResource(R.string.onboarding_demo_payback),
+                style = typography.bodyMedium,
+                color = colors.onSurfaceVariant,
             )
             LinearProgressIndicator(
                 progress = { 0.8f },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(MaterialTheme.shapes.extraSmall),
-                color = IosGreen,
-                trackColor = LightTextSecondary.copy(alpha = 0.2f),
+                    .height(Dimens.paddingSmall)
+                    .clip(shapes.extraSmall),
+                color = colors.tertiary,
+                trackColor = colors.onSurfaceVariant.copy(alpha = 0.2f),
                 strokeCap = StrokeCap.Round,
             )
             Row(
@@ -165,28 +174,27 @@ fun OnboardingSmartSavingsIllustration(modifier: Modifier = Modifier) {
             ) {
                 Text(
                     text = "1 500 ₽",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = LightTextSecondary,
+                    style = typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
                 )
                 Text(
-                    text = "+150 ₽ / день",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = IosGreen,
-                    fontWeight = FontWeight.Medium,
+                    text = stringResource(R.string.onboarding_demo_daily),
+                    style = typography.bodyMedium,
+                    color = colors.tertiary,
                 )
             }
             Surface(
-                shape = MaterialTheme.shapes.small,
-                color = IosBlue.copy(alpha = 0.12f),
+                shape = shapes.small,
+                color = colors.secondary.copy(alpha = 0.12f),
             ) {
                 Text(
-                    text = "+ Я сэкономил сегодня",
+                    text = stringResource(R.string.smart_record_usage),
                     modifier = Modifier.padding(
                         horizontal = Dimens.paddingMedium,
                         vertical = Dimens.paddingSmall,
                     ),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = IosBlue,
+                    style = typography.labelLarge,
+                    color = colors.secondary,
                 )
             }
         }
@@ -195,6 +203,9 @@ fun OnboardingSmartSavingsIllustration(modifier: Modifier = Modifier) {
 
 @Composable
 fun OnboardingWelcomeIllustration(modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val shapes = MaterialTheme.shapes
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -203,17 +214,16 @@ fun OnboardingWelcomeIllustration(modifier: Modifier = Modifier) {
     ) {
         Surface(
             modifier = Modifier
-                .width(160.dp)
-                .height(160.dp),
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surface,
+                .width(Dimens.illustrationBarWidth)
+                .height(Dimens.illustrationBarWidth),
+            shape = shapes.large,
+            color = colors.surface,
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Text(
-                    text = "✓",
-                    style = MaterialTheme.typography.displayLarge,
-                    color = IosGreen,
-                    fontWeight = FontWeight.Bold,
+                    text = stringResource(R.string.checkmark),
+                    style = typography.displayLarge,
+                    color = colors.tertiary,
                 )
             }
         }

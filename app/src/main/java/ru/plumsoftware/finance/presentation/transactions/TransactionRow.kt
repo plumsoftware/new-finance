@@ -11,14 +11,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.Transaction
 import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.ui.theme.Dimens
-import ru.plumsoftware.finance.ui.theme.IosGreen
-import ru.plumsoftware.finance.ui.theme.IosRed
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -31,11 +30,13 @@ fun TransactionRow(
     categoryName: String? = null,
     modifier: Modifier = Modifier,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     val dateLabel = SimpleDateFormat("d MMM, HH:mm", Locale("ru")).format(Date(transaction.dateMillis))
     val amountColor = when (transaction.type) {
-        TransactionType.INCOME -> IosGreen
-        TransactionType.EXPENSE -> IosRed
-        TransactionType.SAVINGS -> IosGreen
+        TransactionType.INCOME -> colors.tertiary
+        TransactionType.EXPENSE -> colors.error
+        TransactionType.SAVINGS -> colors.tertiary
     }
     val prefix = when (transaction.type) {
         TransactionType.INCOME -> "+"
@@ -46,7 +47,7 @@ fun TransactionRow(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surface,
+        color = colors.surface,
     ) {
         Row(
             modifier = Modifier
@@ -57,22 +58,21 @@ fun TransactionRow(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "${categoryIcon.orEmpty()} ${categoryName ?: transaction.note ?: "–"}".trim(),
-                    style = MaterialTheme.typography.bodyLarge,
+                    text = "${categoryIcon.orEmpty()} ${categoryName ?: transaction.note ?: stringResource(R.string.dash_placeholder)}".trim(),
+                    style = typography.bodyLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     text = dateLabel,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                    style = typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
                 )
             }
             Text(
                 text = "$prefix${MoneyFormat.format(transaction.amountMinor, currencyCode)}",
-                style = MaterialTheme.typography.titleMedium,
+                style = typography.titleMedium,
                 color = amountColor,
-                fontWeight = FontWeight.SemiBold,
             )
         }
     }

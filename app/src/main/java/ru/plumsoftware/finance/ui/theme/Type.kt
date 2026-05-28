@@ -134,5 +134,77 @@ val Typography = Typography(
         fontSize = 16.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.sp
-    )
+    ),
+
+    // ЗАГОЛОВОК ЭКРАНА (iOS Large Title, 34pt)
+    headlineLarge = TextStyle(
+        fontFamily = Inter28Family,
+        fontWeight = FontWeight.Bold,
+        fontSize = 34.sp,
+        lineHeight = 41.sp,
+        letterSpacing = 0.37.sp,
+    ),
+
+    // ПОДЗАГОЛОВОК КАРТОЧКИ / СЕКЦИИ (22pt)
+    headlineMedium = TextStyle(
+        fontFamily = Inter24Family,
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
+        letterSpacing = 0.35.sp,
+    ),
+
+    // КРУПНАЯ СУММА (40pt)
+    headlineSmall = TextStyle(
+        fontFamily = Inter28Family,
+        fontWeight = FontWeight.Bold,
+        fontSize = 40.sp,
+        lineHeight = 48.sp,
+        letterSpacing = (-0.5).sp,
+    ),
+
+    // СУММА В ДИАЛОГЕ (42pt)
+    displayMedium = TextStyle(
+        fontFamily = Inter28Family,
+        fontWeight = FontWeight.Bold,
+        fontSize = 42.sp,
+        lineHeight = 50.sp,
+        letterSpacing = (-0.5).sp,
+    ),
+
+    // СЕКЦИОННЫЙ ЗАГОЛОВОК (12pt caps)
+    labelSmall = TextStyle(
+        fontFamily = Inter18Family,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.5.sp,
+    ),
+
+    // МЕЛКИЙ ПОДПИСЬ (13pt)
+    bodySmall = TextStyle(
+        fontFamily = Inter18Family,
+        fontWeight = FontWeight.Normal,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+        letterSpacing = (-0.08).sp,
+    ),
+
+    // ПОДПИСЬ 14pt
+    labelMedium = TextStyle(
+        fontFamily = Inter18Family,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 18.sp,
+        letterSpacing = (-0.15).sp,
+    ),
+
+    // НАВИГАЦИЯ (10pt)
+    titleSmall = TextStyle(
+        fontFamily = Inter18Family,
+        fontWeight = FontWeight.Medium,
+        fontSize = 10.sp,
+        lineHeight = 12.sp,
+        letterSpacing = 0.sp,
+    ),
 )

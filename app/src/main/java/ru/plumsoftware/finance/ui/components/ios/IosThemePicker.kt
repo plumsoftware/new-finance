@@ -15,9 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import ru.plumsoftware.finance.ui.theme.IosBlue
+import ru.plumsoftware.finance.ui.theme.Dimens
 
 @Composable
 fun IosThemePicker(
@@ -26,21 +24,24 @@ fun IosThemePicker(
     onSelectIndex: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     val safeIndex = selectedIndex.coerceIn(0, labels.lastIndex.coerceAtLeast(0))
-    val trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
-    val shape = RoundedCornerShape(10.dp)
+    val trackColor = colors.surfaceVariant
+    val shape = RoundedCornerShape(Dimens.cornerRadiusSegment)
+    val innerShape = RoundedCornerShape(Dimens.cornerRadiusSegmentInner)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(36.dp)
+            .height(Dimens.segmentedHeight)
             .clip(shape)
             .background(trackColor),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(2.dp),
+                .padding(Dimens.paddingMicro / 2),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             labels.forEachIndexed { index, label ->
@@ -48,10 +49,10 @@ fun IosThemePicker(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(32.dp)
-                        .clip(RoundedCornerShape(8.dp))
+                        .height(Dimens.segmentedThumbHeight)
+                        .clip(innerShape)
                         .background(
-                            if (isSelected) IosBlue.copy(alpha = 0.2f)
+                            if (isSelected) colors.secondary.copy(alpha = 0.2f)
                             else androidx.compose.ui.graphics.Color.Transparent,
                         )
                         .clickable(
@@ -62,12 +63,11 @@ fun IosThemePicker(
                 ) {
                     Text(
                         text = label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                        style = typography.bodyMedium,
                         color = if (isSelected) {
-                            IosBlue
+                            colors.secondary
                         } else {
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                            colors.onSurfaceVariant
                         },
                     )
                 }

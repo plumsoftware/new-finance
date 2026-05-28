@@ -86,7 +86,7 @@
     <string name="savings_index_monthly">≈ %1$s / мес. экономии</string>
     <string name="no_data">Нет данных за период</string>
 
-    <string name="settings_title">Профиль</string>
+    <string name="settings_title">Настройки</string>
     <string name="settings_theme">Тема</string>
     <string name="theme_system">Система</string>
     <string name="theme_light">Светлая</string>
@@ -99,4 +99,131 @@
     <string name="settings_local_note">Все данные хранятся только на этом устройстве.</string>
     <string name="category_visible">Вкл</string>
     <string name="category_hidden">Скрыта</string>
+
+    <string name="nav_home">Главная</string>
+    <string name="nav_history">История</string>
+    <string name="nav_analytics">Аналитика</string>
+    <string name="nav_settings">Настройки</string>
+
+    <string name="dashboard_greeting">Добрый день 👋</string>
+    <string name="dashboard_see_all">Все →</string>
+    <string name="dashboard_no_operations_short">Нет операций</string>
+    <string name="dashboard_total_balance">ОБЩИЙ БАЛАНС</string>
+    <string name="dashboard_add_first_asset">Добавить первый актив</string>
+    <string name="dashboard_track_payback">Следи за окупаемостью</string>
+    <string name="dashboard_record">+ Записать</string>
+    <string name="dashboard_saved_amount">%1$s сэкономлено</string>
+
+    <string name="transaction_default">Операция</string>
+    <string name="transaction_account_time">Счёт · %1$s</string>
+    <string name="today">сегодня</string>
+    <string name="yesterday">вчера</string>
+
+    <string name="history_title">История</string>
+    <string name="history_subtitle_90">последние 90 операций</string>
+    <string name="history_empty_period">Нет операций за этот период</string>
+    <string name="history_today_header">СЕГОДНЯ, %1$s</string>
+    <string name="delete">Удалить</string>
+
+    <string name="analytics_transfers">Переводы</string>
+    <string name="analytics_expenses_by_day">РАСХОДЫ ПО ДНЯМ</string>
+    <string name="analytics_income_by_category">ДОХОДЫ ПО КАТЕГОРИЯМ</string>
+    <string name="analytics_expense_by_category">РАСХОДЫ ПО КАТЕГОРИЯМ</string>
+    <string name="analytics_total_balance">ОБЩИЙ БАЛАНС</string>
+
+    <string name="categories_title">Категории</string>
+    <string name="categories_add">Добавить</string>
+    <string name="categories_expense_tab">Расходы</string>
+    <string name="categories_income_tab">Доходы</string>
+    <string name="categories_empty_title">Нет категорий</string>
+    <string name="categories_empty_subtitle">Создайте категории для удобного учёта</string>
+    <string name="categories_add_category">Добавить категорию</string>
+    <string name="categories_delete_title">Удалить «%1$s»?</string>
+    <string name="categories_delete_message">Эта категория будет удалена без возможности восстановления.</string>
+    <string name="categories_back_settings">Настройки</string>
+    <string name="cd_delete">Удалить</string>
+    <string name="cd_edit">Редактировать</string>
+    <string name="cd_add">Добавить</string>
+
+    <string name="category_editor_title_edit">Изменить</string>
+    <string name="category_editor_title_new">Новая категория</string>
+    <string name="category_editor_section_name">НАЗВАНИЕ</string>
+    <string name="category_editor_section_type">ТИП</string>
+    <string name="category_editor_section_icon">ИКОНКА</string>
+    <string name="category_editor_section_color">ЦВЕТ</string>
+    <string name="category_editor_type_label">Тип операции</string>
+    <string name="category_editor_name_placeholder">Напр. Продукты</string>
+    <string name="category_editor_preview">Название категории</string>
+
+    <string name="settings_data_section">ДАННЫЕ</string>
+    <string name="settings_categories">Категории</string>
+
+    <string name="new_category_title">Новая категория</string>
+    <string name="category_name">Название</string>
+    <string name="new_category_chip"> Новая</string>
+    <string name="plus_sign">+</string>
+
+    <string name="period_this_week">Эта неделя</string>
+    <string name="period_this_month">Этот месяц</string>
+    <string name="period_last_month">Прошлый месяц</string>
+    <string name="period_this_year">Этот год</string>
+
+    <string name="smart_updated_success">Экономия обновлена</string>
+    <string name="smart_deleted_success">Экономия удалена</string>
+    <string name="smart_my_assets">МОИ АКТИВЫ</string>
+    <string name="smart_add_asset">Добавить актив</string>
+    <string name="smart_total_saved_header">💰  Всего сэкономлено</string>
+    <string name="smart_paid_off_badge">✓ Окупился</string>
+    <string name="smart_record_usage_title">Записать использование</string>
+    <string name="smart_default_saving_hint">По умолчанию – ваша стандартная экономия</string>
+    <string name="smart_confirm">Подтвердить</string>
+    <string name="smart_delete_asset_title">Удалить «%1$s»?</string>
+    <string name="smart_delete_asset">Удалить актив</string>
+    <string name="smart_asset_not_found">Актив не найден</string>
+    <string name="smart_payback_label">Окупаемость</string>
+    <string name="smart_remaining_payback">Осталось окупить: %1$s</string>
+    <string name="smart_purchase_cost_label">Стоимость покупки</string>
+    <string name="smart_record_saving_cta">✓ Использовал – записать экономию</string>
+    <string name="smart_history_section">ИСТОРИЯ</string>
+    <string name="smart_history_empty_short">Ещё нет записей</string>
+    <string name="smart_savings_tab">Экономия</string>
+    <string name="smart_edit_title">Редактировать</string>
+    <string name="smart_new_asset">Новый актив</string>
+    <string name="smart_section_main">ОСНОВНОЕ</string>
+    <string name="smart_section_icon">ИКОНКА</string>
+    <string name="smart_section_finance">ФИНАНСЫ</string>
+    <string name="smart_section_settings">НАСТРОЙКИ</string>
+    <string name="smart_note">Заметка</string>
+    <string name="smart_note_optional">Необязательно</string>
+    <string name="smart_name_placeholder">Термокружка</string>
+    <string name="smart_record_as_expense">Записать как расход</string>
+    <string name="smart_record_as_expense_hint">При создании добавит транзакцию расхода</string>
+    <string name="pipe_separator">|</string>
+    <string name="checkmark">✓</string>
+
+    <string name="onboarding_demo_balance">Баланс</string>
+    <string name="onboarding_demo_amount">120 000 ₽</string>
+    <string name="onboarding_demo_mug">Термокружка</string>
+    <string name="onboarding_demo_payback">Окупаемость 80%</string>
+    <string name="onboarding_demo_daily">+150 ₽ / день</string>
+
+    <string name="transaction_detail_date">📅 Дата и время</string>
+    <string name="transaction_detail_category">📂 Категория</string>
+    <string name="transaction_detail_note">📝 Заметка</string>
+    <string name="dash_placeholder">–</string>
+
+    <string name="categories_empty_expense_subtitle">Добавьте первую категорию расходов</string>
+    <string name="categories_empty_income_subtitle">Добавьте первую категорию доходов</string>
+    <string name="categories_empty_emoji">🏷️</string>
+    <string name="smart_empty_assets_title">Ещё нет активов</string>
+    <string name="smart_empty_assets_subtitle">Добавьте первый предмет и следите, как он окупается</string>
+    <string name="smart_hero_tip">💡 Каждое использование вместо кофе-автомата экономит деньги</string>
+    <string name="smart_profit_celebration">🎉 Окупился! Чистая прибыль</string>
+    <string name="analytics_saved_percent">%1$d%% сохранено</string>
+    <string name="analytics_nav_prev">‹</string>
+    <string name="analytics_nav_next">›</string>
+    <string name="analytics_income_up">↑</string>
+    <string name="analytics_expense_down">↓</string>
+    <string name="cd_add_asset">Добавить актив</string>
+    <string name="percent_short">%1$d%%</string>
 </resources>

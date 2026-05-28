@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,6 +22,7 @@ import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -34,18 +34,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
+import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
+import ru.plumsoftware.finance.ui.components.ios.IosNavigationTextButton
 import ru.plumsoftware.finance.ui.components.ios.IosSegmentedControl
-import ru.plumsoftware.finance.ui.theme.IosBlue
-import ru.plumsoftware.finance.ui.theme.IosRed
+import ru.plumsoftware.finance.ui.components.ios.IosTextButton
+import ru.plumsoftware.finance.ui.theme.Dimens
 
 @Composable
 fun CategoriesScreen(
@@ -57,6 +58,9 @@ fun CategoriesScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var pendingDelete by remember { mutableStateOf<Category?>(null) }
     val categories = if (state.selectedType == CategoryType.EXPENSE) state.expenseCategories else state.incomeCategories
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val listCardShape = RoundedCornerShape(Dimens.cornerRadiusList)
 
     pendingDelete?.let { cat ->
         DeleteCategoryDialog(
@@ -71,81 +75,87 @@ fun CategoriesScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = Color(0xFFF2F2F7),
+        containerColor = colors.background,
     ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(horizontal = Dimens.paddingMedium, vertical = Dimens.spacingRow),
+            verticalArrangement = Arrangement.spacedBy(Dimens.spacingList),
         ) {
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable(onClick = onBack),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBackIos, contentDescription = null, tint = IosBlue, modifier = Modifier.size(16.dp))
-                        Text("Настройки", color = IosBlue, fontSize = 17.sp)
-                    }
-                    Text("Категории", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                    IosNavigationTextButton(
+                        text = stringResource(R.string.categories_back_settings),
+                        onClick = onBack,
+                        modifier = Modifier.weight(1f),
+                    )
                     Text(
-                        text = "Добавить",
-                        color = IosBlue,
-                        fontSize = 17.sp,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { onAdd(state.selectedType) },
+                        stringResource(R.string.categories_title),
+                        style = typography.bodyLarge,
+                    )
+                    IosTextButton(
+                        text = stringResource(R.string.categories_add),
+                        onClick = { onAdd(state.selectedType) },
+                        modifier = Modifier.weight(1f),
                         textAlign = TextAlign.End,
                     )
                 }
             }
             item {
                 IosSegmentedControl(
-                    labels = listOf("Расходы", "Доходы"),
+                    labels = listOf(
+                        stringResource(R.string.categories_expense_tab),
+                        stringResource(R.string.categories_income_tab),
+                    ),
                     selectedIndex = if (state.selectedType == CategoryType.EXPENSE) 0 else 1,
                     onSelectIndex = { viewModel.selectType(if (it == 0) CategoryType.EXPENSE else CategoryType.INCOME) },
                 )
             }
             if (categories.isEmpty()) {
                 item {
-                    Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                    Surface(shape = listCardShape, color = colors.surface) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 20.dp, vertical = 32.dp),
+                                .padding(horizontal = Dimens.paddingLarge, vertical = Dimens.paddingExtraLarge),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            Text("🏷️", fontSize = 48.sp)
-                            Text("Нет категорий", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 12.dp))
+                            Text(
+                                stringResource(R.string.categories_empty_emoji),
+                                style = typography.displayMedium,
+                            )
+                            Text(
+                                stringResource(R.string.categories_empty_title),
+                                style = typography.titleMedium,
+                                modifier = Modifier.padding(top = Dimens.spacingList),
+                            )
                             Text(
                                 text = if (state.selectedType == CategoryType.EXPENSE) {
-                                    "Добавьте первую категорию расходов"
+                                    stringResource(R.string.categories_empty_expense_subtitle)
                                 } else {
-                                    "Добавьте первую категорию доходов"
+                                    stringResource(R.string.categories_empty_income_subtitle)
                                 },
-                                color = Color(0xFF8E8E93),
-                                fontSize = 15.sp,
+                                color = colors.onSurfaceVariant,
+                                style = typography.bodyMedium,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(top = 8.dp),
+                                modifier = Modifier.padding(top = Dimens.paddingSmall),
                             )
                             IosPrimaryButton(
-                                text = "Добавить категорию",
+                                text = stringResource(R.string.categories_add_category),
                                 onClick = { onAdd(state.selectedType) },
-                                modifier = Modifier.padding(top = 20.dp),
+                                modifier = Modifier.padding(top = Dimens.paddingLarge),
                             )
                         }
                     }
                 }
             } else {
                 item {
-                    Surface(shape = RoundedCornerShape(16.dp), color = Color.White) {
+                    Surface(shape = listCardShape, color = colors.surface) {
                         Column {
                             categories.forEachIndexed { index, category ->
                                 CategoryListRow(
@@ -155,9 +165,9 @@ fun CategoriesScreen(
                                 )
                                 if (index != categories.lastIndex) {
                                     HorizontalDivider(
-                                        color = Color(0xFFE5E5EA),
-                                        thickness = 0.5.dp,
-                                        modifier = Modifier.padding(start = 60.dp),
+                                        color = colors.outline,
+                                        thickness = Dimens.dividerThickness,
+                                        modifier = Modifier.padding(start = Dimens.categoryRowInset),
                                     )
                                 }
                             }
@@ -175,41 +185,53 @@ private fun CategoryListRow(
     onClick: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     val color = Color(category.colorArgb?.toInt() ?: 0xFF8E8E93.toInt())
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = Dimens.paddingMedium, vertical = Dimens.paddingSmall),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
             androidx.compose.foundation.layout.Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(Dimens.avatarSize)
                     .background(color.copy(alpha = 0.15f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(category.icon, fontSize = 20.sp)
+                Text(category.icon, style = typography.titleMedium)
             }
             Text(
                 category.name,
-                fontSize = 17.sp,
-                color = Color.Black,
-                modifier = Modifier.padding(start = 12.dp),
+                style = typography.bodyLarge,
+                color = colors.onSurface,
+                modifier = Modifier.padding(start = Dimens.spacingList),
             )
         }
         Icon(
             imageVector = Icons.Outlined.Delete,
-            contentDescription = "Удалить",
-            tint = IosRed,
+            contentDescription = stringResource(R.string.cd_delete),
+            tint = colors.error,
             modifier = Modifier
-                .size(20.dp)
+                .size(Dimens.dragIconSize)
                 .clickable(onClick = onDelete),
         )
-        Spacer(Modifier.size(8.dp))
-        Icon(Icons.Outlined.DragHandle, contentDescription = null, tint = Color(0xFFC7C7CC), modifier = Modifier.size(20.dp))
-        Icon(Icons.Outlined.KeyboardArrowRight, contentDescription = null, tint = Color(0xFFC7C7CC), modifier = Modifier.size(20.dp))
+        Spacer(Modifier.size(Dimens.paddingSmall))
+        Icon(
+            Icons.Outlined.DragHandle,
+            contentDescription = null,
+            tint = colors.outlineVariant,
+            modifier = Modifier.size(Dimens.dragIconSize),
+        )
+        Icon(
+            Icons.Outlined.KeyboardArrowRight,
+            contentDescription = null,
+            tint = colors.outlineVariant,
+            modifier = Modifier.size(Dimens.dragIconSize),
+        )
     }
 }
 
@@ -219,26 +241,39 @@ private fun DeleteCategoryDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val shapes = MaterialTheme.shapes
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(14.dp), color = Color.White) {
-            Column(modifier = Modifier.padding(18.dp)) {
-                Text("Удалить «$name»?", fontWeight = FontWeight.SemiBold)
+        Surface(shape = shapes.small, color = colors.surface) {
+            Column(modifier = Modifier.padding(Dimens.paddingMedium + 2.dp)) {
                 Text(
-                    "Эта категория будет удалена. Операции сохранятся.",
-                    color = Color(0xFF8E8E93),
-                    modifier = Modifier.padding(top = 8.dp),
+                    stringResource(R.string.categories_delete_title, name),
+                    style = typography.titleMedium,
+                )
+                Text(
+                    stringResource(R.string.categories_delete_message),
+                    color = colors.onSurfaceVariant,
+                    style = typography.bodyMedium,
+                    modifier = Modifier.padding(top = Dimens.paddingSmall),
                 )
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 14.dp),
+                        .padding(top = Dimens.spacingRow + 4.dp),
                     horizontalArrangement = Arrangement.End,
                 ) {
-                    Text("Отмена", color = IosBlue, modifier = Modifier.clickable(onClick = onDismiss).padding(8.dp))
-                    Text("Удалить", color = IosRed, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable(onClick = onConfirm).padding(8.dp))
+                    IosTextButton(
+                        text = stringResource(R.string.cancel),
+                        onClick = onDismiss,
+                    )
+                    IosTextButton(
+                        text = stringResource(R.string.delete),
+                        onClick = onConfirm,
+                        color = colors.error,
+                    )
                 }
             }
         }
     }
 }
-

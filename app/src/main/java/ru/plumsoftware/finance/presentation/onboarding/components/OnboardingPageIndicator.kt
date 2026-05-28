@@ -10,9 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
 import ru.plumsoftware.finance.ui.theme.Dimens
-import ru.plumsoftware.finance.ui.theme.IosBlue
 
 @Composable
 fun OnboardingPageIndicator(
@@ -20,6 +18,7 @@ fun OnboardingPageIndicator(
     currentPage: Int,
     modifier: Modifier = Modifier,
 ) {
+    val colors = MaterialTheme.colorScheme
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
@@ -28,13 +27,15 @@ fun OnboardingPageIndicator(
             val selected = index == currentPage
             Box(
                 modifier = Modifier
-                    .size(if (selected) 8.dp else 6.dp)
+                    .size(
+                        if (selected) Dimens.pageIndicatorDotActive else Dimens.pageIndicatorDotInactive,
+                    )
                     .clip(CircleShape)
                     .background(
                         if (selected) {
-                            IosBlue
+                            colors.secondary
                         } else {
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
+                            colors.onSurface.copy(alpha = 0.35f)
                         },
                     ),
             )

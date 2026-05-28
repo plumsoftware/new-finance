@@ -15,9 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import ru.plumsoftware.finance.ui.theme.Dimens
 
 private val keys = listOf(
@@ -33,6 +30,7 @@ fun FinanceNumPad(
     onBackspace: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val typography = MaterialTheme.typography
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
@@ -45,7 +43,7 @@ fun FinanceNumPad(
                 row.forEach { key ->
                     val cellModifier = Modifier
                         .weight(1f)
-                        .height(72.dp)
+                        .height(Dimens.numPadKeyHeight)
                     when (key) {
                         "" -> Spacer(modifier = cellModifier)
                         "⌫" -> NumPadKey(
@@ -60,10 +58,7 @@ fun FinanceNumPad(
                         ) {
                             Text(
                                 text = key,
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontSize = 28.sp,
-                                    fontWeight = FontWeight.Medium,
-                                ),
+                                style = typography.titleLarge,
                             )
                         }
                     }
@@ -84,7 +79,7 @@ private fun NumPadKey(
         modifier = modifier,
         shape = MaterialTheme.shapes.small,
         color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 6.dp,
+        shadowElevation = Dimens.elevationNumPad,
         content = {
             androidx.compose.foundation.layout.Box(
                 modifier = Modifier.fillMaxWidth(),
