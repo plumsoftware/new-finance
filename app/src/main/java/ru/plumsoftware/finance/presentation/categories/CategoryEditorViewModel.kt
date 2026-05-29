@@ -14,17 +14,21 @@ import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
 
 private val expenseEmojis = listOf(
-    "🛒", "☕", "🚌", "💊", "🎬", "👗", "🏠", "💡", "📱", "🍕",
-    "💈", "🐾", "🎮", "📚", "✈️", "🏋️", "💄", "🔧", "🎁", "🍺",
+    "🛒", "☕", "🚌", "🏠", "💊", "🎬",
+    "👗", "💡", "📱", "🍕", "🐾", "🎮",
+    "📚", "✈️", "🏋️", "💄", "🔧", "🎁",
 )
 private val incomeEmojis = listOf(
-    "💼", "💻", "📈", "🎓", "🏦", "💰", "🎯", "🏆", "🤝", "🎪",
-    "💡", "🛠️", "🎨", "📝", "🔑", "⭐", "🚀", "🌟", "💎", "🎤",
+    "💼", "💻", "📈", "🏦", "💰", "🎓",
+    "🎯", "🏆", "🤝", "🚀", "🎨", "📝",
+    "🔑", "⭐", "💎", "🎤", "🛠️", "🌟",
 )
 
 val categoryColors = listOf(
     0xFFFF3B30, 0xFFFF9500, 0xFFFFCC00, 0xFF34C759, 0xFF00C7BE,
     0xFF30B0C7, 0xFF007AFF, 0xFF5856D6, 0xFFAF52DE, 0xFFFF2D55,
+    0xFF8E8E93, 0xFFA2845E, 0xFF5AC8FA, 0xFF64D2FF, 0xFFBF5AF2,
+    0xFFDAA520, 0xFF228B22, 0xFF4B0082, 0xFF2E8B57, 0xFFB22222,
 )
 
 data class CategoryEditorUiState(
