@@ -94,6 +94,7 @@ fun SmartSavingsDetailScreen(
             sheetState = sheetState,
             containerColor = colors.background,
         ) {
+            var isNumPadVisible by remember { mutableStateOf(true) }
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -118,6 +119,7 @@ fun SmartSavingsDetailScreen(
                         text = MoneyFormat.formatEntryDisplay(state.amountDigits, state.currencyCode),
                         style = typography.displayMedium,
                         color = colors.tertiary,
+                        modifier = Modifier.clickable { isNumPadVisible = true },
                     )
                     val cursorAlpha by rememberInfiniteTransition(label = "cursor").animateFloat(
                         initialValue = 1f,
@@ -142,10 +144,13 @@ fun SmartSavingsDetailScreen(
                     modifier = Modifier.padding(top = Dimens.paddingMicro + 2.dp, bottom = Dimens.paddingMedium),
                     textAlign = TextAlign.Center,
                 )
-                FinanceNumPad(
-                    onDigit = viewModel::appendDigit,
-                    onBackspace = viewModel::backspace,
-                )
+                if (isNumPadVisible) {
+                    FinanceNumPad(
+                        onDigit = viewModel::appendDigit,
+                        onBackspace = viewModel::backspace,
+                        onCollapse = { isNumPadVisible = false },
+                    )
+                }
                 Spacer(Modifier.height(Dimens.spacingRow + 4.dp))
                 IosPrimaryButton(
                     text = stringResource(R.string.smart_confirm),

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -28,6 +29,7 @@ private val keys = listOf(
 fun FinanceNumPad(
     onDigit: (String) -> Unit,
     onBackspace: () -> Unit,
+    onCollapse: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val typography = MaterialTheme.typography
@@ -46,6 +48,29 @@ fun FinanceNumPad(
                         .height(Dimens.numPadKeyHeight)
                     when (key) {
                         "" -> Spacer(modifier = cellModifier)
+                        "." -> {
+                            if (onCollapse != null) {
+                                NumPadKey(
+                                    modifier = cellModifier,
+                                    onClick = onCollapse,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.KeyboardArrowDown,
+                                        contentDescription = null,
+                                    )
+                                }
+                            } else {
+                                NumPadKey(
+                                    modifier = cellModifier,
+                                    onClick = { onDigit(key) },
+                                ) {
+                                    Text(
+                                        text = key,
+                                        style = typography.titleLarge,
+                                    )
+                                }
+                            }
+                        }
                         "⌫" -> NumPadKey(
                             modifier = cellModifier,
                             onClick = onBackspace,
