@@ -81,7 +81,8 @@ fun CategoryEditorScreen(
         ) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(horizontal = Dimens.paddingMedium),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IosNavigationTextButton(
@@ -124,7 +125,10 @@ fun CategoryEditorScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(Dimens.cornerRadiusList))
                         .background(colors.surface)
-                        .padding(horizontal = Dimens.paddingMedium, vertical = Dimens.categoryEditorFieldVertical),
+                        .padding(
+                            horizontal = Dimens.paddingMedium,
+                            vertical = Dimens.categoryEditorFieldVertical
+                        ),
                 ) {
                     if (state.name.isEmpty()) {
                         Text(
@@ -156,11 +160,17 @@ fun CategoryEditorScreen(
 
                 Spacer(Modifier.height(Dimens.categoryEditorSectionGap))
                 SectionTitle(stringResource(R.string.category_editor_section_type))
-                Surface(shape = RoundedCornerShape(Dimens.cornerRadiusList), color = colors.surface) {
+                Surface(
+                    shape = RoundedCornerShape(Dimens.cornerRadiusList),
+                    color = colors.surface
+                ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = Dimens.paddingMedium, vertical = Dimens.spacingList),
+                            .padding(
+                                horizontal = Dimens.paddingMedium,
+                                vertical = Dimens.spacingList
+                            ),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -207,7 +217,10 @@ fun CategoryEditorScreen(
 
                 Spacer(Modifier.height(Dimens.categoryEditorSectionGap))
                 SectionTitle(stringResource(R.string.category_editor_section_icon))
-                Surface(shape = RoundedCornerShape(Dimens.cornerRadiusList), color = colors.surface) {
+                Surface(
+                    shape = RoundedCornerShape(Dimens.cornerRadiusList),
+                    color = colors.surface
+                ) {
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -223,7 +236,11 @@ fun CategoryEditorScreen(
                                     .clip(CircleShape)
                                     .background(if (isSelected) selectedColor.copy(alpha = 0.18f) else colors.surfaceVariant)
                                     .then(
-                                        if (isSelected) Modifier.border(Dimens.categoryEditorIconBorder, selectedColor, CircleShape) else Modifier,
+                                        if (isSelected) Modifier.border(
+                                            Dimens.categoryEditorIconBorder,
+                                            selectedColor,
+                                            CircleShape
+                                        ) else Modifier,
                                     )
                                     .clickable { viewModel.setIcon(emoji) },
                                 contentAlignment = Alignment.Center,
@@ -239,12 +256,18 @@ fun CategoryEditorScreen(
 
                 Spacer(Modifier.height(Dimens.categoryEditorSectionGap))
                 SectionTitle(stringResource(R.string.category_editor_section_color))
-                Surface(shape = RoundedCornerShape(Dimens.cornerRadiusList), color = colors.surface) {
+                Surface(
+                    shape = RoundedCornerShape(Dimens.cornerRadiusList),
+                    color = colors.surface
+                ) {
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(Dimens.paddingMedium),
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.spacingRow, Alignment.CenterHorizontally),
+                        horizontalArrangement = Arrangement.spacedBy(
+                            Dimens.spacingRow,
+                            Alignment.CenterHorizontally
+                        ),
                         verticalArrangement = Arrangement.spacedBy(Dimens.spacingRow),
                     ) {
                         categoryColors.forEach { colorValue ->
@@ -257,7 +280,11 @@ fun CategoryEditorScreen(
                                     .clip(CircleShape)
                                     .background(color)
                                     .then(
-                                        if (isSelected) Modifier.border(Dimens.categoryEditorSwatchBorder, colors.surface, CircleShape) else Modifier,
+                                        if (isSelected) Modifier.border(
+                                            Dimens.categoryEditorSwatchBorder,
+                                            colors.surface,
+                                            CircleShape
+                                        ) else Modifier,
                                     )
                                     .clickable { viewModel.setColor(colorValue) },
                                 contentAlignment = Alignment.Center,
