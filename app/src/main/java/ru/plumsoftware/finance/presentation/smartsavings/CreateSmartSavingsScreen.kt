@@ -38,6 +38,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -390,6 +391,23 @@ fun CreateSmartSavingsScreen(
                             }
                         },
                         modifier = Modifier.padding(horizontal = Dimens.formHorizontalInset),
+                    )
+                    Icon(
+                        imageVector = Icons.Outlined.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = colors.onSurfaceVariant,
+                        modifier = Modifier
+                            .padding(
+                                start = Dimens.formHorizontalInset,
+                                top = Dimens.paddingSmall,
+                            )
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() },
+                                onClick = dismissNumPad,
+                            )
+                            .padding(Dimens.paddingSmall)
+                            .size(Dimens.iconSizeStandard),
                     )
                     Spacer(Modifier.height(Dimens.spacingList))
                 }
