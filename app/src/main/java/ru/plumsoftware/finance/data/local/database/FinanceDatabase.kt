@@ -13,10 +13,12 @@ import kotlinx.coroutines.runBlocking
 import ru.plumsoftware.finance.data.local.converter.EnumConverters
 import ru.plumsoftware.finance.data.local.dao.CategoryDao
 import ru.plumsoftware.finance.data.local.dao.NotificationDao
+import ru.plumsoftware.finance.data.local.dao.RecurringTransactionDao
 import ru.plumsoftware.finance.data.local.dao.SmartAssetDao
 import ru.plumsoftware.finance.data.local.dao.TransactionDao
 import ru.plumsoftware.finance.data.local.entity.CategoryEntity
 import ru.plumsoftware.finance.data.local.entity.NotificationEntity
+import ru.plumsoftware.finance.data.local.entity.RecurringTransactionEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetUsageEntity
 import ru.plumsoftware.finance.data.local.entity.TransactionEntity
@@ -28,8 +30,9 @@ import ru.plumsoftware.finance.data.local.entity.TransactionEntity
         SmartAssetEntity::class,
         SmartAssetUsageEntity::class,
         NotificationEntity::class,
+        RecurringTransactionEntity::class,
     ],
-    version = 3,
+    version = 7,
     exportSchema = false,
 )
 @TypeConverters(EnumConverters::class)
@@ -38,6 +41,7 @@ abstract class FinanceDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun smartAssetDao(): SmartAssetDao
     abstract fun notificationDao(): NotificationDao
+    abstract fun recurringTransactionDao(): RecurringTransactionDao
 
     companion object {
         private const val DATABASE_NAME = "finance.db"
@@ -53,6 +57,13 @@ abstract class FinanceDatabase : RoomDatabase() {
                                 seed(database)
                             }
                         }
+
+                        override fun onOpen(db: SupportSQLiteDatabase) {
+                            super.onOpen(db)
+                            CoroutineScope(Dispatchers.IO).launch {
+                                seed(database)
+                            }
+                        }
                     },
                 )
                 .fallbackToDestructiveMigration(dropAllTables = true)
@@ -62,8 +73,13 @@ abstract class FinanceDatabase : RoomDatabase() {
 
         private suspend fun seed(database: FinanceDatabase) {
             val categoryDao = database.categoryDao()
-            if (categoryDao.count() == 0) {
-                categoryDao.insertAll(DefaultCategories.all())
+            val existingKeys = categoryDao.getAllSync()
+                .map { it.type to it.name }
+                .toSet()
+            val missing = DefaultCategories.all()
+                .filter { (it.type to it.name) !in existingKeys }
+            if (missing.isNotEmpty()) {
+                categoryDao.insertAll(missing)
             }
         }
     }

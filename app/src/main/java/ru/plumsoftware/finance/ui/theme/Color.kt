@@ -2,34 +2,51 @@ package ru.plumsoftware.finance.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Базовые цвета iOS
-val IosBlue = Color(0xFF007AFF) // Синий акцент (кнопки, активные элементы)
-val IosGreen = Color(0xFF34C759) // Для доходов и успешной экономии
-val IosRed = Color(0xFFFF3B30)   // Для расходов
+// Semantic palette — Light
+val IncomeGreen = Color(0xFF34C759)
+val ExpenseRed = Color(0xFFFF3B30)
+val AccentBlue = Color(0xFF007AFF)
+val SurfaceLight = Color(0xFFFFFFFF)
+val BackgroundLight = Color(0xFFF2F2F7)
+val SeparatorLight = Color(0xFFE5E5EA)
+val TextPrimaryL = Color(0xFF1C1C1E)
+val TextSecondaryL = Color(0xFF8E8E93)
+val TextPlaceholderL = Color(0xFFC7C7CC)
+
+// Semantic palette — Dark
+val SurfaceDark = Color(0xFF1C1C1E)
+val BackgroundDark = Color(0xFF000000)
+val SeparatorDark = Color(0xFF38383A)
+val TextPrimaryD = Color(0xFFFFFFFF)
+val TextSecondaryD = Color(0xFF8E8E93)
+val TextPlaceholderD = Color(0xFF48484A)
+
+// Chart / category accents (non-theme tokens)
 val IosOrange = Color(0xFFFF9500)
 val IosPurple = Color(0xFF5856D6)
 val IosViolet = Color(0xFFAF52DE)
 
-// Светлая тема
-val LightBackground = Color(0xFFF2F2F7) // Системный светло-серый фон iOS
-val LightSurface = Color(0xFFFFFFFF)    // Белые карточки
-val LightTextPrimary = Color(0xFF000000)
-val LightTextSecondary = Color(0xFF8E8E93) // Серый текст для подписей
-val LightDivider = Color(0x333C3C43) // Еле заметный разделитель
-val LightSeparator = Color(0xFFE5E5EA)
-val LightChevron = Color(0xFFC7C7CC)
-val LightSurfaceMuted = Color(0xFFF2F2F7)
-
-// Темная тема
-val DarkBackground = Color(0xFF000000)  // Глубокий черный фон (OLED)
-val DarkSurface = Color(0xFF1C1C1E)     // Темно-серые карточки (не сливаются с фоном)
-val DarkTextPrimary = Color(0xFFFFFFFF)
-val DarkTextSecondary = Color(0xFFEBEBF5).copy(alpha = 0.6f)
+// Legacy aliases
+val IosBlue = AccentBlue
+val IosGreen = IncomeGreen
+val IosRed = ExpenseRed
+val LightBackground = BackgroundLight
+val LightSurface = SurfaceLight
+val LightTextPrimary = TextPrimaryL
+val LightTextSecondary = TextSecondaryL
+val LightSeparator = SeparatorLight
+val LightChevron = TextPlaceholderL
+val LightDivider = Color(0x333C3C43)
+val LightSurfaceMuted = SeparatorLight
+val DarkBackground = BackgroundDark
+val DarkSurface = SurfaceDark
+val DarkTextPrimary = TextPrimaryD
+val DarkTextSecondary = TextSecondaryD
+val DarkSeparator = SeparatorDark
+val DarkChevron = TextPlaceholderD
 val DarkDivider = Color(0x545458A6)
-val DarkSeparator = Color(0xFF38383A)
-val DarkChevron = Color(0xFF636366)
-val DarkSurfaceMuted = Color(0xFF2C2C2E)
+val DarkSurfaceMuted = SeparatorDark
 
-// Прозрачность для стеклянной навигации
+// Navigation bar glass
 val NavBarGlassLight = Color(0xD9FFFFFF)
 val NavBarGlassDark = Color(0xD91C1C1E)

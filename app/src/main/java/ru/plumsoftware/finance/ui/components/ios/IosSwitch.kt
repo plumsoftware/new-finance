@@ -20,12 +20,12 @@ fun IosSwitch(
         enabled = enabled,
         modifier = modifier,
         colors = SwitchDefaults.colors(
-            checkedThumbColor = colors.onSecondary,
-            checkedTrackColor = colors.tertiary,
-            uncheckedThumbColor = colors.onSecondary,
+            checkedThumbColor = colors.onPrimary,
+            checkedTrackColor = colors.secondary,
+            uncheckedThumbColor = colors.onPrimary,
             uncheckedTrackColor = colors.outline,
             uncheckedBorderColor = colors.outline,
-            checkedBorderColor = colors.tertiary,
+            checkedBorderColor = colors.secondary,
         ),
     )
 }

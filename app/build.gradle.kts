@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.fragment.ktx)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
@@ -88,6 +89,9 @@ dependencies {
 
     // Biometric
     implementation(libs.androidx.biometric)
+
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
 
     // Зависимости всегда (код FCM/In-App в проекте); плагин google-services — только при наличии json
     implementation(platform(libs.firebase.bom))

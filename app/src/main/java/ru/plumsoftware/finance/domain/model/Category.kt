@@ -9,4 +9,5 @@ data class Category(
     val isHidden: Boolean = false,
     val isSystem: Boolean = false,
     val sortOrder: Int = 0,
+    val monthlyLimitMinor: Long? = null,
 )

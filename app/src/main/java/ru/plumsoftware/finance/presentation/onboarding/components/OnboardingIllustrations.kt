@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -24,24 +26,23 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.theme.Dimens
 
 @Composable
 fun OnboardingControlChartIllustration(modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    val shapes = MaterialTheme.shapes
-    Surface(
+    AppCard(
         modifier = modifier
             .fillMaxWidth()
             .height(Dimens.illustrationHeight),
-        shape = shapes.medium,
-        color = colors.surface,
-        shadowElevation = 0.dp,
-        tonalElevation = 0.dp,
     ) {
         Column(
-            modifier = Modifier.padding(Dimens.paddingLarge),
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight()
+                .padding(Dimens.SpacingXl),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
@@ -55,7 +56,7 @@ fun OnboardingControlChartIllustration(modifier: Modifier = Modifier) {
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
                 verticalAlignment = Alignment.Bottom,
             ) {
                 listOf(0.35f, 0.5f, 0.42f, 0.68f, 0.55f, 0.82f, 0.75f).forEach { fraction ->
@@ -69,7 +70,7 @@ fun OnboardingControlChartIllustration(modifier: Modifier = Modifier) {
                                     topEnd = Dimens.illustrationBarRadius,
                                 ),
                             )
-                            .background(colors.secondary.copy(alpha = 0.85f)),
+                            .background(colors.primary.copy(alpha = 0.85f)),
                     )
                 }
             }
@@ -84,16 +85,16 @@ fun OnboardingIncomeExpenseIllustration(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .height(Dimens.illustrationHeight),
-        verticalArrangement = Arrangement.spacedBy(Dimens.paddingMedium),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
     ) {
         FinanceSummaryRow(
             label = stringResource(R.string.income),
-            amount = "+45 200 ₽",
-            accentColor = colors.tertiary,
+            amount = stringResource(R.string.onboarding_demo_income_amount),
+            accentColor = colors.secondary,
         )
         FinanceSummaryRow(
             label = stringResource(R.string.expense),
-            amount = "–28 150 ₽",
+            amount = stringResource(R.string.onboarding_demo_expense_amount),
             accentColor = colors.error,
         )
     }
@@ -107,16 +108,11 @@ private fun FinanceSummaryRow(
 ) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    val shapes = MaterialTheme.shapes
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = shapes.medium,
-        color = colors.surface,
-    ) {
+    AppCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Dimens.paddingLarge),
+                .padding(Dimens.SpacingXl),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -138,16 +134,14 @@ fun OnboardingSmartSavingsIllustration(modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     val shapes = MaterialTheme.shapes
-    Surface(
+    AppCard(
         modifier = modifier
             .fillMaxWidth()
             .height(Dimens.illustrationHeight),
-        shape = shapes.medium,
-        color = colors.surface,
     ) {
         Column(
-            modifier = Modifier.padding(Dimens.paddingLarge),
-            verticalArrangement = Arrangement.spacedBy(Dimens.paddingMedium),
+            modifier = Modifier.padding(Dimens.SpacingXl),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
         ) {
             Text(
                 text = stringResource(R.string.onboarding_demo_mug),
@@ -162,9 +156,9 @@ fun OnboardingSmartSavingsIllustration(modifier: Modifier = Modifier) {
                 progress = { 0.8f },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(Dimens.paddingSmall)
+                    .height(Dimens.SpacingXs)
                     .clip(shapes.extraSmall),
-                color = colors.tertiary,
+                color = colors.secondary,
                 trackColor = colors.onSurfaceVariant.copy(alpha = 0.2f),
                 strokeCap = StrokeCap.Round,
             )
@@ -173,28 +167,28 @@ fun OnboardingSmartSavingsIllustration(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = "1 500 ₽",
+                    text = stringResource(R.string.onboarding_demo_saved_amount),
                     style = typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                 )
                 Text(
                     text = stringResource(R.string.onboarding_demo_daily),
                     style = typography.bodyMedium,
-                    color = colors.tertiary,
+                    color = colors.secondary,
                 )
             }
             Surface(
                 shape = shapes.small,
-                color = colors.secondary.copy(alpha = 0.12f),
+                color = colors.primary.copy(alpha = 0.12f),
             ) {
                 Text(
                     text = stringResource(R.string.smart_record_usage),
                     modifier = Modifier.padding(
-                        horizontal = Dimens.paddingMedium,
-                        vertical = Dimens.paddingSmall,
+                        horizontal = Dimens.SpacingM,
+                        vertical = Dimens.SpacingXs,
                     ),
                     style = typography.labelLarge,
-                    color = colors.secondary,
+                    color = colors.primary,
                 )
             }
         }
@@ -212,18 +206,19 @@ fun OnboardingWelcomeIllustration(modifier: Modifier = Modifier) {
             .height(Dimens.illustrationHeight),
         contentAlignment = Alignment.Center,
     ) {
-        Surface(
+        AppCard(
             modifier = Modifier
                 .width(Dimens.illustrationBarWidth)
                 .height(Dimens.illustrationBarWidth),
-            shape = shapes.large,
-            color = colors.surface,
         ) {
-            Box(contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
                 Text(
                     text = stringResource(R.string.checkmark),
                     style = typography.displayLarge,
-                    color = colors.tertiary,
+                    color = colors.secondary,
                 )
             }
         }
@@ -254,8 +249,12 @@ fun OnboardingIllustrationWithMascot(
             modifier = Modifier
                 .align(mascotAlignment)
                 .offset(
-                    x = if (mascotAlignment == Alignment.BottomStart) Dimens.paddingMedium else (-Dimens.paddingMedium),
-                    y = Dimens.paddingSmall,
+                    x = if (mascotAlignment == Alignment.BottomStart) {
+                        Dimens.SpacingM
+                    } else {
+                        -Dimens.SpacingM
+                    },
+                    y = Dimens.SpacingXs,
                 ),
             sizeDp = Dimens.mascotOnboarding,
         )

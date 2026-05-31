@@ -20,8 +20,8 @@ fun PeriodSelector(
 ) {
     FlowRow(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
-        verticalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
     ) {
         labels.forEach { (period, label) ->
             val displayLabel = if (period == StatsPeriod.CUSTOM && customPeriodLabel != null) {

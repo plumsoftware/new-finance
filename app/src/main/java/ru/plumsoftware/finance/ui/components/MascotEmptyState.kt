@@ -27,12 +27,14 @@ fun MascotEmptyState(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = Dimens.paddingExtraLarge),
+            .padding(vertical = Dimens.SpacingXxl),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Dimens.paddingMedium),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
     ) {
         Image(
             painter = painterResource(mascotRes),
@@ -42,17 +44,17 @@ fun MascotEmptyState(
         )
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
+            style = typography.titleMedium,
+            color = colors.onBackground,
             textAlign = TextAlign.Center,
         )
         if (subtitle != null) {
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
+                style = typography.bodyMedium,
+                color = colors.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = Dimens.paddingLarge),
+                modifier = Modifier.padding(horizontal = Dimens.SpacingXl),
             )
         }
     }

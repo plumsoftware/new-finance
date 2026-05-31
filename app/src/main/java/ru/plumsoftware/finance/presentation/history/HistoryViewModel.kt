@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -14,18 +15,27 @@ import ru.plumsoftware.finance.domain.model.Transaction
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.domain.repository.TransactionRepository
+import java.time.LocalDate
 
 data class HistoryUiState(
     val transactions: List<Transaction> = emptyList(),
     val categoryMap: Map<Long, Category> = emptyMap(),
     val currencyCode: String = "RUB",
-)
+    val dateRangeStart: LocalDate? = null,
+    val dateRangeEnd: LocalDate? = null,
+) {
+    val dateRangeActive: Boolean
+        get() = dateRangeStart != null && dateRangeEnd != null
+}
 
 class HistoryViewModel(
     private val transactionRepository: TransactionRepository,
     categoryRepository: CategoryRepository,
     settingsRepository: SettingsRepository,
 ) : ViewModel() {
+    private val _dateRangeStart = MutableStateFlow<LocalDate?>(null)
+    private val _dateRangeEnd = MutableStateFlow<LocalDate?>(null)
+
     init {
         pruneOldTransactions()
     }
@@ -35,7 +45,15 @@ class HistoryViewModel(
         categoryRepository.observeByType(CategoryType.EXPENSE, includeHidden = true),
         categoryRepository.observeByType(CategoryType.INCOME, includeHidden = true),
         settingsRepository.settings,
-    ) { transactions, expenseCategories, incomeCategories, settings ->
+        _dateRangeStart,
+        _dateRangeEnd,
+    ) { values ->
+        val transactions = values[0] as List<Transaction>
+        val expenseCategories = values[1] as List<Category>
+        val incomeCategories = values[2] as List<Category>
+        val settings = values[3] as ru.plumsoftware.finance.domain.model.AppSettings
+        val dateRangeStart = values[4] as LocalDate?
+        val dateRangeEnd = values[5] as LocalDate?
         val cutoffMillis = System.currentTimeMillis() - NINETY_DAYS_MILLIS
         val latestTransactions = transactions
             .asSequence()
@@ -47,6 +65,8 @@ class HistoryViewModel(
             transactions = latestTransactions,
             categoryMap = (expenseCategories + incomeCategories).associateBy { it.id },
             currencyCode = settings.defaultCurrencyCode,
+            dateRangeStart = dateRangeStart,
+            dateRangeEnd = dateRangeEnd,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -58,6 +78,16 @@ class HistoryViewModel(
         viewModelScope.launch {
             transactionRepository.delete(id)
         }
+    }
+
+    fun setDateRange(start: LocalDate, end: LocalDate) {
+        _dateRangeStart.value = start
+        _dateRangeEnd.value = end
+    }
+
+    fun clearDateRange() {
+        _dateRangeStart.value = null
+        _dateRangeEnd.value = null
     }
 
     private fun pruneOldTransactions() {

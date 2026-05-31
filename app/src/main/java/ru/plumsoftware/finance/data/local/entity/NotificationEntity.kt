@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import ru.plumsoftware.finance.domain.model.NotificationSource
+import ru.plumsoftware.finance.domain.model.NotificationType
 
 @Entity(
     tableName = "notifications",
@@ -26,4 +27,9 @@ data class NotificationEntity(
     val receivedAtMillis: Long,
     val isRead: Boolean,
     val isDisplayed: Boolean,
+    val notificationType: NotificationType = NotificationType.MONTHLY_SUMMARY,
+    val titleRes: Int? = null,
+    val bodyRes: Int? = null,
+    val bodyArgsJson: String = "[]",
+    val relatedCategoryId: Long? = null,
 )

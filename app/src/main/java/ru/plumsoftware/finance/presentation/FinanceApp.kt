@@ -8,13 +8,16 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -53,11 +56,15 @@ import ru.plumsoftware.finance.domain.model.ThemeMode
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.presentation.addtransaction.AddTransactionScreen
 import ru.plumsoftware.finance.presentation.analytics.AnalyticsScreen
+import ru.plumsoftware.finance.presentation.limits.LimitsScreen
 import ru.plumsoftware.finance.presentation.categories.CategoriesScreen
 import ru.plumsoftware.finance.presentation.categories.CategoryEditorScreen
-import ru.plumsoftware.finance.presentation.dashboard.DashboardScreen
+import ru.plumsoftware.finance.presentation.dashboard.HomeScreen
+import ru.plumsoftware.finance.presentation.export.ExportScreen
 import ru.plumsoftware.finance.presentation.history.HistoryScreen
+import ru.plumsoftware.finance.presentation.notifications.NotificationsScreen
 import ru.plumsoftware.finance.presentation.onboarding.OnboardingScreen
+import ru.plumsoftware.finance.presentation.recurring.RecurringScreen
 import ru.plumsoftware.finance.presentation.settings.SettingsScreen
 import ru.plumsoftware.finance.presentation.smartsavings.CreateSmartSavingsScreen
 import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsDetailScreen
@@ -67,8 +74,6 @@ import ru.plumsoftware.finance.ui.AppRoute
 import ru.plumsoftware.finance.ui.nav.BottomNavItems
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.FinanceTheme
-import ru.plumsoftware.finance.ui.theme.NavBarGlassDark
-import ru.plumsoftware.finance.ui.theme.NavBarGlassLight
 
 @SuppressLint("FlowOperatorInvokedInComposition")
 @Composable
@@ -107,7 +112,6 @@ fun FinanceApp(
         val bottomNavRoutes = BottomNavItems.map { it.route }
         val showBottomBar = currentRoute in bottomNavRoutes
         val colors = MaterialTheme.colorScheme
-        val navGlass = if (darkTheme) NavBarGlassDark else NavBarGlassLight
 
         Scaffold(
             modifier = modifier.fillMaxSize(),
@@ -116,18 +120,20 @@ fun FinanceApp(
                 AnimatedVisibility(visible = showBottomBar) {
                     Box {
                         HorizontalDivider(
-                            color = colors.onSurface.copy(alpha = 0.1f),
-                            thickness = Dimens.borderThin,
+                            color = colors.outline,
+                            thickness = Dimens.dividerThickness,
                         )
                         NavigationBar(
-                            containerColor = navGlass,
-                            tonalElevation = Dimens.paddingMicro,
+                            containerColor = colors.surface,
+                            tonalElevation = 0.dp,
                             windowInsets = NavigationBarDefaults.windowInsets,
-                            modifier = Modifier.blur(Dimens.navBarBlur),
                         ) {
-                            val leftItems = BottomNavItems.take(2)
-                            val rightItems = BottomNavItems.drop(2)
-                            leftItems.forEach { item ->
+                            val homeItem = BottomNavItems[0]
+                            val historyItem = BottomNavItems[1]
+                            val analyticsItem = BottomNavItems[2]
+                            val settingsItem = BottomNavItems[3]
+
+                            listOf(homeItem, historyItem).forEach { item ->
                                 val isSelected =
                                     navBackStackEntry?.destination?.hierarchy?.any { it.route == item.route } == true
                                 NavigationBarItem(
@@ -148,45 +154,47 @@ fun FinanceApp(
                                         )
                                     },
                                     label = {
-                                        Text(
-                                            text = stringResource(item.titleRes),
-                                            style = MaterialTheme.typography.titleSmall.copy(
-                                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                                            ),
-                                        )
+                                        if (isSelected) {
+                                            Text(
+                                                text = stringResource(item.titleRes),
+                                                style = MaterialTheme.typography.titleSmall.copy(
+                                                    fontWeight = FontWeight.SemiBold,
+                                                ),
+                                            )
+                                        }
                                     },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        indicatorColor = Color.Transparent,
-                                        selectedIconColor = colors.secondary,
-                                        selectedTextColor = colors.secondary,
-                                        unselectedIconColor = colors.onSurface.copy(alpha = 0.4f),
-                                        unselectedTextColor = colors.onSurface.copy(alpha = 0.4f),
-                                    ),
+                                    alwaysShowLabel = isSelected,
+                                    colors = navBarItemColors(isSelected),
                                 )
                             }
                             NavigationBarItem(
                                 selected = false,
                                 onClick = { navController.navigate(AppRoute.AddTransaction.route) },
                                 icon = {
-                                    FloatingActionButton(
-                                        onClick = { navController.navigate(AppRoute.AddTransaction.route) },
-                                        containerColor = colors.secondary,
-                                        contentColor = colors.onSecondary,
-                                        modifier = Modifier.padding(bottom = Dimens.fabBottomOffset),
+                                    Box(
+                                        modifier = Modifier
+                                            .offset(y = (-8).dp)
+                                            .size(Dimens.ButtonHeight)
+                                            .shadow(8.dp, CircleShape)
+                                            .background(colors.primary, CircleShape)
+                                            .clickable { navController.navigate(AppRoute.AddTransaction.route) },
+                                        contentAlignment = Alignment.Center,
                                     ) {
                                         Icon(
-                                            Icons.Default.Add,
+                                            imageVector = Icons.Rounded.Add,
                                             contentDescription = stringResource(R.string.add_transaction),
+                                            tint = Color.White,
+                                            modifier = Modifier.size(28.dp),
                                         )
                                     }
                                 },
-                                label = { Text("") },
+                                label = {},
                                 alwaysShowLabel = false,
                                 colors = NavigationBarItemDefaults.colors(
                                     indicatorColor = Color.Transparent,
                                 ),
                             )
-                            rightItems.forEach { item ->
+                            listOf(analyticsItem, settingsItem).forEach { item ->
                                 val isSelected =
                                     navBackStackEntry?.destination?.hierarchy?.any { it.route == item.route } == true
                                 NavigationBarItem(
@@ -207,20 +215,17 @@ fun FinanceApp(
                                         )
                                     },
                                     label = {
-                                        Text(
-                                            text = stringResource(item.titleRes),
-                                            style = MaterialTheme.typography.titleSmall.copy(
-                                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-                                            ),
-                                        )
+                                        if (isSelected) {
+                                            Text(
+                                                text = stringResource(item.titleRes),
+                                                style = MaterialTheme.typography.titleSmall.copy(
+                                                    fontWeight = FontWeight.SemiBold,
+                                                ),
+                                            )
+                                        }
                                     },
-                                    colors = NavigationBarItemDefaults.colors(
-                                        indicatorColor = Color.Transparent,
-                                        selectedIconColor = colors.secondary,
-                                        selectedTextColor = colors.secondary,
-                                        unselectedIconColor = colors.onSurface.copy(alpha = 0.4f),
-                                        unselectedTextColor = colors.onSurface.copy(alpha = 0.4f),
-                                    ),
+                                    alwaysShowLabel = isSelected,
+                                    colors = navBarItemColors(isSelected),
                                 )
                             }
                         }
@@ -246,14 +251,19 @@ fun FinanceApp(
                         )
                     }
                     composable(AppRoute.Home.route) {
-                        DashboardScreen(
+                        HomeScreen(
                             onOpenSmartSavingsClick = { navController.navigate(AppRoute.SmartSavings.route) },
                             onOpenHistoryClick = { navController.navigate(AppRoute.History.route) },
                             onOpenAnalyticsClick = { navController.navigate(AppRoute.Analytics.route) },
+                            onOpenLimitsClick = { navController.navigate(AppRoute.Limits.route) },
+                            onOpenNotificationsClick = { navController.navigate(AppRoute.Notifications.route) },
+                            onCreateAssetClick = { navController.navigate(AppRoute.smartCreate(null)) },
                         )
                     }
                     composable(AppRoute.History.route) {
-                        HistoryScreen()
+                        HistoryScreen(
+                            onNavigateToAdd = { navController.navigate(AppRoute.AddTransaction.route) },
+                        )
                     }
                     composable(AppRoute.SmartSavings.route) { backStackEntry ->
                         val snackbarMessage by backStackEntry.savedStateHandle
@@ -354,10 +364,25 @@ fun FinanceApp(
                     composable(AppRoute.Analytics.route) {
                         AnalyticsScreen()
                     }
+                    composable(AppRoute.Limits.route) {
+                        LimitsScreen(navController = navController)
+                    }
+                    composable(AppRoute.Notifications.route) {
+                        NotificationsScreen(navController = navController)
+                    }
                     composable(AppRoute.Settings.route) {
                         SettingsScreen(
                             onOpenCategories = { navController.navigate(AppRoute.Categories.route) },
+                            onOpenLimits = { navController.navigate(AppRoute.Limits.route) },
+                            onOpenRecurring = { navController.navigate(AppRoute.Recurring.route) },
+                            onOpenExport = { navController.navigate(AppRoute.Export.route) },
                         )
+                    }
+                    composable(AppRoute.Export.route) {
+                        ExportScreen(navController = navController)
+                    }
+                    composable(AppRoute.Recurring.route) {
+                        RecurringScreen(navController = navController)
                     }
                     composable(AppRoute.Categories.route) {
                         CategoriesScreen(
@@ -429,3 +454,12 @@ fun FinanceApp(
         }
     }
 }
+
+@Composable
+private fun navBarItemColors(isSelected: Boolean) = NavigationBarItemDefaults.colors(
+    indicatorColor = Color.Transparent,
+    selectedIconColor = MaterialTheme.colorScheme.primary,
+    selectedTextColor = MaterialTheme.colorScheme.primary,
+    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+)

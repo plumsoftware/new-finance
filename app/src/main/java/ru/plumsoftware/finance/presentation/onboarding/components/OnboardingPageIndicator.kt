@@ -21,7 +21,7 @@ fun OnboardingPageIndicator(
     val colors = MaterialTheme.colorScheme
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
     ) {
         repeat(pageCount) { index ->
             val selected = index == currentPage
@@ -33,7 +33,7 @@ fun OnboardingPageIndicator(
                     .clip(CircleShape)
                     .background(
                         if (selected) {
-                            colors.secondary
+                            colors.primary
                         } else {
                             colors.onSurface.copy(alpha = 0.35f)
                         },

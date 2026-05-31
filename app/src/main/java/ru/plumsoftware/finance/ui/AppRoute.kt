@@ -9,7 +9,11 @@ sealed class AppRoute(val route: String) {
     object Analytics : AppRoute("analytics")
     object Settings : AppRoute("settings")
     object Categories : AppRoute("settings/categories")
+    object Limits : AppRoute("limits")
+    object Notifications : AppRoute("notifications")
     object AddTransaction : AppRoute("add_transaction")
+    object Export : AppRoute("settings/export")
+    object Recurring : AppRoute("settings/recurring")
 
     companion object {
         const val SMART_DETAIL = "smart_savings/detail/{assetId}"

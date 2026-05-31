@@ -3,8 +3,10 @@ package ru.plumsoftware.finance.data.local.converter
 import androidx.room.TypeConverter
 import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.domain.model.NotificationSource
+import ru.plumsoftware.finance.domain.model.NotificationType
 import ru.plumsoftware.finance.domain.model.SmartAssetStatus
 import ru.plumsoftware.finance.domain.model.SmartAssetTrackingMode
+import ru.plumsoftware.finance.domain.model.RecurringFrequency
 import ru.plumsoftware.finance.domain.model.TransactionType
 
 class EnumConverters {
@@ -38,4 +40,16 @@ class EnumConverters {
 
     @TypeConverter
     fun toNotificationSource(value: String): NotificationSource = NotificationSource.valueOf(value)
+
+    @TypeConverter
+    fun fromNotificationType(value: NotificationType): String = value.name
+
+    @TypeConverter
+    fun toNotificationType(value: String): NotificationType = NotificationType.valueOf(value)
+
+    @TypeConverter
+    fun fromRecurringFrequency(value: RecurringFrequency): String = value.name
+
+    @TypeConverter
+    fun toRecurringFrequency(value: String): RecurringFrequency = RecurringFrequency.valueOf(value)
 }

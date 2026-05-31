@@ -25,10 +25,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,11 +43,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.CategoryType
-import ru.plumsoftware.finance.ui.components.IosPrimaryButton
+import ru.plumsoftware.finance.ui.components.AppCard
+import ru.plumsoftware.finance.ui.components.PrimaryButton
+import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.components.ios.IosNavigationTextButton
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
@@ -59,6 +64,7 @@ fun CategoryEditorScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
+    val shapes = MaterialTheme.shapes
     val selectedColor = Color(state.colorArgb.toInt())
     val previewColor by animateColorAsState(
         targetValue = selectedColor,
@@ -82,7 +88,7 @@ fun CategoryEditorScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Dimens.paddingMedium),
+                    .padding(horizontal = Dimens.SpacingM),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IosNavigationTextButton(
@@ -104,7 +110,7 @@ fun CategoryEditorScreen(
                     enabled = state.canSave,
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.End,
-                    color = if (state.canSave) colors.secondary else colors.outlineVariant,
+                    color = if (state.canSave) colors.primary else colors.outlineVariant,
                 )
             }
 
@@ -112,22 +118,22 @@ fun CategoryEditorScreen(
                 modifier = Modifier
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = Dimens.paddingMedium),
+                    .padding(horizontal = Dimens.SpacingM),
             ) {
                 HeroPreview(
                     name = state.name,
                     icon = state.icon,
                     previewColor = previewColor,
                 )
-                SectionTitle(stringResource(R.string.category_editor_section_name))
+                SectionLabel(text = stringResource(R.string.category_editor_section_name))
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(Dimens.cornerRadiusList))
+                        .clip(shapes.medium)
                         .background(colors.surface)
                         .padding(
-                            horizontal = Dimens.paddingMedium,
-                            vertical = Dimens.categoryEditorFieldVertical
+                            horizontal = Dimens.SpacingM,
+                            vertical = Dimens.categoryEditorFieldVertical,
                         ),
                 ) {
                     if (state.name.isEmpty()) {
@@ -154,22 +160,19 @@ fun CategoryEditorScreen(
                     color = colors.onSurfaceVariant,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = Dimens.categoryEditorCounterTop, end = Dimens.paddingMicro),
+                        .padding(top = Dimens.categoryEditorCounterTop, end = Dimens.SpacingXxs),
                     textAlign = TextAlign.End,
                 )
 
                 Spacer(Modifier.height(Dimens.categoryEditorSectionGap))
-                SectionTitle(stringResource(R.string.category_editor_section_type))
-                Surface(
-                    shape = RoundedCornerShape(Dimens.cornerRadiusList),
-                    color = colors.surface
-                ) {
+                SectionLabel(text = stringResource(R.string.category_editor_section_type))
+                AppCard(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(
-                                horizontal = Dimens.paddingMedium,
-                                vertical = Dimens.spacingList
+                                horizontal = Dimens.SpacingM,
+                                vertical = Dimens.SpacingS,
                             ),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
@@ -182,7 +185,7 @@ fun CategoryEditorScreen(
                         Box(
                             modifier = Modifier
                                 .height(Dimens.categoryEditorMiniSegmentHeight)
-                                .clip(RoundedCornerShape(Dimens.cornerRadiusSegmentInner))
+                                .clip(RoundedCornerShape(Dimens.RadiusS))
                                 .background(colors.surfaceVariant)
                                 .padding(Dimens.categoryEditorMiniSegmentInset),
                         ) {
@@ -192,10 +195,10 @@ fun CategoryEditorScreen(
                                     Box(
                                         modifier = Modifier
                                             .height(Dimens.categoryEditorMiniSegmentItemHeight)
-                                            .clip(RoundedCornerShape(Dimens.paddingSmall - Dimens.paddingMicro))
+                                            .clip(RoundedCornerShape(Dimens.SpacingXs - Dimens.SpacingXxs))
                                             .background(if (selected) colors.surface else Color.Transparent)
                                             .clickable { viewModel.setType(type) }
-                                            .padding(horizontal = Dimens.spacingRow),
+                                            .padding(horizontal = Dimens.RadiusS),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Text(
@@ -216,17 +219,14 @@ fun CategoryEditorScreen(
                 }
 
                 Spacer(Modifier.height(Dimens.categoryEditorSectionGap))
-                SectionTitle(stringResource(R.string.category_editor_section_icon))
-                Surface(
-                    shape = RoundedCornerShape(Dimens.cornerRadiusList),
-                    color = colors.surface
-                ) {
+                SectionLabel(text = stringResource(R.string.category_editor_section_icon))
+                AppCard(modifier = Modifier.fillMaxWidth()) {
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(Dimens.spacingList),
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
-                        verticalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+                            .padding(Dimens.SpacingS),
+                        horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
                     ) {
                         state.availableEmojis.forEach { emoji ->
                             val isSelected = emoji == state.icon
@@ -234,13 +234,19 @@ fun CategoryEditorScreen(
                                 modifier = Modifier
                                     .size(Dimens.categoryEditorIconCell)
                                     .clip(CircleShape)
-                                    .background(if (isSelected) selectedColor.copy(alpha = 0.18f) else colors.surfaceVariant)
+                                    .background(
+                                        if (isSelected) selectedColor.copy(alpha = 0.18f) else colors.surfaceVariant,
+                                    )
                                     .then(
-                                        if (isSelected) Modifier.border(
-                                            Dimens.categoryEditorIconBorder,
-                                            selectedColor,
-                                            CircleShape
-                                        ) else Modifier,
+                                        if (isSelected) {
+                                            Modifier.border(
+                                                Dimens.categoryEditorIconBorder,
+                                                selectedColor,
+                                                CircleShape,
+                                            )
+                                        } else {
+                                            Modifier
+                                        },
                                     )
                                     .clickable { viewModel.setIcon(emoji) },
                                 contentAlignment = Alignment.Center,
@@ -255,20 +261,17 @@ fun CategoryEditorScreen(
                 }
 
                 Spacer(Modifier.height(Dimens.categoryEditorSectionGap))
-                SectionTitle(stringResource(R.string.category_editor_section_color))
-                Surface(
-                    shape = RoundedCornerShape(Dimens.cornerRadiusList),
-                    color = colors.surface
-                ) {
+                SectionLabel(text = stringResource(R.string.category_editor_section_color))
+                AppCard(modifier = Modifier.fillMaxWidth()) {
                     FlowRow(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(Dimens.paddingMedium),
+                            .padding(Dimens.SpacingM),
                         horizontalArrangement = Arrangement.spacedBy(
-                            Dimens.spacingRow,
-                            Alignment.CenterHorizontally
+                            Dimens.RadiusS,
+                            Alignment.CenterHorizontally,
                         ),
-                        verticalArrangement = Arrangement.spacedBy(Dimens.spacingRow),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.RadiusS),
                     ) {
                         categoryColors.forEach { colorValue ->
                             val color = Color(colorValue.toInt())
@@ -280,11 +283,15 @@ fun CategoryEditorScreen(
                                     .clip(CircleShape)
                                     .background(color)
                                     .then(
-                                        if (isSelected) Modifier.border(
-                                            Dimens.categoryEditorSwatchBorder,
-                                            colors.surface,
-                                            CircleShape
-                                        ) else Modifier,
+                                        if (isSelected) {
+                                            Modifier.border(
+                                                Dimens.categoryEditorSwatchBorder,
+                                                colors.surface,
+                                                CircleShape,
+                                            )
+                                        } else {
+                                            Modifier
+                                        },
                                     )
                                     .clickable { viewModel.setColor(colorValue) },
                                 contentAlignment = Alignment.Center,
@@ -301,21 +308,60 @@ fun CategoryEditorScreen(
                         }
                     }
                 }
-                Spacer(Modifier.height(Dimens.paddingMedium))
+                Spacer(Modifier.height(Dimens.SpacingM))
             }
 
-            IosPrimaryButton(
+            CategoryEditorSaveButton(
                 text = stringResource(R.string.save),
                 onClick = viewModel::save,
                 enabled = state.canSave,
                 loading = state.isSaving,
                 modifier = Modifier.padding(
-                    start = Dimens.paddingMedium,
-                    end = Dimens.paddingMedium,
+                    start = Dimens.SpacingM,
+                    end = Dimens.SpacingM,
                     bottom = Dimens.bottomSheetBottomPadding,
                 ),
             )
         }
+    }
+}
+
+@Composable
+private fun CategoryEditorSaveButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    loading: Boolean = false,
+) {
+    if (loading) {
+        val colors = MaterialTheme.colorScheme
+        Button(
+            onClick = onClick,
+            enabled = false,
+            modifier = modifier
+                .fillMaxWidth()
+                .height(Dimens.ButtonHeight),
+            shape = RoundedCornerShape(Dimens.RadiusL),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.primary,
+                contentColor = Color.White,
+            ),
+            elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp),
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(Dimens.IconSizeM),
+                strokeWidth = Dimens.borderThin + 1.5.dp,
+                color = Color.White,
+            )
+        }
+    } else {
+        PrimaryButton(
+            text = text,
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
+        )
     }
 }
 
@@ -325,10 +371,12 @@ private fun HeroPreview(
     icon: String,
     previewColor: Color,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = Dimens.spacingSection, bottom = Dimens.spacingSection),
+            .padding(top = Dimens.SpacingL, bottom = Dimens.SpacingL),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
@@ -340,25 +388,15 @@ private fun HeroPreview(
         ) {
             Text(
                 text = icon,
-                style = MaterialTheme.typography.displayMedium,
+                style = typography.displayMedium,
             )
         }
         Text(
             text = name.ifBlank { stringResource(R.string.category_editor_preview) },
-            style = MaterialTheme.typography.bodyLarge,
+            style = typography.bodyLarge,
             fontWeight = if (name.isNotBlank()) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (name.isNotBlank()) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant,
-            modifier = Modifier.padding(top = Dimens.spacingRow),
+            color = if (name.isNotBlank()) colors.onSurface else colors.outlineVariant,
+            modifier = Modifier.padding(top = Dimens.RadiusS),
         )
     }
-}
-
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        style = MaterialTheme.typography.labelSmall,
-        modifier = Modifier.padding(start = Dimens.paddingMicro, bottom = Dimens.paddingSmall),
-    )
 }

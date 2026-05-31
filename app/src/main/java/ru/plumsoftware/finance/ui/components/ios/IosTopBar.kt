@@ -36,7 +36,7 @@ fun IosTopBar(
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                         contentDescription = null,
-                        tint = colors.secondary,
+                        tint = colors.primary,
                     )
                 }
             }

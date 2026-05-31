@@ -1,5 +1,9 @@
 package ru.plumsoftware.finance.ui.components.ios
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,10 +17,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,8 +48,8 @@ fun IosSegmentedControl(
         label = "ios_segmented_offset",
     )
     val density = LocalDensity.current
-    val shape = RoundedCornerShape(Dimens.cornerRadiusSegment)
-    val activeShape = RoundedCornerShape(Dimens.cornerRadiusSegmentInner)
+    val shape = RoundedCornerShape(Dimens.RadiusS)
+    val activeShape = RoundedCornerShape(Dimens.SpacingXs)
 
     BoxWithConstraints(
         modifier = modifier
@@ -58,17 +58,17 @@ fun IosSegmentedControl(
             .clip(shape)
             .background(colors.outline),
     ) {
-        val innerWidth = maxWidth - Dimens.paddingMicro
+        val innerWidth = maxWidth - Dimens.SpacingXxs
         val segmentWidth = innerWidth / labels.size
         val indicatorOffsetPx = with(density) { (segmentWidth * animatedIndex).toPx() }
 
         Box(
             modifier = Modifier
-                .padding(Dimens.paddingMicro / 2)
+                .padding(Dimens.SpacingXxs / 2)
                 .offset { IntOffset(indicatorOffsetPx.roundToInt(), 0) }
                 .width(segmentWidth)
                 .height(Dimens.segmentedThumbHeight)
-                .shadow(elevation = Dimens.paddingMicro / 2, shape = activeShape, clip = false)
+                .shadow(elevation = Dimens.SpacingXxs / 2, shape = activeShape, clip = false)
                 .clip(activeShape)
                 .background(colors.surface),
         )
@@ -76,7 +76,7 @@ fun IosSegmentedControl(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Dimens.paddingMicro / 2),
+                .padding(Dimens.SpacingXxs / 2),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             labels.forEachIndexed { index, label ->

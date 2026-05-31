@@ -95,4 +95,19 @@ interface TransactionDao {
         endMillis: Long,
         limit: Int,
     ): List<CategorySpendingRow>
+
+    @Query(
+        """
+        SELECT categoryId, COALESCE(SUM(amountMinor), 0) AS amountMinor
+        FROM transactions
+        WHERE type = 'EXPENSE'
+        AND categoryId IS NOT NULL
+        AND dateMillis >= :startMillis AND dateMillis < :endMillis
+        GROUP BY categoryId
+        """,
+    )
+    fun observeExpenseByCategoryForPeriod(
+        startMillis: Long,
+        endMillis: Long,
+    ): Flow<List<CategorySpendingRow>>
 }

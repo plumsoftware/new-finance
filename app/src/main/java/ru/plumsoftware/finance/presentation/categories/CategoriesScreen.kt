@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
@@ -25,7 +24,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
@@ -40,7 +38,8 @@ import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.CategoryType
-import ru.plumsoftware.finance.ui.components.IosPrimaryButton
+import ru.plumsoftware.finance.ui.components.AppCard
+import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.components.ios.IosNavigationTextButton
 import ru.plumsoftware.finance.ui.components.ios.IosSegmentedControl
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
@@ -58,7 +57,6 @@ fun CategoriesScreen(
     val categories = if (state.selectedType == CategoryType.EXPENSE) state.expenseCategories else state.incomeCategories
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    val listCardShape = RoundedCornerShape(Dimens.cornerRadiusList)
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -68,8 +66,11 @@ fun CategoriesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(horizontal = Dimens.paddingMedium, vertical = Dimens.spacingRow),
-            verticalArrangement = Arrangement.spacedBy(Dimens.spacingList),
+            contentPadding = PaddingValues(
+                horizontal = Dimens.SpacingM,
+                vertical = Dimens.RadiusS,
+            ),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
         ) {
             item {
                 Row(
@@ -101,16 +102,19 @@ fun CategoriesScreen(
                     ),
                     selectedIndex = if (state.selectedType == CategoryType.EXPENSE) 0 else 1,
                     onSelectIndex = { viewModel.selectType(if (it == 0) CategoryType.EXPENSE else CategoryType.INCOME) },
-                    modifier = Modifier.padding(vertical = Dimens.spacingList),
+                    modifier = Modifier.padding(vertical = Dimens.SpacingS),
                 )
             }
             if (categories.isEmpty()) {
                 item {
-                    Surface(shape = listCardShape, color = colors.surface) {
+                    AppCard(modifier = Modifier.fillMaxWidth()) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = Dimens.paddingLarge, vertical = Dimens.paddingExtraLarge),
+                                .padding(
+                                    horizontal = Dimens.SpacingXl,
+                                    vertical = Dimens.SpacingXxl,
+                                ),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
@@ -120,7 +124,7 @@ fun CategoriesScreen(
                             Text(
                                 stringResource(R.string.categories_empty_title),
                                 style = typography.titleMedium,
-                                modifier = Modifier.padding(top = Dimens.spacingList),
+                                modifier = Modifier.padding(top = Dimens.SpacingS),
                             )
                             Text(
                                 text = if (state.selectedType == CategoryType.EXPENSE) {
@@ -131,33 +135,33 @@ fun CategoriesScreen(
                                 color = colors.onSurfaceVariant,
                                 style = typography.bodyMedium,
                                 textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(top = Dimens.paddingSmall),
+                                modifier = Modifier.padding(top = Dimens.SpacingXs),
                             )
-                            IosPrimaryButton(
+                            PrimaryButton(
                                 text = stringResource(R.string.categories_add_category),
                                 onClick = { onAdd(state.selectedType) },
-                                modifier = Modifier.padding(top = Dimens.paddingLarge),
+                                modifier = Modifier.padding(top = Dimens.SpacingXl),
                             )
                         }
                     }
                 }
             } else {
                 item {
-                    Surface(shape = listCardShape, color = colors.surface) {
-                        Column {
-                            categories.forEachIndexed { index, category ->
-                                CategoryListRow(
-                                    category = category,
-                                    onClick = { onEdit(category.id) },
-                                    onDelete = { viewModel.deleteCategory(category.id) },
+                    AppCard(modifier = Modifier.fillMaxWidth()) {
+                        categories.forEachIndexed { index, category ->
+                            CategoryListRow(
+                                category = category,
+                                onClick = { onEdit(category.id) },
+                                onDelete = { viewModel.deleteCategory(category.id) },
+                            )
+                            if (index != categories.lastIndex) {
+                                HorizontalDivider(
+                                    color = colors.outline,
+                                    thickness = Dimens.dividerThickness,
+                                    modifier = Modifier.padding(
+                                        start = Dimens.SpacingM + Dimens.avatarSize + Dimens.SpacingS,
+                                    ),
                                 )
-                                if (index != categories.lastIndex) {
-                                    HorizontalDivider(
-                                        color = colors.outline,
-                                        thickness = Dimens.dividerThickness,
-                                        modifier = Modifier.padding(start = Dimens.paddingMedium + Dimens.avatarSize + Dimens.spacingList),
-                                    )
-                                }
                             }
                         }
                     }
@@ -174,7 +178,9 @@ private fun CategoryListRow(
     onClick: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val defaultCategoryColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val defaultCategoryColor = colors.onSurfaceVariant
     val color = category.colorArgb?.let { Color(it.toInt()) } ?: defaultCategoryColor
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
@@ -195,13 +201,13 @@ private fun CategoryListRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(Dimens.categorySwipeCornerRadius))
-                    .background(MaterialTheme.colorScheme.error),
+                    .background(colors.error),
                 contentAlignment = Alignment.CenterEnd,
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = stringResource(R.string.cd_delete),
-                    tint = MaterialTheme.colorScheme.onError,
+                    tint = colors.onError,
                     modifier = Modifier.padding(end = Dimens.categorySwipeDeleteEndPadding),
                 )
             }
@@ -212,8 +218,11 @@ private fun CategoryListRow(
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
                 .clip(RoundedCornerShape(Dimens.categorySwipeCornerRadius))
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(horizontal = Dimens.paddingMedium, vertical = Dimens.categoryRowVerticalPadding),
+                .background(colors.surface)
+                .padding(
+                    horizontal = Dimens.SpacingM,
+                    vertical = Dimens.categoryRowVerticalPadding,
+                ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
@@ -222,22 +231,21 @@ private fun CategoryListRow(
                     .background(color.copy(alpha = 0.12f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = category.icon, style = MaterialTheme.typography.titleMedium)
+                Text(text = category.icon, style = typography.titleMedium)
             }
             Text(
                 text = category.name,
-                style = MaterialTheme.typography.bodyLarge,
+                style = typography.bodyLarge,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = Dimens.spacingList),
+                    .padding(horizontal = Dimens.SpacingS),
             )
             Icon(
                 imageVector = Icons.Outlined.DragHandle,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.outlineVariant,
+                tint = colors.outlineVariant,
                 modifier = Modifier.size(Dimens.dragIconSize),
             )
         }
     }
 }
-

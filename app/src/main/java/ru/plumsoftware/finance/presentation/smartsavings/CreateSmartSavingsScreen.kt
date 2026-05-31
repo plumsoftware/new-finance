@@ -39,15 +39,11 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -74,6 +70,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
+import ru.plumsoftware.finance.ui.components.AppCard
+import ru.plumsoftware.finance.ui.components.IosPrimaryButton
+import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.components.ios.IosAlertDialog
 import ru.plumsoftware.finance.ui.components.ios.IosSwitch
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
@@ -106,7 +105,6 @@ fun CreateSmartSavingsScreen(
     val onCreatedUpdated by rememberUpdatedState(onCreated)
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    val formCardShape = RoundedCornerShape(Dimens.cornerRadiusList)
     val canSave = state.name.isNotBlank() &&
         MoneyFormat.majorDigitsToMinor(state.purchaseDigits, state.currencyCode) > 0L
     val showNumPad = activeField != null
@@ -192,17 +190,11 @@ fun CreateSmartSavingsScreen(
                     .padding(horizontal = Dimens.formHorizontalInset),
             ) {
                 Spacer(Modifier.height(Dimens.headerContentGap))
-                SectionTitle(
+                FormSectionLabel(
                     text = stringResource(R.string.smart_section_main),
-                    onClick = if (showNumPad) dismissNumPad else null,
+                    onDismissNumPad = if (showNumPad) dismissNumPad else null,
                 )
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = formCardShape,
-                    color = colors.surface,
-                    shadowElevation = 0.dp,
-                    tonalElevation = 0.dp,
-                ) {
+                AppCard(modifier = Modifier.fillMaxWidth()) {
                     Column {
                         IosFormTextField(
                             label = stringResource(R.string.smart_name),
@@ -227,9 +219,9 @@ fun CreateSmartSavingsScreen(
                         .height(Dimens.sectionGapLarge)
                         .then(dismissTapModifier),
                 )
-                SectionTitle(
+                FormSectionLabel(
                     text = stringResource(R.string.smart_section_icon),
-                    onClick = if (showNumPad) dismissNumPad else null,
+                    onDismissNumPad = if (showNumPad) dismissNumPad else null,
                 )
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
@@ -252,17 +244,11 @@ fun CreateSmartSavingsScreen(
                         .height(Dimens.sectionGapLarge)
                         .then(dismissTapModifier),
                 )
-                SectionTitle(
+                FormSectionLabel(
                     text = stringResource(R.string.smart_section_finance),
-                    onClick = if (showNumPad) dismissNumPad else null,
+                    onDismissNumPad = if (showNumPad) dismissNumPad else null,
                 )
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = formCardShape,
-                    color = colors.surface,
-                    shadowElevation = 0.dp,
-                    tonalElevation = 0.dp,
-                ) {
+                AppCard(modifier = Modifier.fillMaxWidth()) {
                     Column {
                         IosAmountSelectorRow(
                             label = stringResource(R.string.smart_purchase_cost_label),
@@ -301,17 +287,11 @@ fun CreateSmartSavingsScreen(
                         .height(Dimens.sectionGapLarge)
                         .then(dismissTapModifier),
                 )
-                SectionTitle(
+                FormSectionLabel(
                     text = stringResource(R.string.smart_section_settings),
-                    onClick = if (showNumPad) dismissNumPad else null,
+                    onDismissNumPad = if (showNumPad) dismissNumPad else null,
                 )
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = formCardShape,
-                    color = colors.surface,
-                    shadowElevation = 0.dp,
-                    tonalElevation = 0.dp,
-                ) {
+                AppCard(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -412,7 +392,7 @@ fun CreateSmartSavingsScreen(
                     Spacer(Modifier.height(Dimens.spacingList))
                 }
             }
-            CreateAssetPrimaryButton(
+            IosPrimaryButton(
                 text = if (state.isEditMode) stringResource(R.string.save) else stringResource(R.string.create),
                 onClick = {
                     dismissNumPad()
@@ -420,7 +400,8 @@ fun CreateSmartSavingsScreen(
                 },
                 loading = state.isSaving,
                 enabled = canSave,
-                modifier = Modifier.padding(horizontal = Dimens.paddingMedium),
+                color = colors.secondary,
+                modifier = Modifier.padding(horizontal = Dimens.SpacingM),
             )
             Spacer(
                 Modifier
@@ -468,7 +449,7 @@ private fun CreateAssetTopBar(
             text = actionLabel,
             onClick = onAction,
             enabled = actionEnabled,
-            color = if (actionEnabled) colors.secondary else colors.secondary.copy(alpha = 0.3f),
+            color = if (actionEnabled) colors.primary else colors.primary.copy(alpha = 0.3f),
             style = typography.bodyLarge.copy(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 17.sp,
@@ -480,29 +461,22 @@ private fun CreateAssetTopBar(
 }
 
 @Composable
-private fun SectionTitle(
+private fun FormSectionLabel(
     text: String,
-    onClick: (() -> Unit)? = null,
+    onDismissNumPad: (() -> Unit)?,
 ) {
-    val colors = MaterialTheme.colorScheme
-    val interactionSource = remember { MutableInteractionSource() }
-    Text(
-        text = text.uppercase(),
-        style = ExtendedTypography.sectionLabel,
-        color = colors.onSurfaceVariant,
-        modifier = Modifier
-            .padding(bottom = Dimens.paddingSmall)
-            .then(
-                if (onClick != null) {
-                    Modifier.clickable(
-                        indication = null,
-                        interactionSource = interactionSource,
-                        onClick = onClick,
-                    )
-                } else {
-                    Modifier
-                },
-            ),
+    val dismissModifier = if (onDismissNumPad != null) {
+        Modifier.clickable(
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() },
+            onClick = onDismissNumPad,
+        )
+    } else {
+        Modifier
+    }
+    SectionLabel(
+        text = text,
+        modifier = dismissModifier.padding(bottom = Dimens.SpacingXs),
     )
 }
 
@@ -556,7 +530,7 @@ private fun IosFormTextField(
                     color = colors.onSurface,
                     textAlign = TextAlign.End,
                 ),
-                cursorBrush = SolidColor(colors.tertiary),
+                cursorBrush = SolidColor(colors.secondary),
                 modifier = Modifier
                     .fillMaxWidth()
                     .onFocusChanged { focusState ->
@@ -590,7 +564,7 @@ private fun CreateAssetIconCell(
             .size(Dimens.iconPickerCellSize)
             .scale(scale)
             .clip(cellShape)
-            .background(if (selected) colors.tertiary else colors.outline)
+            .background(if (selected) colors.secondary else colors.outline)
             .clickable(onClick = onClick),
     ) {
         Text(
@@ -613,7 +587,7 @@ private fun IosAmountSelectorRow(
     val typography = MaterialTheme.typography
     val hasValue = MoneyFormat.majorDigitsToMinor(digits, currencyCode) > 0L
     val valueColor = when {
-        hasValue -> colors.tertiary
+        hasValue -> colors.secondary
         else -> colors.onSurfaceVariant
     }
     Row(
@@ -642,7 +616,7 @@ private fun IosAmountSelectorRow(
                         .padding(top = Dimens.paddingMicro)
                         .height(Dimens.borderThin)
                         .width(Dimens.iconSizeStandard)
-                        .background(colors.tertiary),
+                        .background(colors.secondary),
                 )
             }
         }
@@ -780,68 +754,3 @@ private fun CreateAssetNumPadKey(
     }
 }
 
-@Composable
-private fun CreateAssetPrimaryButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    loading: Boolean = false,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val pressScale by animateFloatAsState(
-        targetValue = if (isPressed && enabled && !loading) 0.97f else 1f,
-        animationSpec = if (isPressed) {
-            tween(durationMillis = 80)
-        } else {
-            spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessMedium,
-            )
-        },
-        label = "create_asset_button_scale",
-    )
-    val shape = RoundedCornerShape(Dimens.cornerRadiusList)
-    Button(
-        onClick = onClick,
-        enabled = enabled && !loading,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(Dimens.createActionHeight)
-            .scale(pressScale),
-        shape = shape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = colors.tertiary,
-            contentColor = colors.onSecondary,
-            disabledContainerColor = colors.tertiary.copy(alpha = 0.25f),
-            disabledContentColor = colors.tertiary.copy(alpha = 0.6f),
-        ),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 0.dp,
-            pressedElevation = 0.dp,
-            disabledElevation = 0.dp,
-            focusedElevation = 0.dp,
-            hoveredElevation = 0.dp,
-        ),
-        interactionSource = interactionSource,
-    ) {
-        if (loading) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(Dimens.iconSizeStandard),
-                strokeWidth = Dimens.borderThin + 1.5.dp,
-                color = colors.onSecondary,
-            )
-        } else {
-            Text(
-                text = text,
-                style = typography.bodyLarge.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 17.sp,
-                ),
-            )
-        }
-    }
-}

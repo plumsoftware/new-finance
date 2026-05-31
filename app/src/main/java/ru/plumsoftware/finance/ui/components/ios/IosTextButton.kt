@@ -34,12 +34,12 @@ fun IosTextButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    color: Color = MaterialTheme.colorScheme.secondary,
+    color: Color = MaterialTheme.colorScheme.primary,
     style: TextStyle = MaterialTheme.typography.bodyLarge,
     textAlign: TextAlign? = null,
     contentPadding: PaddingValues = PaddingValues(
-        horizontal = Dimens.paddingSmall,
-        vertical = Dimens.paddingMicro,
+        horizontal = Dimens.SpacingXs,
+        vertical = Dimens.SpacingXxs,
     ),
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -97,18 +97,18 @@ fun IosNavigationTextButton(
                 indication = null,
                 onClick = onClick,
             )
-            .padding(vertical = Dimens.paddingMicro),
+            .padding(vertical = Dimens.SpacingXxs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = colors.secondary,
+            tint = colors.primary,
             modifier = Modifier.size(Dimens.iconSizeNav),
         )
         Text(
             text = text,
-            color = colors.secondary,
+            color = colors.primary,
             style = typography.bodyLarge,
         )
     }

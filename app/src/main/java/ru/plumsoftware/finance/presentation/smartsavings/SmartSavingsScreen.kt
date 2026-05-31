@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
@@ -30,7 +29,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,11 +45,13 @@ import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.SmartAssetStatus
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
+import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
+import ru.plumsoftware.finance.ui.components.MascotEmptyState
+import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.components.ios.IosTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.MascotAssets
-import ru.plumsoftware.finance.ui.components.MascotEmptyState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,8 +68,6 @@ fun SmartSavingsScreen(
     val snackbarHost = remember { SnackbarHostState() }
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    val listCardShape = RoundedCornerShape(Dimens.cornerRadiusList)
-
     LaunchedEffect(snackbarMessage) {
         snackbarMessage?.let {
             snackbarHost.showSnackbar(it)
@@ -90,8 +88,8 @@ fun SmartSavingsScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onCreateClick,
-                containerColor = colors.secondary,
-                contentColor = colors.onSecondary,
+                containerColor = colors.primary,
+                contentColor = colors.onPrimary,
                 modifier = Modifier.size(Dimens.fabSize),
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_asset))
@@ -103,22 +101,20 @@ fun SmartSavingsScreen(
                 .fillMaxSize()
                 .padding(padding),
             contentPadding = PaddingValues(
-                start = Dimens.paddingMedium,
-                end = Dimens.paddingMedium,
-                top = Dimens.paddingMicro,
-                bottom = Dimens.paddingMicro,
+                start = Dimens.SpacingM,
+                end = Dimens.SpacingM,
+                top = Dimens.SpacingXxs,
+                bottom = Dimens.SpacingXxs,
             ),
-            verticalArrangement = Arrangement.spacedBy(Dimens.paddingMedium),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
         ) {
             item {
                 HeroCard(totalSaved = MoneyFormat.format(state.totalSavedMinor, state.currencyCode))
             }
             item {
-                Text(
+                SectionLabel(
                     text = stringResource(R.string.smart_my_assets),
-                    style = typography.labelSmall,
-                    color = colors.onSurfaceVariant,
-                    modifier = Modifier.padding(start = Dimens.paddingMicro, top = Dimens.paddingMicro + 2.dp),
+                    modifier = Modifier.padding(top = Dimens.SpacingXxs),
                 )
             }
 
@@ -127,7 +123,7 @@ fun SmartSavingsScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = Dimens.paddingExtraLarge + 12.dp),
+                            .padding(top = Dimens.SpacingXxl + Dimens.SpacingS),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         MascotEmptyState(
@@ -135,11 +131,11 @@ fun SmartSavingsScreen(
                             title = stringResource(R.string.smart_empty_assets_title),
                             subtitle = stringResource(R.string.smart_empty_assets_subtitle),
                         )
-                        Spacer(Modifier.height(Dimens.paddingLarge))
+                        Spacer(Modifier.height(Dimens.SpacingXl))
                         IosPrimaryButton(
                             text = stringResource(R.string.smart_add_asset),
                             onClick = onCreateClick,
-                            modifier = Modifier.padding(horizontal = Dimens.spacingList),
+                            modifier = Modifier.padding(horizontal = Dimens.SpacingS),
                         )
                     }
                 }
@@ -149,7 +145,6 @@ fun SmartSavingsScreen(
                         asset = asset,
                         currencyCode = state.currencyCode,
                         onClick = { onAssetClick(asset.id) },
-                        listCardShape = listCardShape,
                     )
                 }
             }
@@ -161,16 +156,10 @@ fun SmartSavingsScreen(
 private fun HeroCard(totalSaved: String) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    val shapes = MaterialTheme.shapes
-    Surface(
-        shape = shapes.medium,
-        color = colors.surface,
-        shadowElevation = Dimens.elevationCard,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
+    AppCard(modifier = Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier.padding(Dimens.paddingLarge - 4.dp),
-            verticalArrangement = Arrangement.spacedBy(Dimens.spacingList),
+            modifier = Modifier.padding(Dimens.SpacingXl),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
         ) {
             Text(
                 text = stringResource(R.string.smart_total_saved_header),
@@ -180,7 +169,7 @@ private fun HeroCard(totalSaved: String) {
             Text(
                 text = "+$totalSaved",
                 style = typography.headlineSmall,
-                color = colors.tertiary,
+                color = colors.secondary,
             )
             HorizontalDivider(color = colors.outline, thickness = Dimens.dividerThickness)
             Text(
@@ -197,15 +186,12 @@ private fun SmartAssetRow(
     asset: SmartAsset,
     currencyCode: String,
     onClick: () -> Unit,
-    listCardShape: RoundedCornerShape,
 ) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     val progress = asset.paybackProgress.coerceIn(0f, 1f)
     val isProfit = asset.status == SmartAssetStatus.PROFIT
-    Surface(
-        shape = listCardShape,
-        color = colors.surface,
+    AppCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
@@ -213,7 +199,7 @@ private fun SmartAssetRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Dimens.paddingMedium),
+                .padding(Dimens.SpacingM),
             verticalAlignment = Alignment.Top,
         ) {
             Box(
@@ -224,7 +210,7 @@ private fun SmartAssetRow(
             ) {
                 Text(text = asset.icon, style = typography.headlineMedium)
             }
-            Spacer(Modifier.width(Dimens.spacingList))
+            Spacer(Modifier.width(Dimens.SpacingS))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     asset.name,
@@ -238,20 +224,23 @@ private fun SmartAssetRow(
                         MoneyFormat.format(asset.purchaseCostMinor, currencyCode),
                     ),
                     style = typography.labelMedium,
-                    color = colors.tertiary,
+                    color = colors.secondary,
                     modifier = Modifier.padding(top = 2.dp),
                 )
-                Spacer(Modifier.height(Dimens.spacingRow))
+                Spacer(Modifier.height(Dimens.RadiusS))
                 if (isProfit) {
                     Box(
                         modifier = Modifier
-                            .background(colors.tertiary.copy(alpha = 0.12f), RoundedCornerShape(Dimens.cornerRadiusSegment))
-                            .padding(horizontal = Dimens.spacingRow, vertical = Dimens.paddingMicro),
+                            .background(
+                                colors.secondary.copy(alpha = 0.12f),
+                                MaterialTheme.shapes.extraSmall,
+                            )
+                            .padding(horizontal = Dimens.RadiusS, vertical = Dimens.SpacingXxs),
                     ) {
                         Text(
                             stringResource(R.string.smart_paid_off_badge),
                             style = typography.labelSmall,
-                            color = colors.tertiary,
+                            color = colors.secondary,
                         )
                     }
                 } else {
@@ -260,7 +249,7 @@ private fun SmartAssetRow(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(Dimens.progressHeightThin + 1.dp),
-                        color = colors.secondary,
+                        color = colors.primary,
                         trackColor = colors.outline,
                         strokeCap = StrokeCap.Round,
                     )
@@ -268,7 +257,7 @@ private fun SmartAssetRow(
                         text = stringResource(R.string.percent_short, (progress * 100).toInt()),
                         style = typography.labelSmall,
                         color = colors.onSurfaceVariant,
-                        modifier = Modifier.padding(top = Dimens.paddingMicro),
+                        modifier = Modifier.padding(top = Dimens.SpacingXxs),
                     )
                 }
             }

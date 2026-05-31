@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,14 +26,17 @@ fun IosChip(
     Surface(
         onClick = onClick,
         modifier = modifier,
-        shape = MaterialTheme.shapes.small,
-        color = if (selected) colors.secondary.copy(alpha = 0.14f) else colors.surface,
+        shape = RoundedCornerShape(Dimens.RadiusM),
+        color = if (selected) colors.primary.copy(alpha = 0.14f) else colors.surface,
     ) {
         Text(
             text = text,
-            modifier = Modifier.padding(horizontal = Dimens.spacingRow + 4.dp, vertical = Dimens.spacingRow),
+            modifier = Modifier.padding(
+                horizontal = Dimens.RadiusS + 4.dp,
+                vertical = Dimens.RadiusS,
+            ),
             style = typography.bodyMedium,
-            color = if (selected) colors.secondary else colors.onSurfaceVariant,
+            color = if (selected) colors.primary else colors.onSurfaceVariant,
         )
     }
 }
@@ -47,8 +51,8 @@ fun IosChipRow(
     Row(
         modifier = modifier
             .horizontalScroll(rememberScrollState())
-            .padding(vertical = Dimens.paddingMicro),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+            .padding(vertical = Dimens.SpacingXxs),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
     ) {
         items.forEach { item ->
             IosChip(

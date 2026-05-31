@@ -11,6 +11,7 @@ import org.koin.core.context.startKoin
 import ru.plumsoftware.finance.BuildConfig
 import ru.plumsoftware.finance.data.firebase.InAppMessagingHandler
 import ru.plumsoftware.finance.data.firebase.NotificationDisplayHelper
+import ru.plumsoftware.finance.data.work.RecurringTransactionWorker
 import ru.plumsoftware.finance.di.dataModule
 import ru.plumsoftware.finance.di.presentationModule
 import ru.plumsoftware.finance.domain.repository.PushMessagingRepository
@@ -34,5 +35,7 @@ class FinanceApplication : Application() {
                 getKoin().get<PushMessagingRepository>().refreshFcmToken()
             }
         }
+
+        RecurringTransactionWorker.schedule(this)
     }
 }

@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.ArrowBackIosNew
@@ -35,7 +34,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -57,8 +55,10 @@ import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.SmartAssetStatus
 import ru.plumsoftware.finance.domain.model.SmartAssetUsage
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
+import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.FinanceNumPad
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
+import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.components.ios.IosAlertDialog
 import ru.plumsoftware.finance.ui.components.ios.IosNavigationTextButton
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
@@ -81,8 +81,6 @@ fun SmartSavingsDetailScreen(
     var showDeleteSheet by remember { mutableStateOf(false) }
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    val listCardShape = RoundedCornerShape(Dimens.cornerRadiusList)
-
     state.errorMessage?.let { msg ->
         IosAlertDialog(message = msg, onDismiss = viewModel::clearError)
     }
@@ -98,7 +96,7 @@ fun SmartSavingsDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Dimens.paddingLarge - 4.dp)
+                    .padding(horizontal = Dimens.SpacingXl - 4.dp)
                     .padding(bottom = Dimens.bottomSheetBottomPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -106,7 +104,7 @@ fun SmartSavingsDetailScreen(
                     Modifier
                         .width(Dimens.bottomSheetHandleWidth)
                         .height(Dimens.bottomSheetHandleHeight)
-                        .background(colors.outlineVariant, RoundedCornerShape(Dimens.cornerRadiusHandle)),
+                        .background(colors.outlineVariant, MaterialTheme.shapes.extraSmall),
                 )
                 Spacer(Modifier.height(Dimens.spacingRow))
                 Text(
@@ -118,7 +116,7 @@ fun SmartSavingsDetailScreen(
                     Text(
                         text = MoneyFormat.formatEntryDisplay(state.amountDigits, state.currencyCode),
                         style = typography.displayMedium,
-                        color = colors.tertiary,
+                        color = colors.secondary,
                         modifier = Modifier.clickable { isNumPadVisible = true },
                     )
                     val cursorAlpha by rememberInfiniteTransition(label = "cursor").animateFloat(
@@ -133,7 +131,7 @@ fun SmartSavingsDetailScreen(
                     Text(
                         text = stringResource(R.string.pipe_separator),
                         style = typography.displayLarge,
-                        color = colors.tertiary,
+                        color = colors.secondary,
                         modifier = Modifier.alpha(cursorAlpha),
                     )
                 }
@@ -141,7 +139,7 @@ fun SmartSavingsDetailScreen(
                     text = stringResource(R.string.smart_default_saving_hint),
                     style = typography.bodySmall,
                     color = colors.onSurfaceVariant,
-                    modifier = Modifier.padding(top = Dimens.paddingMicro + 2.dp, bottom = Dimens.paddingMedium),
+                    modifier = Modifier.padding(top = Dimens.SpacingXxs + 2.dp, bottom = Dimens.SpacingM),
                     textAlign = TextAlign.Center,
                 )
                 if (isNumPadVisible) {
@@ -172,7 +170,7 @@ fun SmartSavingsDetailScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Dimens.paddingLarge - 4.dp, vertical = Dimens.paddingSmall),
+                    .padding(horizontal = Dimens.SpacingXl - 4.dp, vertical = Dimens.SpacingXs),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
@@ -181,7 +179,7 @@ fun SmartSavingsDetailScreen(
                     color = colors.onSurface,
                     textAlign = TextAlign.Center,
                 )
-                Spacer(Modifier.height(Dimens.paddingLarge - 6.dp))
+                Spacer(Modifier.height(Dimens.SpacingXl - 6.dp))
                 IosTextButton(
                     text = stringResource(R.string.cancel),
                     onClick = { showDeleteSheet = false },
@@ -204,7 +202,7 @@ fun SmartSavingsDetailScreen(
                         vertical = Dimens.spacingList,
                     ),
                 )
-                Spacer(Modifier.height(Dimens.paddingLarge - 6.dp))
+                Spacer(Modifier.height(Dimens.SpacingXl - 6.dp))
             }
         }
     }
@@ -216,7 +214,7 @@ fun SmartSavingsDetailScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Dimens.paddingSmall, vertical = Dimens.spacingRow),
+                    .padding(horizontal = Dimens.SpacingXs, vertical = Dimens.RadiusS),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IosNavigationTextButton(
@@ -238,7 +236,7 @@ fun SmartSavingsDetailScreen(
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = stringResource(R.string.cd_edit),
-                            tint = colors.secondary,
+                            tint = colors.primary,
                             modifier = Modifier.size(Dimens.iconSizeSmall + 2.dp),
                         )
                     }
@@ -251,7 +249,7 @@ fun SmartSavingsDetailScreen(
                 text = stringResource(R.string.smart_asset_not_found),
                 modifier = Modifier
                     .padding(padding)
-                    .padding(Dimens.paddingLarge - 4.dp),
+                    .padding(Dimens.SpacingXl - 4.dp),
                 style = typography.bodyLarge,
             )
             return@Scaffold
@@ -267,8 +265,8 @@ fun SmartSavingsDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(horizontal = Dimens.paddingMedium, vertical = Dimens.spacingRow),
-            verticalArrangement = Arrangement.spacedBy(Dimens.spacingList),
+            contentPadding = PaddingValues(horizontal = Dimens.SpacingM, vertical = Dimens.RadiusS),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
         ) {
             item {
                 Column(
@@ -278,7 +276,7 @@ fun SmartSavingsDetailScreen(
                     Box(
                         modifier = Modifier
                             .size(Dimens.avatarSizeLarge)
-                            .background(colors.secondary.copy(alpha = 0.12f), CircleShape),
+                            .background(colors.primary.copy(alpha = 0.12f), CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(asset.icon, style = typography.displayMedium)
@@ -292,8 +290,8 @@ fun SmartSavingsDetailScreen(
                     Text(
                         text = "+${MoneyFormat.format(asset.totalSavedMinor, state.currencyCode)}",
                         style = typography.headlineSmall,
-                        color = colors.tertiary,
-                        modifier = Modifier.padding(top = Dimens.paddingMicro),
+                        color = colors.secondary,
+                        modifier = Modifier.padding(top = Dimens.SpacingXxs),
                     )
                     Text(
                         text = stringResource(R.string.smart_total_saved_label),
@@ -303,12 +301,8 @@ fun SmartSavingsDetailScreen(
                 }
             }
             item {
-                Surface(
-                    shape = listCardShape,
-                    color = colors.surface,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Column(Modifier.padding(Dimens.paddingMedium)) {
+                AppCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(Dimens.SpacingM)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(
                                 stringResource(R.string.smart_payback_label),
@@ -318,16 +312,16 @@ fun SmartSavingsDetailScreen(
                             Text(
                                 stringResource(R.string.percent_short, (animatedProgress * 100).toInt()),
                                 style = typography.bodyMedium,
-                                color = if (asset.status == SmartAssetStatus.PROFIT) colors.tertiary else colors.secondary,
+                                color = if (asset.status == SmartAssetStatus.PROFIT) colors.secondary else colors.primary,
                             )
                         }
                         LinearProgressIndicator(
                             progress = { animatedProgress },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = Dimens.paddingSmall)
+                                .padding(top = Dimens.SpacingXs)
                                 .height(Dimens.progressHeight),
-                            color = if (asset.status == SmartAssetStatus.PROFIT) colors.tertiary else colors.secondary,
+                            color = if (asset.status == SmartAssetStatus.PROFIT) colors.secondary else colors.primary,
                             trackColor = colors.outline,
                             strokeCap = StrokeCap.Round,
                         )
@@ -344,8 +338,8 @@ fun SmartSavingsDetailScreen(
                                 )
                             },
                             style = typography.bodySmall,
-                            color = if (asset.status == SmartAssetStatus.PROFIT) colors.tertiary else colors.onSurfaceVariant,
-                            modifier = Modifier.padding(top = Dimens.paddingSmall),
+                            color = if (asset.status == SmartAssetStatus.PROFIT) colors.secondary else colors.onSurfaceVariant,
+                            modifier = Modifier.padding(top = Dimens.SpacingXs),
                         )
                     }
                 }
@@ -353,21 +347,19 @@ fun SmartSavingsDetailScreen(
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.spacingList),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
                 ) {
                     StatCell(
                         label = stringResource(R.string.smart_purchase_cost_label),
                         value = MoneyFormat.format(asset.purchaseCostMinor, state.currencyCode),
                         valueColor = colors.onSurface,
                         modifier = Modifier.weight(1f),
-                        listCardShape = listCardShape,
                     )
                     StatCell(
                         label = stringResource(R.string.smart_saving_per_use),
                         value = MoneyFormat.format(asset.alternativeCostMinor, state.currencyCode),
-                        valueColor = colors.tertiary,
+                        valueColor = colors.secondary,
                         modifier = Modifier.weight(1f),
-                        listCardShape = listCardShape,
                     )
                 }
             }
@@ -379,19 +371,10 @@ fun SmartSavingsDetailScreen(
                 )
             }
             item {
-                Text(
-                    text = stringResource(R.string.smart_history_section),
-                    style = typography.labelSmall,
-                    color = colors.onSurfaceVariant,
-                    modifier = Modifier.padding(start = Dimens.paddingMicro, top = Dimens.paddingMicro),
-                )
+                SectionLabel(text = stringResource(R.string.smart_history_section))
             }
             item {
-                Surface(
-                    shape = listCardShape,
-                    color = colors.surface,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
+                AppCard(modifier = Modifier.fillMaxWidth()) {
                     if (state.usages.isEmpty()) {
                         Text(
                             text = stringResource(R.string.smart_history_empty_short),
@@ -399,7 +382,7 @@ fun SmartSavingsDetailScreen(
                             color = colors.onSurfaceVariant,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(Dimens.paddingLarge),
+                                .padding(Dimens.SpacingXl),
                             textAlign = TextAlign.Center,
                         )
                     } else {
@@ -410,7 +393,7 @@ fun SmartSavingsDetailScreen(
                                     HorizontalDivider(
                                         color = colors.outline,
                                         thickness = Dimens.dividerThickness,
-                                        modifier = Modifier.padding(start = Dimens.spacingRow + 4.dp),
+                                        modifier = Modifier.padding(start = Dimens.RadiusS + 4.dp),
                                     )
                                 }
                             }
@@ -426,7 +409,7 @@ fun SmartSavingsDetailScreen(
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        top = Dimens.paddingMedium,
+                        top = Dimens.SpacingM,
                         bottom = Dimens.bottomSheetBottomPadding,
                     ),
                 )
@@ -441,22 +424,17 @@ private fun StatCell(
     value: String,
     valueColor: androidx.compose.ui.graphics.Color,
     modifier: Modifier = Modifier,
-    listCardShape: RoundedCornerShape,
 ) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    Surface(
-        shape = listCardShape,
-        color = colors.surface,
-        modifier = modifier,
-    ) {
-        Column(Modifier.padding(Dimens.spacingRow + 4.dp)) {
+    AppCard(modifier = modifier) {
+        Column(Modifier.padding(Dimens.RadiusS + 4.dp)) {
             Text(label, style = typography.labelSmall, color = colors.onSurfaceVariant)
             Text(
                 value,
                 style = typography.titleMedium,
                 color = valueColor,
-                modifier = Modifier.padding(top = Dimens.paddingMicro),
+                modifier = Modifier.padding(top = Dimens.SpacingXxs),
             )
         }
     }
@@ -470,14 +448,14 @@ private fun UsageRow(usage: SmartAssetUsage, currencyCode: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Dimens.spacingRow + 4.dp, vertical = Dimens.spacingRow + 4.dp),
+            .padding(horizontal = Dimens.RadiusS + 4.dp, vertical = Dimens.RadiusS + 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(text = date, style = typography.bodyMedium, color = colors.onSurfaceVariant)
         Text(
             text = "+${MoneyFormat.format(usage.savedAmountMinor, currencyCode)}",
-            color = colors.tertiary,
+            color = colors.secondary,
             style = typography.bodyMedium,
         )
     }

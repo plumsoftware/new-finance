@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import ru.plumsoftware.finance.ui.theme.Dimens
 
 @Composable
@@ -28,8 +29,8 @@ fun IosThemePicker(
     val typography = MaterialTheme.typography
     val safeIndex = selectedIndex.coerceIn(0, labels.lastIndex.coerceAtLeast(0))
     val trackColor = colors.surfaceVariant
-    val shape = RoundedCornerShape(Dimens.cornerRadiusSegment)
-    val innerShape = RoundedCornerShape(Dimens.cornerRadiusSegmentInner)
+    val shape = RoundedCornerShape(Dimens.RadiusS)
+    val innerShape = RoundedCornerShape(Dimens.SpacingXs)
 
     Box(
         modifier = modifier
@@ -41,7 +42,7 @@ fun IosThemePicker(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(Dimens.paddingMicro / 2),
+                .padding(Dimens.SpacingXxs / 2),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             labels.forEachIndexed { index, label ->
@@ -52,8 +53,8 @@ fun IosThemePicker(
                         .height(Dimens.segmentedThumbHeight)
                         .clip(innerShape)
                         .background(
-                            if (isSelected) colors.secondary.copy(alpha = 0.2f)
-                            else androidx.compose.ui.graphics.Color.Transparent,
+                            if (isSelected) colors.primary.copy(alpha = 0.2f)
+                            else Color.Transparent,
                         )
                         .clickable(
                             interactionSource = MutableInteractionSource(),
@@ -65,7 +66,7 @@ fun IosThemePicker(
                         text = label,
                         style = typography.bodyMedium,
                         color = if (isSelected) {
-                            colors.secondary
+                            colors.primary
                         } else {
                             colors.onSurfaceVariant
                         },

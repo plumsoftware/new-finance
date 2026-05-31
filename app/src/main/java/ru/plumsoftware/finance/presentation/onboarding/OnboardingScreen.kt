@@ -6,11 +6,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -21,8 +27,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
@@ -33,7 +41,7 @@ import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingMasc
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingPageIndicator
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingSmartSavingsIllustration
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingWelcomeIllustration
-import ru.plumsoftware.finance.ui.components.IosPrimaryButton
+import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
 
@@ -73,19 +81,20 @@ fun OnboardingScreen(
     val uiState by viewModel.uiState.collectAsState()
     val pagerState = rememberPagerState(pageCount = { onboardingPages.size })
     val scope = rememberCoroutineScope()
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
 
     val isLastPage = uiState.currentPage == onboardingPages.lastIndex
-    val colors = MaterialTheme.colorScheme
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = colors.background,
         topBar = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
-                    .padding(horizontal = Dimens.paddingSmall),
+                    .padding(horizontal = Dimens.SpacingXs),
             ) {
                 IosTextButton(
                     text = stringResource(R.string.onboarding_skip),
@@ -104,7 +113,7 @@ fun OnboardingScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .navigationBarsPadding()
-                .padding(horizontal = Dimens.paddingLarge),
+                .padding(horizontal = Dimens.SpacingXl),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             HorizontalPager(
@@ -124,14 +133,14 @@ fun OnboardingScreen(
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Dimens.paddingLarge),
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXl),
             ) {
                 OnboardingPageIndicator(
                     pageCount = onboardingPages.size,
                     currentPage = uiState.currentPage,
                 )
 
-                IosPrimaryButton(
+                OnboardingPrimaryButton(
                     text = stringResource(
                         if (isLastPage) R.string.onboarding_start else R.string.onboarding_next,
                     ),
@@ -157,13 +166,53 @@ fun OnboardingScreen(
 }
 
 @Composable
+private fun OnboardingPrimaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    loading: Boolean = false,
+) {
+    if (loading) {
+        val colors = MaterialTheme.colorScheme
+        Button(
+            onClick = onClick,
+            enabled = false,
+            modifier = modifier
+                .fillMaxWidth()
+                .height(Dimens.ButtonHeight),
+            shape = RoundedCornerShape(Dimens.RadiusL),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.primary,
+                contentColor = Color.White,
+            ),
+            elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp),
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(Dimens.IconSizeM),
+                strokeWidth = Dimens.borderThin + 1.5.dp,
+                color = Color.White,
+            )
+        }
+    } else {
+        PrimaryButton(
+            text = text,
+            onClick = onClick,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
 private fun OnboardingPageContent(
     page: OnboardingPage,
     modifier: Modifier = Modifier,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+
     Column(
-        modifier = modifier.padding(top = Dimens.paddingMedium),
-        verticalArrangement = Arrangement.spacedBy(Dimens.paddingLarge),
+        modifier = modifier.padding(top = Dimens.SpacingM),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXl),
     ) {
         when (page.illustrationType) {
             OnboardingIllustrationType.CONTROL_CHART -> {
@@ -192,7 +241,7 @@ private fun OnboardingPageContent(
 
             OnboardingIllustrationType.WELCOME -> {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(Dimens.paddingMedium),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     OnboardingWelcomeIllustration()
@@ -205,17 +254,17 @@ private fun OnboardingPageContent(
         }
 
         Column(
-            verticalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
         ) {
             Text(
                 text = stringResource(page.titleRes),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
+                style = typography.titleLarge,
+                color = colors.onBackground,
             )
             Text(
                 text = stringResource(page.subtitleRes),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f),
+                style = typography.bodyLarge,
+                color = colors.onSurfaceVariant,
                 textAlign = TextAlign.Start,
             )
         }

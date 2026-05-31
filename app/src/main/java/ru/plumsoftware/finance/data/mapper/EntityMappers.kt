@@ -44,6 +44,7 @@ fun CategoryEntity.toDomain(): Category = Category(
     isHidden = isHidden,
     isSystem = isSystem,
     sortOrder = sortOrder,
+    monthlyLimitMinor = monthlyLimitMinor,
 )
 
 fun Category.toEntity(): CategoryEntity = CategoryEntity(
@@ -55,6 +56,7 @@ fun Category.toEntity(): CategoryEntity = CategoryEntity(
     isHidden = isHidden,
     isSystem = isSystem,
     sortOrder = sortOrder,
+    monthlyLimitMinor = monthlyLimitMinor,
 )
 
 fun SmartAssetEntity.toDomain(): SmartAsset = SmartAsset(

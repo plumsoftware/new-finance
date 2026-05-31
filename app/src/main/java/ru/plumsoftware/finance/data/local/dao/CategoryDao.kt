@@ -37,8 +37,14 @@ interface CategoryDao {
     @Query("UPDATE categories SET isHidden = :hidden WHERE id = :id")
     suspend fun setHidden(id: Long, hidden: Boolean)
 
+    @Query("UPDATE categories SET monthly_limit = :limit WHERE id = :id")
+    suspend fun setLimit(id: Long, limit: Long?)
+
     @Query("SELECT COUNT(*) FROM categories")
     suspend fun count(): Int
+
+    @Query("SELECT * FROM categories")
+    suspend fun getAllSync(): List<CategoryEntity>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(categories: List<CategoryEntity>)

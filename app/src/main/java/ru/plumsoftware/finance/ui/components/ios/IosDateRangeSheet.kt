@@ -51,7 +51,6 @@ fun IosDateRangeSheet(
 ) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    val shapes = MaterialTheme.shapes
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val pickerState = rememberDateRangePickerState(
         initialSelectedStartDateMillis = initialStartMillis,
@@ -70,22 +69,26 @@ fun IosDateRangeSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = Dimens.paddingLarge),
+                .padding(bottom = Dimens.SpacingXl),
         ) {
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .padding(top = Dimens.paddingSmall)
+                    .padding(top = Dimens.SpacingXs)
                     .height(Dimens.bottomSheetHandleHeight)
                     .fillMaxWidth(0.14f)
-                    .background(colors.outlineVariant, RoundedCornerShape(Dimens.cornerRadiusHandle)),
+                    .background(
+                        colors.outlineVariant,
+                        RoundedCornerShape(Dimens.cornerRadiusHandle),
+                    ),
             )
             Text(
                 text = stringResource(R.string.period_select_title),
                 style = typography.titleLarge,
+                color = colors.onSurface,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Dimens.paddingLarge, vertical = Dimens.spacingRow),
+                    .padding(horizontal = Dimens.SpacingXl, vertical = Dimens.RadiusS),
             )
             QuickRanges(
                 onRange = { start, end ->
@@ -93,13 +96,13 @@ fun IosDateRangeSheet(
                     onDismiss()
                 },
             )
-            Spacer(modifier = Modifier.height(Dimens.paddingSmall))
+            Spacer(modifier = Modifier.height(Dimens.SpacingXs))
             HorizontalDivider(
                 color = colors.outline,
                 thickness = Dimens.dividerThickness,
-                modifier = Modifier.padding(horizontal = Dimens.paddingMedium),
+                modifier = Modifier.padding(horizontal = Dimens.SpacingM),
             )
-            Spacer(modifier = Modifier.height(Dimens.paddingMicro + 2.dp))
+            Spacer(modifier = Modifier.height(Dimens.SpacingXxs + 2.dp))
             DateRangePicker(
                 state = pickerState,
                 modifier = Modifier
@@ -109,14 +112,14 @@ fun IosDateRangeSheet(
                 headline = null,
                 showModeToggle = false,
                 colors = DatePickerDefaults.colors(
-                    selectedDayContainerColor = colors.secondary,
-                    dayInSelectionRangeContainerColor = colors.secondary.copy(alpha = 0.2f),
+                    selectedDayContainerColor = colors.primary,
+                    dayInSelectionRangeContainerColor = colors.primary.copy(alpha = 0.2f),
                 ),
             )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Dimens.paddingLarge),
+                    .padding(horizontal = Dimens.SpacingXl),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IosTextButton(
@@ -136,7 +139,7 @@ fun IosDateRangeSheet(
                         }
                     },
                     enabled = canConfirm,
-                    color = if (canConfirm) colors.secondary else colors.outlineVariant,
+                    color = if (canConfirm) colors.primary else colors.outlineVariant,
                     style = typography.labelLarge,
                 )
             }
@@ -157,14 +160,14 @@ private fun QuickRanges(
         QuickRangePreset.THIS_YEAR to stringResource(R.string.period_this_year),
     )
     Column(
-        modifier = Modifier.padding(horizontal = Dimens.paddingMedium),
-        verticalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+        modifier = Modifier.padding(horizontal = Dimens.SpacingM),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
     ) {
         items.chunked(2).forEach { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs)) {
                 row.forEach { (preset, label) ->
                     Surface(
-                        shape = RoundedCornerShape(Dimens.cornerRadiusChip),
+                        shape = RoundedCornerShape(Dimens.RadiusS),
                         color = colors.surfaceVariant,
                         modifier = Modifier
                             .weight(1f)

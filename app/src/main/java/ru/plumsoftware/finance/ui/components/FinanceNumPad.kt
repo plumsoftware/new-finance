@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -33,14 +34,15 @@ fun FinanceNumPad(
     modifier: Modifier = Modifier,
 ) {
     val typography = MaterialTheme.typography
+    val colors = MaterialTheme.colorScheme
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
     ) {
         keys.forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
             ) {
                 row.forEach { key ->
                     val cellModifier = Modifier
@@ -57,6 +59,7 @@ fun FinanceNumPad(
                                     Icon(
                                         imageVector = Icons.Default.KeyboardArrowDown,
                                         contentDescription = null,
+                                        tint = colors.onSurfaceVariant,
                                     )
                                 }
                             } else {
@@ -67,6 +70,7 @@ fun FinanceNumPad(
                                     Text(
                                         text = key,
                                         style = typography.titleLarge,
+                                        color = colors.onSurface,
                                     )
                                 }
                             }
@@ -75,7 +79,11 @@ fun FinanceNumPad(
                             modifier = cellModifier,
                             onClick = onBackspace,
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.Backspace, contentDescription = null)
+                            Icon(
+                                Icons.AutoMirrored.Filled.Backspace,
+                                contentDescription = null,
+                                tint = colors.onSurfaceVariant,
+                            )
                         }
                         else -> NumPadKey(
                             modifier = cellModifier,
@@ -84,6 +92,7 @@ fun FinanceNumPad(
                             Text(
                                 text = key,
                                 style = typography.titleLarge,
+                                color = colors.onSurface,
                             )
                         }
                     }
@@ -99,11 +108,12 @@ private fun NumPadKey(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    val colors = MaterialTheme.colorScheme
     Surface(
         onClick = onClick,
         modifier = modifier,
-        shape = MaterialTheme.shapes.small,
-        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(Dimens.RadiusS),
+        color = colors.surface,
         shadowElevation = Dimens.elevationNumPad,
         content = {
             androidx.compose.foundation.layout.Box(

@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -81,30 +80,11 @@ import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
-import ru.plumsoftware.finance.ui.components.IosPrimaryButton
 import ru.plumsoftware.finance.ui.components.ios.IosAlertDialog
 import ru.plumsoftware.finance.ui.components.ios.IosTextField
+import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.Inter28Family
-
-private object AddTransactionLayout {
-    val horizontalPadding = 20.dp
-    val sectionGap = 11.dp
-    val segmentHeight = 28.dp
-    val segmentInnerPadding = 2.dp
-    val segmentThumbRadius = 8.dp
-    val chipHeight = 36.dp
-    val chipRadius = 18.dp
-    val chipPaddingH = 16.dp
-    val noteRadius = 12.dp
-    val notePadding = 14.dp
-    val saveHeight = 56.dp
-    val saveRadius = 16.dp
-    val numpadGap = 8.dp
-    val numpadKeyHeight = 72.dp
-    val numpadKeyRadius = 14.dp
-    val amountSize = 56.sp
-}
 
 private val numPadKeys = listOf(
     listOf("1", "2", "3"),
@@ -151,21 +131,21 @@ fun AddTransactionScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = Dimens.paddingMedium, vertical = Dimens.paddingSmall),
+                    .padding(horizontal = Dimens.SpacingM, vertical = Dimens.SpacingXs),
             ) {
                 Text(
                     stringResource(R.string.new_category_title),
                     style = typography.titleLarge,
                 )
-                Spacer(Modifier.height(Dimens.spacingList))
+                Spacer(Modifier.height(Dimens.SpacingS))
                 IosTextField(
                     value = quickName,
                     onValueChange = { quickName = it.take(30) },
                     placeholder = stringResource(R.string.category_name),
                 )
-                Spacer(Modifier.height(Dimens.spacingRow))
+                Spacer(Modifier.height(Dimens.RadiusS))
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                 ) {
                     val emojis = if (state.type == TransactionType.INCOME) {
@@ -175,8 +155,12 @@ fun AddTransactionScreen(
                     }
                     emojis.forEach { emoji ->
                         Surface(
-                            shape = RoundedCornerShape(Dimens.cornerRadiusChip),
-                            color = if (quickIcon == emoji) Color(quickColor.toInt()).copy(alpha = 0.2f) else colors.surfaceVariant,
+                            shape = RoundedCornerShape(Dimens.RadiusS),
+                            color = if (quickIcon == emoji) {
+                                Color(quickColor.toInt()).copy(alpha = 0.2f)
+                            } else {
+                                colors.surfaceVariant
+                            },
                             modifier = Modifier
                                 .size(Dimens.emojiPickerSize)
                                 .clickable { quickIcon = emoji },
@@ -187,8 +171,8 @@ fun AddTransactionScreen(
                         }
                     }
                 }
-                Spacer(Modifier.height(Dimens.spacingRow))
-                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.spacingRow)) {
+                Spacer(Modifier.height(Dimens.RadiusS))
+                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.RadiusS)) {
                     listOf(
                         0xFFFF3B30, 0xFFFF9500, 0xFF34C759, 0xFF007AFF, 0xFF5856D6,
                     ).forEach { color ->
@@ -211,8 +195,8 @@ fun AddTransactionScreen(
                         }
                     }
                 }
-                Spacer(Modifier.height(Dimens.spacingRow + 4.dp))
-                IosPrimaryButton(
+                Spacer(Modifier.height(Dimens.RadiusS + Dimens.SpacingXxs))
+                AddTransactionPrimaryButton(
                     text = stringResource(R.string.create),
                     onClick = {
                         viewModel.createQuickCategory(
@@ -228,7 +212,7 @@ fun AddTransactionScreen(
                     enabled = quickName.isNotBlank(),
                     loading = state.quickCategorySaving,
                 )
-                Spacer(Modifier.height(Dimens.paddingLarge))
+                Spacer(Modifier.height(Dimens.SpacingXl))
             }
         }
     }
@@ -246,11 +230,11 @@ fun AddTransactionScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = AddTransactionLayout.horizontalPadding)
+                    .padding(horizontal = Dimens.SpacingL)
                     .navigationBarsPadding()
-                    .padding(bottom = Dimens.paddingMedium),
+                    .padding(bottom = Dimens.SpacingM),
             ) {
-                AddTransactionSaveButton(
+                AddTransactionPrimaryButton(
                     text = stringResource(R.string.save),
                     onClick = viewModel::save,
                     loading = state.isSaving,
@@ -263,7 +247,7 @@ fun AddTransactionScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = AddTransactionLayout.horizontalPadding),
+                .padding(horizontal = Dimens.SpacingL),
         ) {
             val segmentType = when (state.type) {
                 TransactionType.INCOME -> TransactionType.INCOME
@@ -281,17 +265,17 @@ fun AddTransactionScreen(
                     )
                 },
             )
-            Spacer(modifier = Modifier.height(AddTransactionLayout.sectionGap))
+            Spacer(modifier = Modifier.height(Dimens.SpacingS))
             AddTransactionAmountDisplay(
                 digits = state.amountMajorDigits,
                 currencyCode = state.currencyCode,
             )
-            Spacer(modifier = Modifier.height(AddTransactionLayout.sectionGap))
+            Spacer(modifier = Modifier.height(Dimens.SpacingS))
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(Dimens.paddingSmall),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
             ) {
                 state.categories.forEach { cat ->
                     AddTransactionCategoryChip(
@@ -306,13 +290,13 @@ fun AddTransactionScreen(
                     onClick = { showQuickCategorySheet = true },
                 )
             }
-            Spacer(modifier = Modifier.height(AddTransactionLayout.sectionGap))
+            Spacer(modifier = Modifier.height(Dimens.SpacingS))
             AddTransactionNoteField(
                 value = state.note,
                 onValueChange = viewModel::setNote,
                 placeholder = stringResource(R.string.note_placeholder),
             )
-            Spacer(modifier = Modifier.height(AddTransactionLayout.sectionGap))
+            Spacer(modifier = Modifier.height(Dimens.SpacingS))
             AddTransactionNumPad(
                 onDigit = viewModel::appendDigit,
                 onBackspace = viewModel::backspace,
@@ -329,11 +313,12 @@ private fun AddTransactionTopBar(
     onBack: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     CenterAlignedTopAppBar(
         title = {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium.copy(
+                style = typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 17.sp,
                 ),
@@ -351,8 +336,8 @@ private fun AddTransactionTopBar(
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowLeft,
                     contentDescription = null,
-                    tint = colors.secondary,
-                    modifier = Modifier.size(22.dp),
+                    tint = colors.primary,
+                    modifier = Modifier.size(Dimens.iconSizeNav),
                 )
             }
         },
@@ -379,28 +364,30 @@ private fun AddTransactionTypeToggle(
         label = "add_tx_segment_offset",
     )
     val density = LocalDensity.current
-    val trackShape = RoundedCornerShape(AddTransactionLayout.segmentHeight / 2)
-    val thumbShape = RoundedCornerShape(AddTransactionLayout.segmentThumbRadius)
+    val segmentHeight = Dimens.categoryEditorMiniSegmentHeight
+    val segmentInnerPadding = Dimens.categoryEditorMiniSegmentInset
+    val trackShape = RoundedCornerShape(segmentHeight / 2)
+    val thumbShape = RoundedCornerShape(Dimens.RadiusS)
 
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .height(AddTransactionLayout.segmentHeight)
+            .height(segmentHeight)
             .clip(trackShape)
             .background(colors.outline),
     ) {
-        val innerWidth = maxWidth - AddTransactionLayout.segmentInnerPadding * 2
+        val innerWidth = maxWidth - segmentInnerPadding * 2
         val segmentWidth = innerWidth / labels.size
         val indicatorOffsetPx = with(density) { (segmentWidth * animatedIndex).toPx() }
 
         Box(
             modifier = Modifier
-                .padding(AddTransactionLayout.segmentInnerPadding)
+                .padding(segmentInnerPadding)
                 .offset { IntOffset(indicatorOffsetPx.roundToInt(), 0) }
                 .width(segmentWidth)
-                .height(AddTransactionLayout.segmentHeight - AddTransactionLayout.segmentInnerPadding * 2)
+                .height(segmentHeight - segmentInnerPadding * 2)
                 .shadow(
-                    elevation = 1.dp,
+                    elevation = Dimens.borderThin,
                     shape = thumbShape,
                     clip = false,
                     ambientColor = Color.Black.copy(alpha = 0.12f),
@@ -413,7 +400,7 @@ private fun AddTransactionTypeToggle(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(AddTransactionLayout.segmentInnerPadding),
+                .padding(segmentInnerPadding),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             labels.forEachIndexed { index, label ->
@@ -421,7 +408,7 @@ private fun AddTransactionTypeToggle(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(AddTransactionLayout.segmentHeight - AddTransactionLayout.segmentInnerPadding * 2)
+                        .height(segmentHeight - segmentInnerPadding * 2)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
@@ -452,6 +439,7 @@ private fun AddTransactionAmountDisplay(
     } else {
         display
     }
+    val amountSize = 56.sp
 
     AnimatedContent(
         targetState = amountText,
@@ -479,7 +467,7 @@ private fun AddTransactionAmountDisplay(
                 style = TextStyle(
                     fontFamily = Inter28Family,
                     fontWeight = FontWeight.Bold,
-                    fontSize = AddTransactionLayout.amountSize,
+                    fontSize = amountSize,
                     letterSpacing = (-1).sp,
                 ),
                 color = colors.onSurface,
@@ -490,7 +478,7 @@ private fun AddTransactionAmountDisplay(
                 style = TextStyle(
                     fontFamily = Inter28Family,
                     fontWeight = FontWeight.Light,
-                    fontSize = AddTransactionLayout.amountSize,
+                    fontSize = amountSize,
                     letterSpacing = (-1).sp,
                 ),
                 color = colors.onSurfaceVariant,
@@ -506,20 +494,21 @@ private fun AddTransactionCategoryChip(
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
-    val chipShape = RoundedCornerShape(AddTransactionLayout.chipRadius)
+    val typography = MaterialTheme.typography
+    val chipShape = RoundedCornerShape(Dimens.RadiusL)
     Box(
         modifier = Modifier
-            .height(AddTransactionLayout.chipHeight)
+            .height(Dimens.segmentedHeight)
             .clip(chipShape)
-            .background(if (selected) colors.secondary else colors.outline)
+            .background(if (selected) colors.primary else colors.outline)
             .clickable(onClick = onClick)
-            .padding(horizontal = AddTransactionLayout.chipPaddingH),
+            .padding(horizontal = Dimens.SpacingM),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 15.sp),
-            color = if (selected) colors.onSecondary else colors.onSurface,
+            style = typography.bodyMedium.copy(fontSize = 15.sp),
+            color = if (selected) colors.onPrimary else colors.onSurface,
         )
     }
 }
@@ -532,7 +521,7 @@ private fun AddTransactionNoteField(
 ) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    val shape = RoundedCornerShape(AddTransactionLayout.noteRadius)
+    val shapes = MaterialTheme.shapes
     val textStyle = typography.bodyMedium.copy(
         fontSize = 14.sp,
         color = colors.onSurface,
@@ -543,14 +532,14 @@ private fun AddTransactionNoteField(
         onValueChange = onValueChange,
         textStyle = textStyle,
         singleLine = true,
-        cursorBrush = SolidColor(colors.secondary),
+        cursorBrush = SolidColor(colors.primary),
         modifier = Modifier
             .fillMaxWidth()
-            .clip(shape)
+            .clip(shapes.small)
             .background(colors.surface)
             .padding(
-                horizontal = AddTransactionLayout.notePadding,
-                vertical = AddTransactionLayout.notePadding,
+                horizontal = Dimens.RadiusM,
+                vertical = Dimens.RadiusM,
             ),
         decorationBox = { inner ->
             Box(contentAlignment = Alignment.CenterStart) {
@@ -574,6 +563,7 @@ private fun AddTransactionNumPad(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
+    val shapes = MaterialTheme.shapes
     val keyStyle = TextStyle(
         fontFamily = Inter28Family,
         fontWeight = FontWeight.Normal,
@@ -581,17 +571,17 @@ private fun AddTransactionNumPad(
     )
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(AddTransactionLayout.numpadGap),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
     ) {
         numPadKeys.forEach { row ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(AddTransactionLayout.numpadGap),
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
             ) {
                 row.forEach { key ->
                     val cellModifier = Modifier
                         .weight(1f)
-                        .height(AddTransactionLayout.numpadKeyHeight)
+                        .height(Dimens.numPadKeyHeight)
                     when (key) {
                         "⌫" -> AddTransactionNumPadKey(
                             modifier = cellModifier,
@@ -601,7 +591,7 @@ private fun AddTransactionNumPad(
                                 imageVector = Icons.AutoMirrored.Filled.Backspace,
                                 contentDescription = null,
                                 tint = colors.onSurface,
-                                modifier = Modifier.size(22.dp),
+                                modifier = Modifier.size(Dimens.iconSizeNav),
                             )
                         }
                         else -> AddTransactionNumPadKey(
@@ -624,6 +614,7 @@ private fun AddTransactionNumPadKey(
     content: @Composable () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
+    val shapes = MaterialTheme.shapes
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val backgroundColor by animateFloatAsState(
@@ -631,13 +622,12 @@ private fun AddTransactionNumPadKey(
         animationSpec = tween(durationMillis = 80),
         label = "numpad_press",
     )
-    val keyShape = RoundedCornerShape(AddTransactionLayout.numpadKeyRadius)
     val pressedBg = colors.outline
     val normalBg = colors.surface
 
     Box(
         modifier = modifier
-            .clip(keyShape)
+            .clip(shapes.small)
             .background(lerp(normalBg, pressedBg, backgroundColor))
             .clickable(
                 interactionSource = interactionSource,
@@ -651,50 +641,40 @@ private fun AddTransactionNumPadKey(
 }
 
 @Composable
-private fun AddTransactionSaveButton(
+private fun AddTransactionPrimaryButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     loading: Boolean = false,
 ) {
-    val colors = MaterialTheme.colorScheme
-    val shape = RoundedCornerShape(AddTransactionLayout.saveRadius)
-    Button(
-        onClick = onClick,
-        enabled = enabled && !loading,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(AddTransactionLayout.saveHeight),
-        shape = shape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = colors.secondary,
-            contentColor = colors.onSecondary,
-            disabledContainerColor = colors.secondary.copy(alpha = 0.3f),
-            disabledContentColor = colors.onSecondary.copy(alpha = 0.9f),
-        ),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 0.dp,
-            pressedElevation = 0.dp,
-            disabledElevation = 0.dp,
-            focusedElevation = 0.dp,
-            hoveredElevation = 0.dp,
-        ),
-    ) {
-        if (loading) {
+    if (loading) {
+        val colors = MaterialTheme.colorScheme
+        Button(
+            onClick = onClick,
+            enabled = false,
+            modifier = modifier
+                .fillMaxWidth()
+                .height(Dimens.ButtonHeight),
+            shape = RoundedCornerShape(Dimens.RadiusL),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.primary,
+                contentColor = Color.White,
+            ),
+            elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp),
+        ) {
             CircularProgressIndicator(
-                modifier = Modifier.size(Dimens.iconSizeStandard),
+                modifier = Modifier.size(Dimens.IconSizeM),
                 strokeWidth = Dimens.borderThin + 1.5.dp,
-                color = colors.onSecondary,
-            )
-        } else {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 17.sp,
-                ),
+                color = Color.White,
             )
         }
+    } else {
+        PrimaryButton(
+            text = text,
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
+        )
     }
 }

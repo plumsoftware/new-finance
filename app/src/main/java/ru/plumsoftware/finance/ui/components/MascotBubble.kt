@@ -17,12 +17,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import ru.plumsoftware.finance.ui.theme.Dimens
 
+private val MascotBubbleMaxWidth = 260.dp
+
 @Composable
 fun MascotBubble(
     @DrawableRes mascotRes: Int,
     message: String,
     modifier: Modifier = Modifier,
 ) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -30,19 +34,19 @@ fun MascotBubble(
         Image(
             painter = painterResource(mascotRes),
             contentDescription = null,
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier.size(Dimens.emojiPickerSize),
             contentScale = ContentScale.Fit,
         )
         Surface(
-            modifier = Modifier.widthIn(max = 260.dp),
+            modifier = Modifier.widthIn(max = MascotBubbleMaxWidth),
             shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surface,
+            color = colors.surface,
         ) {
             Text(
                 text = message,
-                modifier = Modifier.padding(Dimens.paddingMedium),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                modifier = Modifier.padding(Dimens.SpacingM),
+                style = typography.bodyMedium,
+                color = colors.onSurfaceVariant,
             )
         }
     }
