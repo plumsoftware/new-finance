@@ -83,4 +83,22 @@ interface SmartAssetDao {
 
     @Query("DELETE FROM smart_asset_usages WHERE smartAssetId = :smartAssetId")
     suspend fun deleteUsages(smartAssetId: Long)
+
+    @Query("SELECT * FROM smart_assets ORDER BY id ASC")
+    suspend fun getAllSync(): List<SmartAssetEntity>
+
+    @Query("SELECT * FROM smart_asset_usages ORDER BY usedAtMillis DESC")
+    suspend fun getAllUsagesSync(): List<SmartAssetUsageEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(assets: List<SmartAssetEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllUsages(usages: List<SmartAssetUsageEntity>)
+
+    @Query("DELETE FROM smart_asset_usages")
+    suspend fun deleteAllUsages()
+
+    @Query("DELETE FROM smart_assets")
+    suspend fun deleteAllAssets()
 }

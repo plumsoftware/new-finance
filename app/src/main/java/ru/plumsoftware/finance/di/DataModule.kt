@@ -14,7 +14,7 @@ import ru.plumsoftware.finance.data.local.datastore.PushTokenDataStore
 import ru.plumsoftware.finance.data.local.datastore.SettingsDataStore
 import ru.plumsoftware.finance.data.repository.AnalyticsRepositoryImpl
 import ru.plumsoftware.finance.data.repository.CategoryRepositoryImpl
-import ru.plumsoftware.finance.data.repository.ExportRepositoryImpl
+import ru.plumsoftware.finance.data.repository.BackupRepositoryImpl
 import ru.plumsoftware.finance.data.repository.NotificationRepositoryImpl
 import ru.plumsoftware.finance.data.repository.PermissionsRepositoryImpl
 import ru.plumsoftware.finance.data.repository.PushMessagingRepositoryImpl
@@ -24,7 +24,7 @@ import ru.plumsoftware.finance.data.repository.SmartAssetRepositoryImpl
 import ru.plumsoftware.finance.data.repository.TransactionRepositoryImpl
 import ru.plumsoftware.finance.domain.repository.AnalyticsRepository
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
-import ru.plumsoftware.finance.domain.repository.ExportRepository
+import ru.plumsoftware.finance.domain.repository.BackupRepository
 import ru.plumsoftware.finance.domain.repository.NotificationRepository
 import ru.plumsoftware.finance.domain.repository.PermissionsRepository
 import ru.plumsoftware.finance.domain.repository.PushMessagingRepository
@@ -58,8 +58,8 @@ val dataModule = module {
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
     single<NotificationRepository> { NotificationRepositoryImpl(get()) }
     single<PushMessagingRepository> { PushMessagingRepositoryImpl(get()) }
-    single<ExportRepository> {
-        ExportRepositoryImpl(get(), get(), get(), get())
+    single<BackupRepository> {
+        BackupRepositoryImpl(androidContext(), get(), get(), get(), get(), get())
     }
     single<RecurringRepository> { RecurringRepositoryImpl(get(), get()) }
     single<PermissionsRepository> { PermissionsRepositoryImpl(androidContext()) }

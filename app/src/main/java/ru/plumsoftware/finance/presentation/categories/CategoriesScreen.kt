@@ -2,6 +2,7 @@ package ru.plumsoftware.finance.presentation.categories
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,12 +10,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.outlined.DragHandle
@@ -27,13 +28,26 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.Category
@@ -41,9 +55,7 @@ import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
-import ru.plumsoftware.finance.ui.components.ios.IosNavigationTextButton
 import ru.plumsoftware.finance.ui.components.ios.IosSegmentedControl
-import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -68,9 +80,9 @@ fun CategoriesScreen(
                 backLabel = stringResource(R.string.categories_back_settings),
                 onBack = onBack,
                 actionLabel = stringResource(R.string.categories_add),
-                onAction = { onAdd(state.selectedType) }
+                onAction = { onAdd(state.selectedType) },
             )
-        }
+        },
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -135,25 +147,77 @@ fun CategoriesScreen(
                 }
             } else {
                 item {
-                    AppCard(modifier = Modifier.fillMaxWidth()) {
-                        categories.forEachIndexed { index, category ->
-                            CategoryListRow(
-                                category = category,
-                                onClick = { onEdit(category.id) },
-                                onDelete = { viewModel.deleteCategory(category.id) },
-                            )
-                            if (index != categories.lastIndex) {
-                                HorizontalDivider(
-                                    color = colors.outline,
-                                    thickness = Dimens.dividerThickness,
-                                    modifier = Modifier.padding(
-                                        start = Dimens.SpacingM + Dimens.avatarSize + Dimens.SpacingS,
-                                    ),
-                                )
-                            }
-                        }
-                    }
+                    ReorderableCategoriesCard(
+                        categories = categories,
+                        onEdit = onEdit,
+                        onDelete = { viewModel.deleteCategory(it) },
+                        onReorder = { viewModel.reorderCategories(state.selectedType, it) },
+                    )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReorderableCategoriesCard(
+    categories: List<Category>,
+    onEdit: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
+    onReorder: (List<Long>) -> Unit,
+) {
+    val ordered = remember { mutableStateListOf<Category>() }
+    var draggingIndex by remember { mutableIntStateOf(-1) }
+    var dragOffsetY by remember { mutableFloatStateOf(0f) }
+    val density = LocalDensity.current
+    val rowHeightPx = with(density) {
+        (Dimens.avatarSize + Dimens.categoryRowVerticalPadding * 2).toPx()
+    }
+    val categoryIds = categories.map { it.id }
+
+    LaunchedEffect(categoryIds) {
+        if (draggingIndex == -1) {
+            ordered.clear()
+            ordered.addAll(categories)
+        }
+    }
+
+    AppCard(modifier = Modifier.fillMaxWidth()) {
+        ordered.forEachIndexed { index, category ->
+            CategoryListRow(
+                category = category,
+                onClick = { if (draggingIndex == -1) onEdit(category.id) },
+                onDelete = { onDelete(category.id) },
+                isDragging = index == draggingIndex,
+                dragOffsetY = if (index == draggingIndex) dragOffsetY else 0f,
+                onDragStart = {
+                    draggingIndex = index
+                    dragOffsetY = 0f
+                },
+                onDrag = { amount ->
+                    dragOffsetY += amount.y
+                    val targetIndex = (draggingIndex + (dragOffsetY / rowHeightPx).roundToInt())
+                        .coerceIn(0, ordered.lastIndex)
+                    if (targetIndex != draggingIndex) {
+                        ordered.add(targetIndex, ordered.removeAt(draggingIndex))
+                        draggingIndex = targetIndex
+                        dragOffsetY = 0f
+                    }
+                },
+                onDragEnd = {
+                    draggingIndex = -1
+                    dragOffsetY = 0f
+                    onReorder(ordered.map { it.id })
+                },
+            )
+            if (index != ordered.lastIndex) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outline,
+                    thickness = Dimens.dividerThickness,
+                    modifier = Modifier.padding(
+                        start = Dimens.SpacingM + Dimens.avatarSize + Dimens.SpacingS,
+                    ),
+                )
             }
         }
     }
@@ -165,6 +229,11 @@ private fun CategoryListRow(
     category: Category,
     onClick: () -> Unit,
     onDelete: () -> Unit,
+    isDragging: Boolean,
+    dragOffsetY: Float,
+    onDragStart: () -> Unit,
+    onDrag: (androidx.compose.ui.geometry.Offset) -> Unit,
+    onDragEnd: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
@@ -204,9 +273,18 @@ private fun CategoryListRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .zIndex(if (isDragging) 1f else 0f)
+                .offset { IntOffset(0, dragOffsetY.roundToInt()) }
+                .then(
+                    if (isDragging) {
+                        Modifier.shadow(Dimens.SpacingXs, RoundedCornerShape(Dimens.categorySwipeCornerRadius))
+                    } else {
+                        Modifier
+                    },
+                )
                 .clickable(onClick = onClick)
                 .clip(RoundedCornerShape(Dimens.categorySwipeCornerRadius))
-                .background(colors.surface)
+                .background(if (isDragging) colors.surfaceVariant else colors.surface)
                 .padding(
                     horizontal = Dimens.SpacingM,
                     vertical = Dimens.categoryRowVerticalPadding,
@@ -230,9 +308,21 @@ private fun CategoryListRow(
             )
             Icon(
                 imageVector = Icons.Outlined.DragHandle,
-                contentDescription = null,
-                tint = colors.outlineVariant,
-                modifier = Modifier.size(Dimens.dragIconSize),
+                contentDescription = stringResource(R.string.cd_drag_handle),
+                tint = if (isDragging) colors.primary else colors.outlineVariant,
+                modifier = Modifier
+                    .size(Dimens.dragIconSize)
+                    .pointerInput(category.id) {
+                        detectDragGesturesAfterLongPress(
+                            onDragStart = { onDragStart() },
+                            onDragEnd = { onDragEnd() },
+                            onDragCancel = { onDragEnd() },
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                onDrag(dragAmount)
+                            },
+                        )
+                    },
             )
         }
     }

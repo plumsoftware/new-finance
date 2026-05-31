@@ -25,4 +25,5 @@ interface CategoryRepository {
         name: String,
         excludeId: Long = 0,
     ): Boolean
+    suspend fun updateSortOrders(type: CategoryType, orderedIds: List<Long>)
 }

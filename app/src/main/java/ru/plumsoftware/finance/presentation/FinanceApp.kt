@@ -28,6 +28,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -61,6 +62,7 @@ import ru.plumsoftware.finance.presentation.categories.CategoriesScreen
 import ru.plumsoftware.finance.presentation.categories.CategoryEditorScreen
 import ru.plumsoftware.finance.presentation.dashboard.HomeScreen
 import ru.plumsoftware.finance.presentation.export.ExportScreen
+import ru.plumsoftware.finance.presentation.importdata.ImportPreviewScreen
 import ru.plumsoftware.finance.presentation.history.HistoryScreen
 import ru.plumsoftware.finance.presentation.notifications.NotificationsScreen
 import ru.plumsoftware.finance.presentation.onboarding.OnboardingScreen
@@ -81,6 +83,8 @@ import ru.plumsoftware.finance.ui.theme.FinanceTheme
 fun FinanceApp(
     modifier: Modifier = Modifier,
     settingsRepository: SettingsRepository = koinInject(),
+    pendingImportLocalPath: String? = null,
+    onPendingImportConsumed: () -> Unit = {},
 ) {
     val settings by settingsRepository.settings.collectAsStateWithLifecycle(
         initialValue = ru.plumsoftware.finance.domain.model.AppSettings(),
@@ -107,6 +111,16 @@ fun FinanceApp(
         val navController = rememberNavController()
         val startRoute =
             if (isOnboardingCompleted == true) AppRoute.Home.route else AppRoute.Onboarding.route
+
+        LaunchedEffect(pendingImportLocalPath, isOnboardingCompleted) {
+            val path = pendingImportLocalPath ?: return@LaunchedEffect
+            if (isOnboardingCompleted == true) {
+                navController.navigate(AppRoute.ImportPreview.route(path)) {
+                    launchSingleTop = true
+                }
+                onPendingImportConsumed()
+            }
+        }
 
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
@@ -373,6 +387,7 @@ fun FinanceApp(
                     }
                     composable(AppRoute.Settings.route) {
                         SettingsScreen(
+                            navController = navController,
                             onOpenCategories = { navController.navigate(AppRoute.Categories.route) },
                             onOpenLimits = { navController.navigate(AppRoute.Limits.route) },
                             onOpenRecurring = { navController.navigate(AppRoute.Recurring.route) },
@@ -385,6 +400,18 @@ fun FinanceApp(
                     }
                     composable(AppRoute.Export.route) {
                         ExportScreen(navController = navController)
+                    }
+                    composable(
+                        route = AppRoute.ImportPreview.route,
+                        arguments = listOf(
+                            navArgument("encodedPath") { type = NavType.StringType },
+                        ),
+                    ) { backStackEntry ->
+                        val encodedPath = backStackEntry.arguments?.getString("encodedPath").orEmpty()
+                        ImportPreviewScreen(
+                            localFilePath = android.net.Uri.decode(encodedPath),
+                            navController = navController,
+                        )
                     }
                     composable(AppRoute.Recurring.route) {
                         RecurringScreen(navController = navController)

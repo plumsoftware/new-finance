@@ -46,5 +46,10 @@ class CategoriesViewModel(
             categoryRepository.delete(id)
         }
     }
-}
 
+    fun reorderCategories(type: CategoryType, orderedIds: List<Long>) {
+        viewModelScope.launch {
+            categoryRepository.updateSortOrders(type, orderedIds)
+        }
+    }
+}

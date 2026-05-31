@@ -190,7 +190,7 @@ class AddTransactionViewModel(
                         colorArgb = colorArgb,
                         isHidden = false,
                         isSystem = false,
-                        sortOrder = (existing.maxOfOrNull { it.sortOrder } ?: -1) + 1,
+                        sortOrder = (existing.minOfOrNull { it.sortOrder } ?: 0) - 1,
                     )
                 )
                 val updatedCategories = categoryRepository.observeByType(categoryType, false).first()

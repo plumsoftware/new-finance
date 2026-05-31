@@ -134,7 +134,7 @@ class CategoryEditorViewModel(
                 val nextSortOrder = if (state.isEdit) {
                     currentList.firstOrNull { it.id == state.categoryId }?.sortOrder ?: currentList.size
                 } else {
-                    (currentList.maxOfOrNull { it.sortOrder } ?: -1) + 1
+                    (currentList.minOfOrNull { it.sortOrder } ?: 0) - 1
                 }
                 categoryRepository.upsert(
                     Category(

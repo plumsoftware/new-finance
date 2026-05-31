@@ -91,4 +91,12 @@ class CategoryRepositoryImpl(
         name: String,
         excludeId: Long,
     ): Boolean = categoryDao.existsByNameIgnoreCase(type, name, excludeId)
+
+    override suspend fun updateSortOrders(type: CategoryType, orderedIds: List<Long>) {
+        orderedIds.forEachIndexed { index, id ->
+            val entity = categoryDao.getById(id) ?: return@forEachIndexed
+            if (entity.type != type) return@forEachIndexed
+            categoryDao.update(entity.copy(sortOrder = index))
+        }
+    }
 }

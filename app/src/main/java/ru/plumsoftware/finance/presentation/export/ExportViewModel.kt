@@ -1,64 +1,87 @@
 package ru.plumsoftware.finance.presentation.export
 
-import android.content.Context
 import android.net.Uri
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import ru.plumsoftware.finance.data.export.CsvExporter
-import ru.plumsoftware.finance.data.export.JsonExporter
-import ru.plumsoftware.finance.data.export.PdfExporter
+import kotlinx.coroutines.withContext
+import ru.plumsoftware.finance.data.backup.BackupFileWriter
 import ru.plumsoftware.finance.domain.model.ExportFormat
-import ru.plumsoftware.finance.domain.model.ExportOptions
 import ru.plumsoftware.finance.domain.model.ExportPeriod
 import ru.plumsoftware.finance.domain.model.ExportState
-import ru.plumsoftware.finance.domain.repository.ExportRepository
+import ru.plumsoftware.finance.domain.repository.BackupRepository
 
 class ExportViewModel(
-    private val repository: ExportRepository,
-    private val context: Context,
+    private val backupRepository: BackupRepository,
 ) : ViewModel() {
 
     private val _exportState = MutableStateFlow<ExportState>(ExportState.Idle)
     val exportState = _exportState.asStateFlow()
 
-    fun export(
+    fun saveBackup(
         format: ExportFormat,
         period: ExportPeriod,
-        include: ExportOptions,
         customStartMillis: Long? = null,
         customEndMillis: Long? = null,
     ) {
         viewModelScope.launch {
             _exportState.value = ExportState.Loading
             try {
-                val data = repository.getExportData(
-                    period = period,
-                    include = include,
-                    customStartMillis = customStartMillis,
-                    customEndMillis = customEndMillis,
-                )
-                val file = when (format) {
-                    ExportFormat.CSV -> CsvExporter.export(data, context.cacheDir)
-                    ExportFormat.JSON -> JsonExporter.export(data, context.cacheDir)
-                    ExportFormat.PDF -> PdfExporter.export(data, context.cacheDir)
+                val result = withContext(Dispatchers.IO) {
+                    performExport(format, period, customStartMillis, customEndMillis)
                 }
-                val uri = FileProvider.getUriForFile(
-                    context,
-                    "${context.packageName}.fileprovider",
-                    file,
+                _exportState.value = ExportState.Success(
+                    fileName = result.first,
+                    shareUri = null,
                 )
-                _exportState.value = ExportState.Success(uri)
             } catch (e: Exception) {
-                _exportState.value = ExportState.Error(e.message)
+                _exportState.value = ExportState.Error(e.message.orEmpty())
             }
         }
     }
 
-    fun resetExportState() {
+    fun exportAndShare(
+        format: ExportFormat,
+        period: ExportPeriod,
+        customStartMillis: Long? = null,
+        customEndMillis: Long? = null,
+    ) {
+        viewModelScope.launch {
+            _exportState.value = ExportState.Loading
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    performExport(format, period, customStartMillis, customEndMillis)
+                }
+                _exportState.value = ExportState.Success(
+                    fileName = result.first,
+                    shareUri = result.second,
+                )
+            } catch (e: Exception) {
+                _exportState.value = ExportState.Error(e.message.orEmpty())
+            }
+        }
+    }
+
+    fun resetState() {
         _exportState.value = ExportState.Idle
+    }
+
+    private suspend fun performExport(
+        format: ExportFormat,
+        period: ExportPeriod,
+        customStartMillis: Long?,
+        customEndMillis: Long?,
+    ): Pair<String, Uri> {
+        val backup = backupRepository.buildBackup(
+            period = period,
+            customStartMillis = customStartMillis,
+            customEndMillis = customEndMillis,
+        )
+        val fileName = BackupFileWriter.buildFileName(format)
+        val uri = backupRepository.exportToUri(backup, format)
+        return fileName to uri
     }
 }

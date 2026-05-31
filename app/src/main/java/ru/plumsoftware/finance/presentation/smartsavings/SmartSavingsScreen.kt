@@ -48,6 +48,7 @@ import ru.plumsoftware.finance.ui.components.IosPrimaryButton
 import ru.plumsoftware.finance.ui.components.MascotEmptyState
 import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
+import ru.plumsoftware.finance.ui.components.ios.IosFilterChip
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.MascotAssets
 
@@ -62,7 +63,7 @@ fun SmartSavingsScreen(
     viewModel: SmartSavingsViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val allAssets = state.payingOff + state.profit
+    val displayedAssets = state.displayedAssets
     val snackbarHost = remember { SnackbarHostState() }
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
@@ -103,13 +104,23 @@ fun SmartSavingsScreen(
                 HeroCard(totalSaved = MoneyFormat.format(state.totalSavedMinor, state.currencyCode))
             }
             item {
-                SectionLabel(
-                    text = stringResource(R.string.smart_my_assets),
-                    modifier = Modifier.padding(top = Dimens.SpacingXxs),
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Dimens.SpacingXxs),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SectionLabel(text = stringResource(R.string.smart_my_assets))
+                    IosFilterChip(
+                        text = stringResource(R.string.smart_filter_completed),
+                        selected = state.showCompletedOnly,
+                        onClick = viewModel::toggleCompletedFilter,
+                    )
+                }
             }
 
-            if (allAssets.isEmpty()) {
+            if (displayedAssets.isEmpty()) {
                 item {
                     Column(
                         modifier = Modifier
@@ -117,21 +128,30 @@ fun SmartSavingsScreen(
                             .padding(top = Dimens.SpacingXxl + Dimens.SpacingS),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        MascotEmptyState(
-                            mascotRes = MascotAssets.emptySmartSavings,
-                            title = stringResource(R.string.smart_empty_assets_title),
-                            subtitle = stringResource(R.string.smart_empty_assets_subtitle),
-                        )
-                        Spacer(Modifier.height(Dimens.SpacingXl))
-                        IosPrimaryButton(
-                            text = stringResource(R.string.smart_add_asset),
-                            onClick = onCreateClick,
-                            modifier = Modifier.padding(horizontal = Dimens.SpacingS),
-                        )
+                        if (state.showCompletedOnly) {
+                            Text(
+                                text = stringResource(R.string.smart_profit_empty),
+                                style = typography.bodyMedium,
+                                color = colors.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = Dimens.SpacingL),
+                            )
+                        } else {
+                            MascotEmptyState(
+                                mascotRes = MascotAssets.emptySmartSavings,
+                                title = stringResource(R.string.smart_empty_assets_title),
+                                subtitle = stringResource(R.string.smart_empty_assets_subtitle),
+                            )
+                            Spacer(Modifier.height(Dimens.SpacingXl))
+                            IosPrimaryButton(
+                                text = stringResource(R.string.smart_add_asset),
+                                onClick = onCreateClick,
+                                modifier = Modifier.padding(horizontal = Dimens.SpacingS),
+                            )
+                        }
                     }
                 }
             } else {
-                items(allAssets, key = { it.id }) { asset ->
+                items(displayedAssets, key = { it.id }) { asset ->
                     SmartAssetRow(
                         asset = asset,
                         currencyCode = state.currencyCode,

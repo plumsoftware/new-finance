@@ -3,6 +3,7 @@ package ru.plumsoftware.finance.presentation.notifications
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -69,6 +71,7 @@ import ru.plumsoftware.finance.ui.AppRoute
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
+import ru.plumsoftware.finance.ui.theme.MascotAssets
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -336,11 +339,10 @@ private fun NotificationsEmptyState(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            imageVector = Icons.Rounded.NotificationsNone,
+        Image(
+            painter = painterResource(MascotAssets.emptyNotifications),
             contentDescription = null,
-            modifier = Modifier.size(Dimens.IconSizeXl + Dimens.SpacingS),
-            tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
+            modifier = Modifier.size(Dimens.mascotEmptyState),
         )
         Spacer(modifier = Modifier.height(Dimens.SpacingM))
         Text(

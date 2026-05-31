@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,8 +27,6 @@ import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DateRangePicker
@@ -47,8 +46,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.rounded.SaveAlt
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -69,11 +76,9 @@ import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.data.util.startOfDayMillis
 import ru.plumsoftware.finance.domain.model.ExportFormat
-import ru.plumsoftware.finance.domain.model.ExportOptions
 import ru.plumsoftware.finance.domain.model.ExportPeriod
 import ru.plumsoftware.finance.domain.model.ExportState
 import ru.plumsoftware.finance.ui.components.AppCard
-import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
@@ -93,11 +98,8 @@ fun ExportScreen(
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
 
-    var selectedFormat by rememberSaveable { mutableStateOf(ExportFormat.CSV) }
-    var selectedPeriod by rememberSaveable { mutableStateOf(ExportPeriod.THIS_MONTH) }
-    var includeTransactions by rememberSaveable { mutableStateOf(true) }
-    var includeCategories by rememberSaveable { mutableStateOf(true) }
-    var includeAssets by rememberSaveable { mutableStateOf(true) }
+    var selectedFormat by rememberSaveable { mutableStateOf(ExportFormat.BACKUP) }
+    var selectedPeriod by rememberSaveable { mutableStateOf(ExportPeriod.ALL_TIME) }
     var customStartMillis by rememberSaveable { mutableStateOf<Long?>(null) }
     var customEndMillis by rememberSaveable { mutableStateOf<Long?>(null) }
     var showDateRangePicker by rememberSaveable { mutableStateOf(false) }
@@ -106,28 +108,39 @@ fun ExportScreen(
         customStartMillis != null &&
         customEndMillis != null
 
-    val includeOptions = ExportOptions(
-        transactions = includeTransactions,
-        categories = includeCategories,
-        assets = includeAssets,
-    )
-    val hasIncludeSelection = includeTransactions || includeCategories || includeAssets
-    val canExport = hasIncludeSelection &&
-        exportState !is ExportState.Loading &&
+    val canExport = exportState !is ExportState.Loading &&
         (selectedPeriod != ExportPeriod.CUSTOM || customRangeActive)
 
+    val isLoading = exportState is ExportState.Loading
+    val successMsg = stringResource(R.string.export_saved_success)
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(exportState) {
-        if (exportState is ExportState.Success) {
-            val uri = (exportState as ExportState.Success).uri
-            val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                type = selectedFormat.mimeType
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        when (val state = exportState) {
+            is ExportState.Success -> {
+                val uri = state.shareUri
+                if (uri != null) {
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = selectedFormat.mimeType
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    context.startActivity(
+                        Intent.createChooser(
+                            shareIntent,
+                            context.getString(R.string.export_share_title),
+                        ),
+                    )
+                    viewModel.resetState()
+                } else {
+                    snackbarHostState.showSnackbar(
+                        message = successMsg,
+                        duration = SnackbarDuration.Short,
+                    )
+                    viewModel.resetState()
+                }
             }
-            context.startActivity(
-                Intent.createChooser(shareIntent, context.getString(R.string.export_data)),
-            )
-            viewModel.resetExportState()
+            else -> Unit
         }
     }
 
@@ -311,6 +324,19 @@ fun ExportScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.padding(bottom = Dimens.SpacingM),
+            ) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = colors.onSurface,
+                    contentColor = colors.surface,
+                    shape = RoundedCornerShape(Dimens.RadiusM),
+                )
+            }
+        },
         topBar = {
             IosEditorTopBar(
                 title = stringResource(R.string.export_data),
@@ -371,6 +397,13 @@ fun ExportScreen(
                     }
                 }
 
+                Text(
+                    text = stringResource(R.string.export_period_hint),
+                    style = typography.bodySmall,
+                    color = colors.onSurfaceVariant,
+                    modifier = Modifier.padding(top = Dimens.SpacingXs),
+                )
+
                 if (customRangeActive) {
                     Row(
                         modifier = Modifier
@@ -425,68 +458,87 @@ fun ExportScreen(
             }
 
             item {
-                SectionLabel(text = stringResource(R.string.export_section_include))
-                AppCard(modifier = Modifier.fillMaxWidth()) {
-                    ExportCheckboxRow(
-                        label = stringResource(R.string.export_include_transactions),
-                        checked = includeTransactions,
-                        onCheckedChange = { includeTransactions = it },
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = Dimens.SpacingM),
-                        color = colors.surfaceVariant,
-                    )
-                    ExportCheckboxRow(
-                        label = stringResource(R.string.export_include_categories),
-                        checked = includeCategories,
-                        onCheckedChange = { includeCategories = it },
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = Dimens.SpacingM),
-                        color = colors.surfaceVariant,
-                    )
-                    ExportCheckboxRow(
-                        label = stringResource(R.string.export_include_assets),
-                        checked = includeAssets,
-                        onCheckedChange = { includeAssets = it },
-                    )
-                }
-            }
-
-            item {
-                PrimaryButton(
-                    text = stringResource(R.string.action_export),
-                    onClick = {
-                        viewModel.export(
-                            format = selectedFormat,
-                            period = selectedPeriod,
-                            include = includeOptions,
-                            customStartMillis = customStartMillis,
-                            customEndMillis = customEndMillis,
-                        )
-                    },
-                    enabled = canExport,
-                )
-
-                if (exportState is ExportState.Loading) {
-                    Box(
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimens.SpacingL),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+                ) {
+                    Button(
+                        onClick = {
+                            viewModel.saveBackup(
+                                format = selectedFormat,
+                                period = selectedPeriod,
+                                customStartMillis = customStartMillis,
+                                customEndMillis = customEndMillis,
+                            )
+                        },
+                        enabled = canExport && !isLoading,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = Dimens.SpacingM),
-                        contentAlignment = Alignment.Center,
+                            .height(Dimens.ButtonHeight),
+                        shape = RoundedCornerShape(Dimens.RadiusL),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.primary,
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(0.dp),
                     ) {
-                        CircularProgressIndicator(
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Rounded.SaveAlt,
+                                contentDescription = null,
+                                modifier = Modifier.size(Dimens.IconSizeM),
+                            )
+                            Spacer(Modifier.width(Dimens.SpacingXs))
+                            Text(
+                                text = stringResource(R.string.export_save_backup),
+                                style = typography.titleMedium,
+                            )
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            viewModel.exportAndShare(
+                                format = selectedFormat,
+                                period = selectedPeriod,
+                                customStartMillis = customStartMillis,
+                                customEndMillis = customEndMillis,
+                            )
+                        },
+                        enabled = canExport && !isLoading,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(Dimens.ButtonHeight),
+                        shape = RoundedCornerShape(Dimens.RadiusL),
+                        border = BorderStroke(1.dp, colors.primary),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Share,
+                            contentDescription = null,
+                            tint = colors.primary,
                             modifier = Modifier.size(Dimens.IconSizeM),
+                        )
+                        Spacer(Modifier.width(Dimens.SpacingXs))
+                        Text(
+                            text = stringResource(R.string.export_share),
                             color = colors.primary,
-                            strokeWidth = 2.dp,
+                            style = typography.titleMedium,
                         )
                     }
                 }
 
                 if (exportState is ExportState.Error) {
                     Text(
-                        text = (exportState as ExportState.Error).message
-                            ?: stringResource(R.string.export_error_generic),
+                        text = (exportState as ExportState.Error).message.ifBlank {
+                            stringResource(R.string.export_error_generic)
+                        },
                         style = typography.bodySmall,
                         color = colors.error,
                         textAlign = TextAlign.Center,
@@ -534,41 +586,6 @@ private fun ExportRadioRow(
             colors = RadioButtonDefaults.colors(
                 selectedColor = colors.primary,
                 unselectedColor = colors.onSurfaceVariant,
-            ),
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = colors.onSurface,
-            modifier = Modifier.padding(start = Dimens.SpacingXs),
-        )
-    }
-}
-
-@Composable
-private fun ExportCheckboxRow(
-    label: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
-            .padding(
-                horizontal = Dimens.SpacingM,
-                vertical = Dimens.SpacingXs,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = CheckboxDefaults.colors(
-                checkedColor = colors.primary,
-                uncheckedColor = colors.onSurfaceVariant,
             ),
         )
         Text(

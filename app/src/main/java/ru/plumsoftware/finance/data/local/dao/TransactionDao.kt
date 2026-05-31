@@ -113,4 +113,22 @@ interface TransactionDao {
         startMillis: Long,
         endMillis: Long,
     ): Flow<List<CategorySpendingRow>>
+
+    @Query("SELECT * FROM transactions ORDER BY dateMillis DESC, id DESC")
+    suspend fun getAllSync(): List<TransactionEntity>
+
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE dateMillis >= :startMillis AND dateMillis < :endMillis
+        ORDER BY dateMillis DESC, id DESC
+        """,
+    )
+    suspend fun getByPeriodSync(startMillis: Long, endMillis: Long): List<TransactionEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(transactions: List<TransactionEntity>)
+
+    @Query("DELETE FROM transactions")
+    suspend fun deleteAll()
 }

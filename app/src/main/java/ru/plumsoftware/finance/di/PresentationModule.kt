@@ -13,6 +13,7 @@ import ru.plumsoftware.finance.presentation.history.HistoryViewModel
 import ru.plumsoftware.finance.presentation.notifications.NotificationsViewModel
 import ru.plumsoftware.finance.presentation.onboarding.OnboardingViewModel
 import ru.plumsoftware.finance.presentation.export.ExportViewModel
+import ru.plumsoftware.finance.presentation.importdata.ImportViewModel
 import ru.plumsoftware.finance.presentation.permissions.PermissionsViewModel
 import ru.plumsoftware.finance.presentation.recurring.RecurringViewModel
 import ru.plumsoftware.finance.presentation.security.AppLockViewModel
@@ -38,7 +39,8 @@ val presentationModule = module {
     viewModel { NotificationsViewModel(get()) }
     viewModel { SettingsViewModel(get(), get(), androidContext()) }
     viewModel { PermissionsViewModel(get()) }
-    viewModel { ExportViewModel(get(), androidContext()) }
+    viewModel { ExportViewModel(get()) }
+    viewModel { ImportViewModel(get(), androidContext()) }
     viewModel { RecurringViewModel(get(), get()) }
     viewModel { AppLockViewModel() }
 }

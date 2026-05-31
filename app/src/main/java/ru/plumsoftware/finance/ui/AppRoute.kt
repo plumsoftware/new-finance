@@ -16,6 +16,11 @@ sealed class AppRoute(val route: String) {
     object Recurring : AppRoute("settings/recurring")
     object Permissions : AppRoute("settings/permissions")
 
+    object ImportPreview : AppRoute("import_preview/{encodedPath}") {
+        fun route(encodedPath: String) =
+            "import_preview/${android.net.Uri.encode(encodedPath)}"
+    }
+
     companion object {
         const val SMART_DETAIL = "smart_savings/detail/{assetId}"
         fun smartDetail(assetId: Long) = "smart_savings/detail/$assetId"

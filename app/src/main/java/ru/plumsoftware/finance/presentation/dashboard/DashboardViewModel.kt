@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.plumsoftware.finance.domain.model.Category
@@ -16,6 +17,7 @@ import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.domain.model.Insight
 import ru.plumsoftware.finance.domain.model.MonthPeriod
 import ru.plumsoftware.finance.domain.model.SmartAsset
+import ru.plumsoftware.finance.domain.model.SmartAssetStatus
 import ru.plumsoftware.finance.domain.model.Transaction
 import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.domain.insights.InsightsEngine
@@ -51,7 +53,7 @@ class DashboardViewModel(
 
     val uiState: StateFlow<DashboardUiState> = combine(
         transactionRepository.observeAll(),
-        smartAssetRepository.observeActive(),
+        smartAssetRepository.observeByStatus(SmartAssetStatus.PAYING_OFF),
         categoryRepository.observeByType(CategoryType.EXPENSE, includeHidden = true),
         categoryRepository.observeByType(CategoryType.INCOME, includeHidden = true),
         categoryRepository.getCategoryWithSpending(MonthPeriod.current()),
@@ -100,7 +102,18 @@ class DashboardViewModel(
 
     fun recordSmartUsage(assetId: Long) {
         viewModelScope.launch {
-            runCatching { smartAssetRepository.recordUsage(smartAssetId = assetId) }
+            runCatching {
+                val incomeCategoryId = categoryRepository
+                    .observeByType(CategoryType.INCOME, includeHidden = false)
+                    .first()
+                    .firstOrNull()
+                    ?.id
+                smartAssetRepository.recordUsage(
+                    smartAssetId = assetId,
+                    recordIncome = true,
+                    incomeCategoryId = incomeCategoryId,
+                )
+            }
                 .onSuccess {
                     _snackbar.value = "Сэкономлено! +1 использование"
                 }

@@ -44,6 +44,7 @@ import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.DarkMode
 
 import androidx.compose.material.icons.rounded.FileDownload
+import androidx.compose.material.icons.rounded.FileUpload
 
 import androidx.compose.material.icons.rounded.Fingerprint
 
@@ -112,7 +113,9 @@ import ru.plumsoftware.finance.BuildConfig
 
 import ru.plumsoftware.finance.R
 
+import androidx.navigation.NavController
 import ru.plumsoftware.finance.presentation.common.BiometricHelper
+import ru.plumsoftware.finance.presentation.importdata.ImportPickerSheet
 
 import ru.plumsoftware.finance.ui.components.AppCard
 
@@ -149,6 +152,8 @@ import ru.plumsoftware.finance.ui.theme.TextPrimaryL
 @Composable
 
 fun SettingsScreen(
+
+    navController: NavController,
 
     onOpenCategories: () -> Unit = {},
 
@@ -203,6 +208,14 @@ fun SettingsScreen(
     }
 
     var showBiometricUnavailableDialog by remember { mutableStateOf(false) }
+    var showImportSheet by remember { mutableStateOf(false) }
+
+    if (showImportSheet) {
+        ImportPickerSheet(
+            navController = navController,
+            onDismiss = { showImportSheet = false },
+        )
+    }
 
     val colors = MaterialTheme.colorScheme
 
@@ -443,6 +456,20 @@ fun SettingsScreen(
                         title = stringResource(R.string.export_data),
 
                         onClick = onOpenExport,
+
+                    )
+
+                    SettingsRowDivider()
+
+                    SettingsNavRow(
+
+                        icon = Icons.Rounded.FileUpload,
+
+                        iconBackground = Color(0xFF5856D6),
+
+                        title = stringResource(R.string.import_data),
+
+                        onClick = { showImportSheet = true },
 
                     )
 

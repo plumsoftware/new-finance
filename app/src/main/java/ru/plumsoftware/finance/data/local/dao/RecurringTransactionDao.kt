@@ -3,6 +3,7 @@ package ru.plumsoftware.finance.data.local.dao
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
@@ -35,4 +36,13 @@ interface RecurringTransactionDao {
 
     @Query("UPDATE recurring_transactions SET isActive = :active WHERE id = :id")
     suspend fun setActive(id: Long, active: Boolean)
+
+    @Query("SELECT * FROM recurring_transactions ORDER BY id ASC")
+    suspend fun getAllSync(): List<RecurringTransactionEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(entities: List<RecurringTransactionEntity>)
+
+    @Query("DELETE FROM recurring_transactions")
+    suspend fun deleteAll()
 }

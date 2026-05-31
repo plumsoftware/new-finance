@@ -16,4 +16,7 @@ object MascotAssets {
 
     @DrawableRes
     val emptyAnalytics: Int = R.drawable.mascot_empty_analytics
+
+    @DrawableRes
+    val emptyNotifications: Int = R.drawable.mascot_empty_notifications
 }
