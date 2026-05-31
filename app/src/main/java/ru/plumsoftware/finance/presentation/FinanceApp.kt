@@ -62,6 +62,7 @@ import ru.plumsoftware.finance.presentation.categories.CategoriesScreen
 import ru.plumsoftware.finance.presentation.categories.CategoryEditorScreen
 import ru.plumsoftware.finance.presentation.dashboard.HomeScreen
 import ru.plumsoftware.finance.presentation.export.ExportScreen
+import ru.plumsoftware.finance.presentation.importdata.ImportPickerDeepLinkScreen
 import ru.plumsoftware.finance.presentation.importdata.ImportPreviewScreen
 import ru.plumsoftware.finance.presentation.history.HistoryScreen
 import ru.plumsoftware.finance.presentation.notifications.NotificationsScreen
@@ -73,6 +74,7 @@ import ru.plumsoftware.finance.presentation.smartsavings.CreateSmartSavingsScree
 import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsDetailScreen
 import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsScreen
 import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsSnackbar
+import ru.plumsoftware.finance.navigation.NavDeepLinks
 import ru.plumsoftware.finance.ui.AppRoute
 import ru.plumsoftware.finance.ui.nav.BottomNavItems
 import ru.plumsoftware.finance.ui.theme.Dimens
@@ -85,6 +87,8 @@ fun FinanceApp(
     settingsRepository: SettingsRepository = koinInject(),
     pendingImportLocalPath: String? = null,
     onPendingImportConsumed: () -> Unit = {},
+    pendingDeepLinkIntent: android.content.Intent? = null,
+    onPendingDeepLinkConsumed: () -> Unit = {},
 ) {
     val settings by settingsRepository.settings.collectAsStateWithLifecycle(
         initialValue = ru.plumsoftware.finance.domain.model.AppSettings(),
@@ -119,6 +123,14 @@ fun FinanceApp(
                     launchSingleTop = true
                 }
                 onPendingImportConsumed()
+            }
+        }
+
+        LaunchedEffect(pendingDeepLinkIntent, isOnboardingCompleted) {
+            val intent = pendingDeepLinkIntent ?: return@LaunchedEffect
+            if (isOnboardingCompleted == true) {
+                runCatching { navController.handleDeepLink(intent) }
+                onPendingDeepLinkConsumed()
             }
         }
 
@@ -256,7 +268,10 @@ fun FinanceApp(
                         .fillMaxSize()
                         .padding(bottom = if (showBottomBar) innerPadding.calculateBottomPadding() else 0.dp),
                 ) {
-                    composable(AppRoute.Onboarding.route) {
+                    composable(
+                        route = AppRoute.Onboarding.route,
+                        deepLinks = listOf(NavDeepLinks.onboarding),
+                    ) {
                         OnboardingScreen(
                             onComplete = {
                                 navController.navigate(AppRoute.Home.route) {
@@ -265,7 +280,10 @@ fun FinanceApp(
                             },
                         )
                     }
-                    composable(AppRoute.Home.route) {
+                    composable(
+                        route = AppRoute.Home.route,
+                        deepLinks = listOf(NavDeepLinks.home),
+                    ) {
                         HomeScreen(
                             onOpenSmartSavingsClick = { navController.navigate(AppRoute.SmartSavings.route) },
                             onOpenHistoryClick = { navController.navigate(AppRoute.History.route) },
@@ -275,12 +293,18 @@ fun FinanceApp(
                             onCreateAssetClick = { navController.navigate(AppRoute.smartCreate(null)) },
                         )
                     }
-                    composable(AppRoute.History.route) {
+                    composable(
+                        route = AppRoute.History.route,
+                        deepLinks = listOf(NavDeepLinks.history),
+                    ) {
                         HistoryScreen(
                             onNavigateToAdd = { navController.navigate(AppRoute.AddTransaction.route) },
                         )
                     }
-                    composable(AppRoute.SmartSavings.route) { backStackEntry ->
+                    composable(
+                        route = AppRoute.SmartSavings.route,
+                        deepLinks = listOf(NavDeepLinks.smartSavings),
+                    ) { backStackEntry ->
                         val snackbarMessage by backStackEntry.savedStateHandle
                             .getStateFlow<String?>(SmartSavingsSnackbar.KEY, null)
                             .collectAsStateWithLifecycle()
@@ -301,6 +325,7 @@ fun FinanceApp(
                     }
                     composable(
                         route = AppRoute.SMART_CREATE_WITH_ARGS,
+                        deepLinks = listOf(NavDeepLinks.smartSavingsCreate, NavDeepLinks.smartSavingsCreateNew),
                         arguments = listOf(navArgument("assetId") {
                             type = NavType.StringType
                             nullable = true
@@ -354,6 +379,7 @@ fun FinanceApp(
                     }
                     composable(
                         route = AppRoute.SMART_DETAIL,
+                        deepLinks = listOf(NavDeepLinks.smartSavingsDetail),
                         arguments = listOf(navArgument("assetId") { type = NavType.LongType }),
                         enterTransition = { slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn(tween(280)) },
                         exitTransition = { slideOutHorizontally(animationSpec = tween(240)) { it } + fadeOut(tween(200)) },
@@ -376,16 +402,28 @@ fun FinanceApp(
                             },
                         )
                     }
-                    composable(AppRoute.Analytics.route) {
+                    composable(
+                        route = AppRoute.Analytics.route,
+                        deepLinks = listOf(NavDeepLinks.analytics),
+                    ) {
                         AnalyticsScreen()
                     }
-                    composable(AppRoute.Limits.route) {
+                    composable(
+                        route = AppRoute.Limits.route,
+                        deepLinks = listOf(NavDeepLinks.limits),
+                    ) {
                         LimitsScreen(navController = navController)
                     }
-                    composable(AppRoute.Notifications.route) {
+                    composable(
+                        route = AppRoute.Notifications.route,
+                        deepLinks = listOf(NavDeepLinks.notifications),
+                    ) {
                         NotificationsScreen(navController = navController)
                     }
-                    composable(AppRoute.Settings.route) {
+                    composable(
+                        route = AppRoute.Settings.route,
+                        deepLinks = listOf(NavDeepLinks.settings),
+                    ) {
                         SettingsScreen(
                             navController = navController,
                             onOpenCategories = { navController.navigate(AppRoute.Categories.route) },
@@ -395,10 +433,16 @@ fun FinanceApp(
                             onOpenPermissions = { navController.navigate(AppRoute.Permissions.route) },
                         )
                     }
-                    composable(AppRoute.Permissions.route) {
+                    composable(
+                        route = AppRoute.Permissions.route,
+                        deepLinks = listOf(NavDeepLinks.permissions),
+                    ) {
                         PermissionsScreen(navController = navController)
                     }
-                    composable(AppRoute.Export.route) {
+                    composable(
+                        route = AppRoute.Export.route,
+                        deepLinks = listOf(NavDeepLinks.export),
+                    ) {
                         ExportScreen(navController = navController)
                     }
                     composable(
@@ -413,10 +457,22 @@ fun FinanceApp(
                             navController = navController,
                         )
                     }
-                    composable(AppRoute.Recurring.route) {
+                    composable(
+                        route = AppRoute.ImportPicker.route,
+                        deepLinks = listOf(NavDeepLinks.importPicker),
+                    ) {
+                        ImportPickerDeepLinkScreen(navController = navController)
+                    }
+                    composable(
+                        route = AppRoute.Recurring.route,
+                        deepLinks = listOf(NavDeepLinks.recurring),
+                    ) {
                         RecurringScreen(navController = navController)
                     }
-                    composable(AppRoute.Categories.route) {
+                    composable(
+                        route = AppRoute.Categories.route,
+                        deepLinks = listOf(NavDeepLinks.categories),
+                    ) {
                         CategoriesScreen(
                             onBack = { navController.popBackStack() },
                             onAdd = { type ->
@@ -429,6 +485,7 @@ fun FinanceApp(
                     }
                     composable(
                         route = AppRoute.CATEGORY_EDIT,
+                        deepLinks = listOf(NavDeepLinks.categoryEdit),
                         arguments = listOf(
                             navArgument("categoryId") {
                                 type = NavType.StringType
@@ -448,6 +505,7 @@ fun FinanceApp(
                     }
                     composable(
                         route = AppRoute.AddTransaction.route,
+                        deepLinks = listOf(NavDeepLinks.addTransaction),
                         enterTransition = {
                             slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn(
                                 tween(

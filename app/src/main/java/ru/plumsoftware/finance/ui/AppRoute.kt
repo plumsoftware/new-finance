@@ -15,6 +15,7 @@ sealed class AppRoute(val route: String) {
     object Export : AppRoute("settings/export")
     object Recurring : AppRoute("settings/recurring")
     object Permissions : AppRoute("settings/permissions")
+    object ImportPicker : AppRoute("settings/import")
 
     object ImportPreview : AppRoute("import_preview/{encodedPath}") {
         fun route(encodedPath: String) =

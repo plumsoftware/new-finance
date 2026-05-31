@@ -188,14 +188,16 @@ private fun LimitsSummaryBanner(
 
     AppCard(modifier = modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(Dimens.SpacingM),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Dimens.SpacingM),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SummaryStatItem(
                 count = okCount,
                 label = R.string.limit_status_ok,
                 color = colors.secondary,
+                modifier = Modifier.weight(1f),
             )
             VerticalDivider(
                 modifier = Modifier.height(36.dp),
@@ -205,6 +207,7 @@ private fun LimitsSummaryBanner(
                 count = warningCount,
                 label = R.string.limit_status_warning,
                 color = LimitWarningOrange,
+                modifier = Modifier.weight(1f),
             )
             VerticalDivider(
                 modifier = Modifier.height(36.dp),
@@ -214,6 +217,7 @@ private fun LimitsSummaryBanner(
                 count = exceededCount,
                 label = R.string.limit_status_exceeded,
                 color = colors.error,
+                modifier = Modifier.weight(1f),
             )
         }
     }
@@ -224,8 +228,12 @@ private fun SummaryStatItem(
     count: Int,
     @StringRes label: Int,
     color: Color,
+    modifier: Modifier = Modifier,
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         Text(
             text = count.toString(),
             style = MaterialTheme.typography.headlineSmall,

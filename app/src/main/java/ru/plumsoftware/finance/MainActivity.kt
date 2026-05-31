@@ -28,6 +28,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
 import ru.plumsoftware.finance.domain.model.AppSettings
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
+import ru.plumsoftware.finance.navigation.AppDeepLinks
 import ru.plumsoftware.finance.presentation.FinanceApp
 import ru.plumsoftware.finance.presentation.common.BiometricHelper
 import ru.plumsoftware.finance.presentation.importdata.OpenDocumentWithInitialUri
@@ -41,6 +42,7 @@ class MainActivity : FragmentActivity() {
 
     private val appLockViewModel: AppLockViewModel by viewModel()
     private val pendingImportLocalPath = mutableStateOf<String?>(null)
+    private val pendingDeepLinkIntent = mutableStateOf<Intent?>(null)
 
     private lateinit var importPickerLauncher: ActivityResultLauncher<Uri?>
 
@@ -60,6 +62,8 @@ class MainActivity : FragmentActivity() {
                 appLockViewModel = appLockViewModel,
                 pendingImportLocalPath = pendingImportLocalPath.value,
                 onPendingImportConsumed = { pendingImportLocalPath.value = null },
+                pendingDeepLinkIntent = pendingDeepLinkIntent.value,
+                onPendingDeepLinkConsumed = { pendingDeepLinkIntent.value = null },
             )
         }
 
@@ -73,6 +77,13 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun handleIntent(intent: Intent?) {
+        if (intent == null) return
+
+        if (AppDeepLinks.isAppDeepLink(intent)) {
+            pendingDeepLinkIntent.value = intent
+            return
+        }
+
         val uri = extractUriFromIntent(intent) ?: return
 
         if (uri.requiresOpenDocument()) {
@@ -120,6 +131,8 @@ private fun AppRoot(
     appLockViewModel: AppLockViewModel,
     pendingImportLocalPath: String? = null,
     onPendingImportConsumed: () -> Unit = {},
+    pendingDeepLinkIntent: Intent? = null,
+    onPendingDeepLinkConsumed: () -> Unit = {},
 ) {
     val settingsRepository: SettingsRepository = koinInject()
     val settings by settingsRepository.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
@@ -153,6 +166,8 @@ private fun AppRoot(
             modifier = Modifier.fillMaxSize(),
             pendingImportLocalPath = pendingImportLocalPath,
             onPendingImportConsumed = onPendingImportConsumed,
+            pendingDeepLinkIntent = pendingDeepLinkIntent,
+            onPendingDeepLinkConsumed = onPendingDeepLinkConsumed,
         )
         if (settings.biometricEnabled && isLocked) {
             BiometricLockOverlay(
