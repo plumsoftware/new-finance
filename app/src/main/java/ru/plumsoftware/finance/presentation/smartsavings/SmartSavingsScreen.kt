@@ -19,9 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -49,7 +47,7 @@ import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
 import ru.plumsoftware.finance.ui.components.MascotEmptyState
 import ru.plumsoftware.finance.ui.components.SectionLabel
-import ru.plumsoftware.finance.ui.components.ios.IosTopBar
+import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.MascotAssets
 
@@ -79,22 +77,15 @@ fun SmartSavingsScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
         topBar = {
-            IosTopBar(
+            IosEditorTopBar(
                 title = stringResource(R.string.smart_savings_block),
+                backLabel = stringResource(R.string.nav_home),
                 onBack = onBack,
+                actionLabel = stringResource(R.string.categories_add),
+                onAction = onCreateClick,
             )
         },
         snackbarHost = { SnackbarHost(snackbarHost) },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreateClick,
-                containerColor = colors.primary,
-                contentColor = colors.onPrimary,
-                modifier = Modifier.size(Dimens.fabSize),
-            ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_asset))
-            }
-        },
     ) { padding ->
         LazyColumn(
             modifier = Modifier

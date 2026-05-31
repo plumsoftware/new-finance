@@ -51,8 +51,7 @@ import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.components.SectionLabel
-import ru.plumsoftware.finance.ui.components.ios.IosNavigationTextButton
-import ru.plumsoftware.finance.ui.components.ios.IosTextButton
+import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -79,41 +78,26 @@ fun CategoryEditorScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
+        topBar = {
+            IosEditorTopBar(
+                title = if (state.isEdit) {
+                    stringResource(R.string.category_editor_title_edit)
+                } else {
+                    stringResource(R.string.category_editor_title_new)
+                },
+                backLabel = stringResource(R.string.categories_title),
+                onBack = onBack,
+                actionLabel = stringResource(R.string.done),
+                onAction = viewModel::save,
+                actionEnabled = state.canSave,
+            )
+        },
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.SpacingM),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IosNavigationTextButton(
-                    text = stringResource(R.string.categories_title),
-                    onClick = onBack,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = if (state.isEdit) {
-                        stringResource(R.string.category_editor_title_edit)
-                    } else {
-                        stringResource(R.string.category_editor_title_new)
-                    },
-                    style = typography.bodyLarge,
-                )
-                IosTextButton(
-                    text = stringResource(R.string.done),
-                    onClick = viewModel::save,
-                    enabled = state.canSave,
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.End,
-                    color = if (state.canSave) colors.primary else colors.outlineVariant,
-                )
-            }
-
             Column(
                 modifier = Modifier
                     .weight(1f)

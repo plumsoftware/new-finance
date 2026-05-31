@@ -22,9 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.EditNote
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.Icon
@@ -37,7 +35,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +61,7 @@ import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.components.SectionLabel
+import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
 
 private val LimitWarningOrange = Color(0xFFFF9500)
@@ -121,26 +119,10 @@ fun LimitsScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.limits),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = navController::popBackStack) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBackIosNew,
-                            contentDescription = stringResource(R.string.cd_back),
-                            tint = colors.primary,
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = colors.background,
-                ),
+            IosEditorTopBar(
+                title = stringResource(R.string.limits),
+                backLabel = stringResource(R.string.categories_back_settings),
+                onBack = navController::popBackStack,
             )
         },
     ) { padding ->

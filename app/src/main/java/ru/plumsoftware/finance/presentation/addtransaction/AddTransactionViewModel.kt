@@ -1,5 +1,6 @@
 package ru.plumsoftware.finance.presentation.addtransaction
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ import ru.plumsoftware.finance.domain.repository.CategoryRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.domain.repository.TransactionRepository
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
+import ru.plumsoftware.finance.R
 
 data class AddTransactionUiState(
     val type: TransactionType = TransactionType.EXPENSE,
@@ -34,6 +36,7 @@ class AddTransactionViewModel(
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository,
+    private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddTransactionUiState())
@@ -173,11 +176,15 @@ class AddTransactionViewModel(
                 TransactionType.INCOME -> CategoryType.INCOME
                 else -> CategoryType.EXPENSE
             }
+            val trimmedName = name.trim().take(30)
             runCatching {
+                if (categoryRepository.existsByNameIgnoreCase(categoryType, trimmedName)) {
+                    error(context.getString(R.string.category_duplicate_name))
+                }
                 val existing = categoryRepository.observeByType(categoryType, includeHidden = true).first()
                 val newId = categoryRepository.upsert(
                     Category(
-                        name = name.trim().take(30),
+                        name = trimmedName,
                         type = categoryType,
                         icon = icon,
                         colorArgb = colorArgb,

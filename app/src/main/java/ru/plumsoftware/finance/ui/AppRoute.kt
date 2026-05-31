@@ -14,6 +14,7 @@ sealed class AppRoute(val route: String) {
     object AddTransaction : AppRoute("add_transaction")
     object Export : AppRoute("settings/export")
     object Recurring : AppRoute("settings/recurring")
+    object Permissions : AppRoute("settings/permissions")
 
     companion object {
         const val SMART_DETAIL = "smart_savings/detail/{assetId}"

@@ -64,6 +64,7 @@ import ru.plumsoftware.finance.presentation.export.ExportScreen
 import ru.plumsoftware.finance.presentation.history.HistoryScreen
 import ru.plumsoftware.finance.presentation.notifications.NotificationsScreen
 import ru.plumsoftware.finance.presentation.onboarding.OnboardingScreen
+import ru.plumsoftware.finance.presentation.permissions.PermissionsScreen
 import ru.plumsoftware.finance.presentation.recurring.RecurringScreen
 import ru.plumsoftware.finance.presentation.settings.SettingsScreen
 import ru.plumsoftware.finance.presentation.smartsavings.CreateSmartSavingsScreen
@@ -376,7 +377,11 @@ fun FinanceApp(
                             onOpenLimits = { navController.navigate(AppRoute.Limits.route) },
                             onOpenRecurring = { navController.navigate(AppRoute.Recurring.route) },
                             onOpenExport = { navController.navigate(AppRoute.Export.route) },
+                            onOpenPermissions = { navController.navigate(AppRoute.Permissions.route) },
                         )
+                    }
+                    composable(AppRoute.Permissions.route) {
+                        PermissionsScreen(navController = navController)
                     }
                     composable(AppRoute.Export.route) {
                         ExportScreen(navController = navController)

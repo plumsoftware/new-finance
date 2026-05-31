@@ -48,4 +48,18 @@ interface CategoryDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(categories: List<CategoryEntity>)
+
+    @Query(
+        """
+        SELECT COUNT(*) > 0 FROM categories
+        WHERE type = :type
+        AND LOWER(TRIM(name)) = LOWER(TRIM(:name))
+        AND id != :excludeId
+        """,
+    )
+    suspend fun existsByNameIgnoreCase(
+        type: CategoryType,
+        name: String,
+        excludeId: Long = 0,
+    ): Boolean
 }

@@ -15,6 +15,29 @@
     <string name="onboarding_page4_title">Готовы начать?</string>
     <string name="onboarding_page4_subtitle">Отслеживайте траты без стресса и радуйтесь каждой сэкономленной сумме.</string>
 
+    <string name="permissions_title">Пара разрешений\nи можно начинать</string>
+    <string name="permissions_subtitle">Сова обещает использовать их\nтолько по делу 🦉</string>
+    <string name="permissions_allow_all">Разрешить доступ</string>
+    <string name="permissions_continue">Начать пользоваться</string>
+    <string name="permissions_skip">Пропустить</string>
+    <string name="permissions_settings_hint">Некоторые разрешения отключены.\nВключите вручную в настройках.</string>
+    <string name="permissions_open_settings">Открыть</string>
+    <string name="permissions_dont_show_again">Больше не показывать</string>
+    <string name="permissions">Разрешения</string>
+    <string name="perm_section_required">Требуют внимания</string>
+    <string name="perm_section_granted">Выдано</string>
+    <string name="perm_allow">Разрешить</string>
+    <string name="perm_open_settings">Открыть</string>
+    <string name="perm_notif_rationale">Нужно, чтобы вовремя напоминать\nо важных событиях</string>
+    <string name="perm_storage_rationale">Нужно для сохранения\nэкспортированных файлов</string>
+    <string name="perm_permanently_denied_hint">Для изменения откройте настройки устройства</string>
+    <string name="perm_all_granted_title">Всё в порядке</string>
+    <string name="perm_all_granted_desc">Все необходимые разрешения выданы</string>
+    <string name="perm_notif_title">Уведомления</string>
+    <string name="perm_notif_desc">Лимиты и регулярные платежи</string>
+    <string name="perm_storage_title">Хранилище</string>
+    <string name="perm_storage_desc">Экспорт данных в файл</string>
+
     <string name="dashboard_title">Главная</string>
     <string name="income">Доходы</string>
     <string name="expense">Расходы</string>
@@ -107,7 +130,7 @@
     <string name="currency">Валюта</string>
     <string name="settings_categories">Категории</string>
     <string name="categories">Категории</string>
-    <string name="recurring_transactions">Повторяющиеся операции</string>
+    <string name="recurring_transactions">Повторяющиеся\nоперации</string>
     <string name="no_recurring">Нет регулярных операций</string>
     <string name="no_recurring_desc">Добавьте подписки и платежи,\nчтобы не забывать о них</string>
     <string name="add_recurring">Добавить операцию</string>
@@ -123,7 +146,7 @@
     <string name="amount">Сумма</string>
     <string name="category">Категория</string>
     <string name="frequency">Периодичность</string>
-    <string name="export_data">Экспорт данных</string>
+    <string name="export_data">Экспорт\nданных</string>
     <string name="export_section_format">Формат</string>
     <string name="export_section_period">Период</string>
     <string name="export_section_include">Включить</string>
@@ -238,6 +261,7 @@
     <string name="category_editor_type_label">Тип операции</string>
     <string name="category_editor_name_placeholder">Напр. Продукты</string>
     <string name="category_editor_preview">Название категории</string>
+    <string name="category_duplicate_name">Категория с таким названием уже есть</string>
 
     <string name="category_name">Название</string>
     <string name="new_category_title">Новая категория</string>

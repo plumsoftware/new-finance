@@ -29,6 +29,7 @@ class SettingsDataStore(
             themeMode = ThemeMode.entries.getOrElse(
                 prefs[Keys.THEME_MODE]?.toIntOrNull() ?: 0,
             ) { ThemeMode.SYSTEM },
+            permissionsPromptHidden = prefs[Keys.PERMISSIONS_PROMPT_HIDDEN] ?: false,
         )
     }
 
@@ -41,12 +42,14 @@ class SettingsDataStore(
                 themeMode = ThemeMode.entries.getOrElse(
                     prefs[Keys.THEME_MODE]?.toIntOrNull() ?: 0,
                 ) { ThemeMode.SYSTEM },
+                permissionsPromptHidden = prefs[Keys.PERMISSIONS_PROMPT_HIDDEN] ?: false,
             )
             val updated = transform(current)
             prefs[Keys.DEFAULT_CURRENCY] = updated.defaultCurrencyCode
             prefs[Keys.ONBOARDING_COMPLETED] = updated.onboardingCompleted
             prefs[Keys.BIOMETRIC_ENABLED] = updated.biometricEnabled
             prefs[Keys.THEME_MODE] = updated.themeMode.ordinal.toString()
+            prefs[Keys.PERMISSIONS_PROMPT_HIDDEN] = updated.permissionsPromptHidden
         }
     }
 
@@ -55,5 +58,6 @@ class SettingsDataStore(
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val PERMISSIONS_PROMPT_HIDDEN = booleanPreferencesKey("permissions_prompt_hidden")
     }
 }

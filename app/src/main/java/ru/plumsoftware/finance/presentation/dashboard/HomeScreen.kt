@@ -46,14 +46,18 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -69,15 +73,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.domain.model.AppSettings
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.SmartAssetStatus
 import ru.plumsoftware.finance.domain.model.Transaction
 import ru.plumsoftware.finance.presentation.notifications.NotificationsViewModel
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
+import ru.plumsoftware.finance.presentation.common.hasPendingPermissions
 import ru.plumsoftware.finance.presentation.history.TransactionDetailSheet
+import ru.plumsoftware.finance.presentation.permissions.PermissionsBottomSheet
+import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.presentation.transactions.TransactionRow
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.SectionLabel
@@ -101,13 +114,57 @@ fun HomeScreen(
     onCreateAssetClick: () -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel(),
     notificationsViewModel: NotificationsViewModel = koinViewModel(),
+    settingsRepository: SettingsRepository = koinInject(),
 ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val settings by settingsRepository.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val unreadCount by notificationsViewModel.unreadCount.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
     var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
+    var showPermissionsSheet by remember { mutableStateOf(false) }
+    var permissionResumeTick by remember { mutableIntStateOf(0) }
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
+
+    DisposableEffect(lifecycleOwner, settings.permissionsPromptHidden) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> {
+                    if (!settings.permissionsPromptHidden && hasPendingPermissions(context)) {
+                        showPermissionsSheet = true
+                    }
+                }
+                Lifecycle.Event.ON_RESUME -> permissionResumeTick++
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    LaunchedEffect(settings.permissionsPromptHidden, permissionResumeTick) {
+        if (settings.permissionsPromptHidden || !hasPendingPermissions(context)) {
+            showPermissionsSheet = false
+        } else if (hasPendingPermissions(context)) {
+            showPermissionsSheet = true
+        }
+    }
+
+    if (showPermissionsSheet) {
+        PermissionsBottomSheet(
+            onDismiss = { dontShowAgain ->
+                showPermissionsSheet = false
+                if (dontShowAgain) {
+                    scope.launch {
+                        settingsRepository.update { it.copy(permissionsPromptHidden = true) }
+                    }
+                }
+            },
+        )
+    }
 
     LaunchedEffect(state.snackbarMessage) {
         state.snackbarMessage?.let {

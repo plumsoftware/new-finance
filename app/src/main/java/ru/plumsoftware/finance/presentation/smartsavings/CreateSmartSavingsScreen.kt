@@ -74,8 +74,8 @@ import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
 import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.components.ios.IosAlertDialog
+import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.components.ios.IosSwitch
-import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.ExtendedTypography
 import ru.plumsoftware.finance.ui.theme.Inter28Family
@@ -155,20 +155,21 @@ fun CreateSmartSavingsScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
         topBar = {
-            CreateAssetTopBar(
+            IosEditorTopBar(
                 title = if (state.isEditMode) {
                     stringResource(R.string.smart_edit_title)
                 } else {
                     stringResource(R.string.smart_new_asset)
                 },
+                backLabel = stringResource(R.string.smart_savings),
+                onBack = {
+                    dismissNumPad()
+                    onBack()
+                },
                 actionLabel = if (state.isEditMode) {
                     stringResource(R.string.save)
                 } else {
                     stringResource(R.string.create)
-                },
-                onCancel = {
-                    dismissNumPad()
-                    onBack()
                 },
                 onAction = {
                     dismissNumPad()
@@ -409,54 +410,6 @@ fun CreateSmartSavingsScreen(
                     .height(Dimens.paddingMedium),
             )
         }
-    }
-}
-
-@Composable
-private fun CreateAssetTopBar(
-    title: String,
-    actionLabel: String,
-    onCancel: () -> Unit,
-    onAction: () -> Unit,
-    actionEnabled: Boolean,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .height(Dimens.toolbarHeight)
-            .background(colors.background)
-            .padding(horizontal = Dimens.formHorizontalInset),
-    ) {
-        IosTextButton(
-            text = stringResource(R.string.cancel),
-            onClick = onCancel,
-            modifier = Modifier.align(Alignment.CenterStart),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(),
-        )
-        Text(
-            text = title,
-            style = typography.bodyLarge.copy(
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 17.sp,
-            ),
-            color = colors.onSurface,
-            modifier = Modifier.align(Alignment.Center),
-        )
-        IosTextButton(
-            text = actionLabel,
-            onClick = onAction,
-            enabled = actionEnabled,
-            color = if (actionEnabled) colors.primary else colors.primary.copy(alpha = 0.3f),
-            style = typography.bodyLarge.copy(
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 17.sp,
-            ),
-            modifier = Modifier.align(Alignment.CenterEnd),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(),
-        )
     }
 }
 

@@ -85,4 +85,10 @@ class CategoryRepositoryImpl(
     override suspend fun setLimit(id: Long, limitMinor: Long?) {
         categoryDao.setLimit(id, limitMinor)
     }
+
+    override suspend fun existsByNameIgnoreCase(
+        type: CategoryType,
+        name: String,
+        excludeId: Long,
+    ): Boolean = categoryDao.existsByNameIgnoreCase(type, name, excludeId)
 }

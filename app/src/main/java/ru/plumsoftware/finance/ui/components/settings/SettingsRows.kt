@@ -97,9 +97,16 @@ fun SettingsNavRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    trailing: @Composable () -> Unit = {
+        val colors = MaterialTheme.colorScheme
+        Icon(
+            imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+            contentDescription = null,
+            tint = colors.onSurfaceVariant,
+            modifier = Modifier.size(Dimens.IconSizeS),
+        )
+    },
 ) {
-    val colors = MaterialTheme.colorScheme
-
     SettingsRow(
         icon = icon,
         iconBackground = iconBackground,
@@ -107,14 +114,7 @@ fun SettingsNavRow(
         subtitle = subtitle,
         modifier = modifier,
         onClick = onClick,
-        trailing = {
-            Icon(
-                imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                contentDescription = null,
-                tint = colors.onSurfaceVariant,
-                modifier = Modifier.size(Dimens.IconSizeS),
-            )
-        },
+        trailing = trailing,
     )
 }
 

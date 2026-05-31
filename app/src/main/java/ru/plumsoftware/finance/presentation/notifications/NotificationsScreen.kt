@@ -67,6 +67,7 @@ import ru.plumsoftware.finance.domain.model.AppNotification
 import ru.plumsoftware.finance.domain.model.NotificationType
 import ru.plumsoftware.finance.ui.AppRoute
 import ru.plumsoftware.finance.ui.components.AppCard
+import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -112,47 +113,10 @@ fun NotificationsScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.notifications),
-                        style = typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 17.sp,
-                        ),
-                        color = colors.onSurface,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(
-                        onClick = navController::popBackStack,
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent,
-                        ),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowLeft,
-                            contentDescription = stringResource(R.string.cd_back),
-                            tint = colors.primary,
-                            modifier = Modifier.size(Dimens.iconSizeNav),
-                        )
-                    }
-                },
-                actions = {
-                    AnimatedVisibility(visible = notifications.isNotEmpty()) {
-                        TextButton(onClick = viewModel::clearAll) {
-                            Text(
-                                text = stringResource(R.string.clear_all),
-                                style = typography.bodyMedium,
-                                color = colors.primary,
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = colors.background,
-                ),
+            IosEditorTopBar(
+                title = stringResource(R.string.notifications),
+                backLabel = stringResource(R.string.nav_home),
+                onBack = navController::popBackStack
             )
         },
     ) { padding ->
@@ -200,9 +164,11 @@ fun NotificationsScreen(
                                     when (notification.type) {
                                         NotificationType.LIMIT_WARNING,
                                         NotificationType.LIMIT_EXCEEDED,
-                                        -> navController.navigate(AppRoute.Limits.route)
+                                            -> navController.navigate(AppRoute.Limits.route)
+
                                         NotificationType.SAVINGS_MILESTONE ->
                                             navController.navigate(AppRoute.SmartSavings.route)
+
                                         else -> Unit
                                     }
                                 },
@@ -459,6 +425,7 @@ private fun formatNotificationTime(timestampMillis: Long): String {
             val minutes = TimeUnit.MILLISECONDS.toMinutes(diff).toInt()
             stringResource(R.string.notif_time_minutes_ago, minutes)
         }
+
         else -> {
             val dayKey = SimpleDateFormat("yyyyMMdd", Locale.US)
             val today = dayKey.format(Date())

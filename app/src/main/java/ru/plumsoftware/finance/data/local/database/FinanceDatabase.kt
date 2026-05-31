@@ -9,7 +9,6 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import ru.plumsoftware.finance.data.local.converter.EnumConverters
 import ru.plumsoftware.finance.data.local.dao.CategoryDao
 import ru.plumsoftware.finance.data.local.dao.NotificationDao
@@ -73,11 +72,15 @@ abstract class FinanceDatabase : RoomDatabase() {
 
         private suspend fun seed(database: FinanceDatabase) {
             val categoryDao = database.categoryDao()
+            val transactionDao = database.transactionDao()
+
+            CategoryDeduplicator.deduplicate(categoryDao, transactionDao)
+
             val existingKeys = categoryDao.getAllSync()
-                .map { it.type to it.name }
+                .map { CategoryDeduplicator.categoryKey(it) }
                 .toSet()
             val missing = DefaultCategories.all()
-                .filter { (it.type to it.name) !in existingKeys }
+                .filter { CategoryDeduplicator.categoryKey(it) !in existingKeys }
             if (missing.isNotEmpty()) {
                 categoryDao.insertAll(missing)
             }

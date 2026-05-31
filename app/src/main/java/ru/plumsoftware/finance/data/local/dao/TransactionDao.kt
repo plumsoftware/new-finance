@@ -50,6 +50,9 @@ interface TransactionDao {
     @Query("DELETE FROM transactions WHERE id = :id")
     suspend fun deleteById(id: Long)
 
+    @Query("UPDATE transactions SET categoryId = :toId WHERE categoryId = :fromId")
+    suspend fun reassignCategory(fromId: Long, toId: Long)
+
     @Query(
         """
         SELECT COALESCE(SUM(amountMinor), 0) FROM transactions

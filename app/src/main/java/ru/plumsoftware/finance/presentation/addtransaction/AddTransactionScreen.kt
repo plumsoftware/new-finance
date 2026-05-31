@@ -83,6 +83,7 @@ import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.ui.components.ios.IosAlertDialog
 import ru.plumsoftware.finance.ui.components.ios.IosTextField
 import ru.plumsoftware.finance.ui.components.PrimaryButton
+import ru.plumsoftware.finance.ui.theme.CategoryUiDefaults
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.Inter28Family
 
@@ -107,7 +108,7 @@ fun AddTransactionScreen(
     var showQuickCategorySheet by remember { mutableStateOf(false) }
     var quickName by remember { mutableStateOf("") }
     var quickIcon by remember { mutableStateOf("🛒") }
-    var quickColor by remember { mutableLongStateOf(0xFFFF3B30) }
+    var quickColor by remember { mutableLongStateOf(CategoryUiDefaults.DEFAULT_COLOR_ARGB) }
 
     LaunchedEffect(state.saved) {
         if (state.saved) {
@@ -174,7 +175,12 @@ fun AddTransactionScreen(
                 Spacer(Modifier.height(Dimens.RadiusS))
                 Row(horizontalArrangement = Arrangement.spacedBy(Dimens.RadiusS)) {
                     listOf(
-                        0xFFFF3B30, 0xFFFF9500, 0xFF34C759, 0xFF007AFF, 0xFF5856D6,
+                        CategoryUiDefaults.DEFAULT_COLOR_ARGB,
+                        0xFFFF3B30,
+                        0xFFFF9500,
+                        0xFF34C759,
+                        0xFF007AFF,
+                        0xFF5856D6,
                     ).forEach { color ->
                         Surface(
                             shape = CircleShape,

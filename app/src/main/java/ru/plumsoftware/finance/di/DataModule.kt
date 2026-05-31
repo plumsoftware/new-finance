@@ -16,6 +16,7 @@ import ru.plumsoftware.finance.data.repository.AnalyticsRepositoryImpl
 import ru.plumsoftware.finance.data.repository.CategoryRepositoryImpl
 import ru.plumsoftware.finance.data.repository.ExportRepositoryImpl
 import ru.plumsoftware.finance.data.repository.NotificationRepositoryImpl
+import ru.plumsoftware.finance.data.repository.PermissionsRepositoryImpl
 import ru.plumsoftware.finance.data.repository.PushMessagingRepositoryImpl
 import ru.plumsoftware.finance.data.repository.RecurringRepositoryImpl
 import ru.plumsoftware.finance.data.repository.SettingsRepositoryImpl
@@ -25,6 +26,7 @@ import ru.plumsoftware.finance.domain.repository.AnalyticsRepository
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
 import ru.plumsoftware.finance.domain.repository.ExportRepository
 import ru.plumsoftware.finance.domain.repository.NotificationRepository
+import ru.plumsoftware.finance.domain.repository.PermissionsRepository
 import ru.plumsoftware.finance.domain.repository.PushMessagingRepository
 import ru.plumsoftware.finance.domain.repository.RecurringRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
@@ -60,6 +62,7 @@ val dataModule = module {
         ExportRepositoryImpl(get(), get(), get(), get())
     }
     single<RecurringRepository> { RecurringRepositoryImpl(get(), get()) }
+    single<PermissionsRepository> { PermissionsRepositoryImpl(androidContext()) }
     single { InsightsEngine() }
     single { LimitNotificationsEngine(get()) }
 }

@@ -13,6 +13,7 @@ import ru.plumsoftware.finance.presentation.history.HistoryViewModel
 import ru.plumsoftware.finance.presentation.notifications.NotificationsViewModel
 import ru.plumsoftware.finance.presentation.onboarding.OnboardingViewModel
 import ru.plumsoftware.finance.presentation.export.ExportViewModel
+import ru.plumsoftware.finance.presentation.permissions.PermissionsViewModel
 import ru.plumsoftware.finance.presentation.recurring.RecurringViewModel
 import ru.plumsoftware.finance.presentation.security.AppLockViewModel
 import ru.plumsoftware.finance.presentation.settings.SettingsViewModel
@@ -25,8 +26,8 @@ val presentationModule = module {
     viewModel { DashboardViewModel(get(), get(), get(), get(), get()) }
     viewModel { HistoryViewModel(get(), get(), get()) }
     viewModel { CategoriesViewModel(get()) }
-    viewModel { CategoryEditorViewModel(get(), get()) }
-    viewModel { AddTransactionViewModel(get(), get(), get()) }
+    viewModel { CategoryEditorViewModel(get(), get(), androidContext()) }
+    viewModel { AddTransactionViewModel(get(), get(), get(), androidContext()) }
     viewModel { SmartSavingsViewModel(get(), get()) }
     viewModel { CreateSmartSavingsViewModel(get(), get(), get()) }
     viewModel { (assetId: Long) ->
@@ -35,7 +36,8 @@ val presentationModule = module {
     viewModel { AnalyticsViewModel(get(), get(), get(), get()) }
     viewModel { LimitsViewModel(get(), get(), get()) }
     viewModel { NotificationsViewModel(get()) }
-    viewModel { SettingsViewModel(get(), androidContext()) }
+    viewModel { SettingsViewModel(get(), get(), androidContext()) }
+    viewModel { PermissionsViewModel(get()) }
     viewModel { ExportViewModel(get(), androidContext()) }
     viewModel { RecurringViewModel(get(), get()) }
     viewModel { AppLockViewModel() }

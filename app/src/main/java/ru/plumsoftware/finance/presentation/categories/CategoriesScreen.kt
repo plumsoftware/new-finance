@@ -40,6 +40,7 @@ import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.PrimaryButton
+import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.components.ios.IosNavigationTextButton
 import ru.plumsoftware.finance.ui.components.ios.IosSegmentedControl
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
@@ -61,6 +62,15 @@ fun CategoriesScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
+        topBar = {
+            IosEditorTopBar(
+                title = stringResource(R.string.categories_title),
+                backLabel = stringResource(R.string.categories_back_settings),
+                onBack = onBack,
+                actionLabel = stringResource(R.string.categories_add),
+                onAction = { onAdd(state.selectedType) }
+            )
+        }
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -72,28 +82,6 @@ fun CategoriesScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
         ) {
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IosNavigationTextButton(
-                        text = stringResource(R.string.categories_back_settings),
-                        onClick = onBack,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        stringResource(R.string.categories_title),
-                        style = typography.bodyLarge,
-                    )
-                    IosTextButton(
-                        text = stringResource(R.string.categories_add),
-                        onClick = { onAdd(state.selectedType) },
-                        modifier = Modifier.weight(1f),
-                        textAlign = TextAlign.End,
-                    )
-                }
-            }
             item {
                 IosSegmentedControl(
                     labels = listOf(

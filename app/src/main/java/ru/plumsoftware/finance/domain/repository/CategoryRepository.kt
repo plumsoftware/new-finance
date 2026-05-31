@@ -20,4 +20,9 @@ interface CategoryRepository {
     ): List<CategorySpending>
     fun getCategoryWithSpending(month: MonthPeriod = MonthPeriod.current()): Flow<List<CategoryBudgetSpending>>
     suspend fun setLimit(id: Long, limitMinor: Long?)
+    suspend fun existsByNameIgnoreCase(
+        type: CategoryType,
+        name: String,
+        excludeId: Long = 0,
+    ): Boolean
 }

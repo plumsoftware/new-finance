@@ -22,12 +22,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.DateRange
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,7 +45,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -78,6 +75,7 @@ import ru.plumsoftware.finance.domain.model.ExportState
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.components.SectionLabel
+import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -314,26 +312,10 @@ fun ExportScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.export_data),
-                        style = typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = navController::popBackStack) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBackIosNew,
-                            contentDescription = stringResource(R.string.cd_back),
-                            tint = colors.primary,
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = colors.background,
-                ),
+            IosEditorTopBar(
+                title = stringResource(R.string.export_data),
+                backLabel = stringResource(R.string.categories_back_settings),
+                onBack = navController::popBackStack,
             )
         },
     ) { padding ->

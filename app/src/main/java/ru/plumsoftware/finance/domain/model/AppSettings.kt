@@ -5,4 +5,5 @@ data class AppSettings(
     val onboardingCompleted: Boolean = false,
     val biometricEnabled: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val permissionsPromptHidden: Boolean = false,
 )

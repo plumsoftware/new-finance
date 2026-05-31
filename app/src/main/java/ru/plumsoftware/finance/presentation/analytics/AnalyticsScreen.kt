@@ -79,7 +79,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.data.util.startOfDayMillis
-import ru.plumsoftware.finance.domain.model.CategorySpending
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.presentation.common.StatsPeriod
 import ru.plumsoftware.finance.ui.components.AppCard
@@ -537,9 +536,9 @@ fun AnalyticsScreen(
                                 modifier = Modifier.padding(Dimens.SpacingL),
                             )
                         } else {
-                            Row(
+                            Column(
                                 modifier = Modifier.padding(Dimens.SpacingM),
-                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
                                 CategoryDonutChart(
                                     segments = expenseSegments,
@@ -547,11 +546,14 @@ fun AnalyticsScreen(
                                 )
                                 Column(
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .padding(start = Dimens.SpacingS),
+                                        .fillMaxWidth()
+                                        .padding(top = Dimens.SpacingM),
                                 ) {
-                                    state.expenseCategories.take(5).forEach { item: CategorySpending ->
-                                        val segmentColor = item.category.colorArgb?.let { Color(it.toInt()) }
+                                    state.expenseCategories.forEachIndexed { index, item ->
+                                        val segmentColor = expenseSegments
+                                            .getOrNull(index)
+                                            ?.color
+                                            ?: item.category.colorArgb?.let { Color(it.toInt()) }
                                             ?: colors.error
                                         CategoryLegendRow(
                                             color = segmentColor,

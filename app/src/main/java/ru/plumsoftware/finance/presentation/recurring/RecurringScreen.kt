@@ -16,14 +16,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.ArrowBackIosNew
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Repeat
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -31,7 +27,6 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,6 +57,7 @@ import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.components.SectionLabel
+import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -102,35 +98,12 @@ fun RecurringScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.recurring_transactions),
-                        style = typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = navController::popBackStack) {
-                        Icon(
-                            imageVector = Icons.Rounded.ArrowBackIosNew,
-                            contentDescription = stringResource(R.string.cd_back),
-                            tint = colors.primary,
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { showAddSheet = true }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Add,
-                            contentDescription = stringResource(R.string.cd_add),
-                            tint = colors.primary,
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = colors.background,
-                ),
+            IosEditorTopBar(
+                title = stringResource(R.string.recurring_transactions),
+                backLabel = stringResource(R.string.categories_back_settings),
+                onBack = navController::popBackStack,
+                actionLabel = stringResource(R.string.categories_add),
+                onAction = { showAddSheet = true },
             )
         },
     ) { padding ->

@@ -1,5 +1,6 @@
 package ru.plumsoftware.finance.presentation.categories
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,6 +13,8 @@ import kotlinx.coroutines.launch
 import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
+import ru.plumsoftware.finance.ui.theme.CategoryUiDefaults
+import ru.plumsoftware.finance.R
 
 private val expenseEmojis = listOf(
     "🛒", "☕", "🚌", "🏠", "💊", "🎬",
@@ -25,9 +28,10 @@ private val incomeEmojis = listOf(
 )
 
 val categoryColors = listOf(
+    CategoryUiDefaults.DEFAULT_COLOR_ARGB,
     0xFFFF3B30, 0xFFFF9500, 0xFFFFCC00, 0xFF34C759, 0xFF00C7BE,
     0xFF30B0C7, 0xFF007AFF, 0xFF5856D6, 0xFFAF52DE, 0xFFFF2D55,
-    0xFF8E8E93, 0xFFA2845E, 0xFF5AC8FA, 0xFF64D2FF, 0xFFBF5AF2,
+    0xFFA2845E, 0xFF5AC8FA, 0xFF64D2FF, 0xFFBF5AF2,
     0xFFDAA520, 0xFF228B22, 0xFF4B0082, 0xFF2E8B57, 0xFFB22222,
 )
 
@@ -37,7 +41,7 @@ data class CategoryEditorUiState(
     val name: String = "",
     val type: CategoryType = CategoryType.EXPENSE,
     val icon: String = "🛒",
-    val colorArgb: Long = 0xFFFF3B30,
+    val colorArgb: Long = CategoryUiDefaults.DEFAULT_COLOR_ARGB,
     val isSaving: Boolean = false,
     val saved: Boolean = false,
     val error: String? = null,
@@ -49,6 +53,7 @@ data class CategoryEditorUiState(
 class CategoryEditorViewModel(
     savedStateHandle: SavedStateHandle,
     private val categoryRepository: CategoryRepository,
+    private val context: Context,
 ) : ViewModel() {
 
     private val categoryIdArg = savedStateHandle.get<String>("categoryId")?.toLongOrNull()
@@ -60,7 +65,7 @@ class CategoryEditorViewModel(
             isEdit = categoryIdArg != null,
             type = if (typeArg == "INCOME") CategoryType.INCOME else CategoryType.EXPENSE,
             icon = if (typeArg == "INCOME") "💼" else "🛒",
-            colorArgb = if (typeArg == "INCOME") 0xFF34C759 else 0xFFFF3B30,
+            colorArgb = CategoryUiDefaults.DEFAULT_COLOR_ARGB,
         )
     )
     val uiState: StateFlow<CategoryEditorUiState> = _uiState.asStateFlow()
@@ -76,7 +81,7 @@ class CategoryEditorViewModel(
                             name = category.name,
                             type = category.type,
                             icon = category.icon,
-                            colorArgb = category.colorArgb ?: if (category.type == CategoryType.INCOME) 0xFF34C759 else 0xFFFF3B30,
+                            colorArgb = category.colorArgb ?: CategoryUiDefaults.DEFAULT_COLOR_ARGB,
                         )
                     }
                 }
@@ -93,7 +98,7 @@ class CategoryEditorViewModel(
             it.copy(
                 type = type,
                 icon = if (type == CategoryType.INCOME) "💼" else "🛒",
-                colorArgb = if (type == CategoryType.INCOME) 0xFF34C759 else 0xFFFF3B30,
+                colorArgb = CategoryUiDefaults.DEFAULT_COLOR_ARGB,
             )
         }
     }
@@ -116,6 +121,15 @@ class CategoryEditorViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true, error = null) }
             runCatching {
+                val trimmedName = state.name.trim()
+                if (categoryRepository.existsByNameIgnoreCase(
+                        state.type,
+                        trimmedName,
+                        excludeId = state.categoryId ?: 0L,
+                    )
+                ) {
+                    error(context.getString(R.string.category_duplicate_name))
+                }
                 val currentList = categoryRepository.observeByType(state.type, includeHidden = true).first()
                 val nextSortOrder = if (state.isEdit) {
                     currentList.firstOrNull { it.id == state.categoryId }?.sortOrder ?: currentList.size
@@ -125,7 +139,7 @@ class CategoryEditorViewModel(
                 categoryRepository.upsert(
                     Category(
                         id = state.categoryId ?: 0L,
-                        name = state.name.trim(),
+                        name = trimmedName,
                         type = state.type,
                         icon = state.icon,
                         colorArgb = state.colorArgb,
