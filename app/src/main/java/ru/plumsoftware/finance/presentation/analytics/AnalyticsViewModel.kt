@@ -1,5 +1,6 @@
 package ru.plumsoftware.finance.presentation.analytics
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +21,7 @@ import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.domain.repository.TransactionRepository
 import ru.plumsoftware.finance.presentation.common.StatsPeriod
 import ru.plumsoftware.finance.presentation.common.resolveRange
+import ru.plumsoftware.finance.R
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -46,7 +48,7 @@ data class AnalyticsUiState(
     val customStartMillis: Long? = null,
     val customEndMillis: Long? = null,
     val periodLabel: String? = null,
-    val periodChipLabel: String = "📅 Период",
+    val periodChipLabel: String = "",
     val periodOffset: Int = 0,
     val canNavigateForward: Boolean = false,
 )
@@ -56,9 +58,14 @@ class AnalyticsViewModel(
     private val categoryRepository: CategoryRepository,
     private val transactionRepository: TransactionRepository,
     private val settingsRepository: SettingsRepository,
+    private val context: Context,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(AnalyticsUiState())
+    private val _uiState = MutableStateFlow(
+        AnalyticsUiState(
+            periodChipLabel = context.getString(R.string.analytics_period_chip_default),
+        ),
+    )
     val uiState = _uiState.asStateFlow()
 
     init {
@@ -149,7 +156,7 @@ class AnalyticsViewModel(
                 val endDayMonth = SimpleDateFormat("d MMM", Locale("ru")).format(Date(range.endMillis))
                 "$startDay–$endDayMonth"
             } else {
-                "📅 Период"
+                context.getString(R.string.analytics_period_chip_default)
             }
             val expenseBreakdown = buildCategoryBreakdown(
                 transactions = transactions,

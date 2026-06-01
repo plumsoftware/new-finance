@@ -25,9 +25,15 @@ object AppDeepLinks {
         if (assetId != null) uri("smart_savings/create", "assetId" to assetId.toString())
         else uri("smart_savings/create")
     fun smartSavingsDetail(assetId: Long): Uri = uri("smart_savings/detail/$assetId")
+    fun goals(): Uri = uri("goals")
+    fun goalsCreate(goalId: Long? = null): Uri =
+        if (goalId != null) uri("goals/create", "goalId" to goalId.toString())
+        else uri("goals/create")
     fun limits(): Uri = uri("limits")
     fun notifications(): Uri = uri("notifications")
-    fun addTransaction(): Uri = uri("add_transaction")
+    fun addTransaction(quickCategory: String? = null): Uri =
+        if (quickCategory.isNullOrBlank()) uri("add_transaction")
+        else uri("add_transaction", "quickCategory" to quickCategory)
     fun categories(): Uri = uri("settings/categories")
     fun categoryEdit(categoryId: Long? = null, type: String? = null): Uri {
         val params = buildList {

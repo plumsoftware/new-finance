@@ -151,7 +151,12 @@ class CategoryEditorViewModel(
             }.onSuccess {
                 _uiState.update { it.copy(isSaving = false, saved = true) }
             }.onFailure { e ->
-                _uiState.update { it.copy(isSaving = false, error = e.message ?: "Ошибка сохранения") }
+                _uiState.update {
+                    it.copy(
+                        isSaving = false,
+                        error = e.message ?: context.getString(R.string.error_save_failed),
+                    )
+                }
             }
         }
     }

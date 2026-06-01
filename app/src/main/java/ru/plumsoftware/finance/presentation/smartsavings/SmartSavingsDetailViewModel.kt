@@ -1,5 +1,6 @@
 package ru.plumsoftware.finance.presentation.smartsavings
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -8,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.SmartAssetUsage
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
@@ -28,6 +30,7 @@ class SmartSavingsDetailViewModel(
     private val assetId: Long,
     private val smartAssetRepository: SmartAssetRepository,
     private val settingsRepository: SettingsRepository,
+    private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SmartSavingsDetailUiState())
@@ -81,7 +84,7 @@ class SmartSavingsDetailViewModel(
         val state = _uiState.value
         val amount = MoneyFormat.majorDigitsToMinor(state.amountDigits, state.currencyCode)
         if (amount <= 0) {
-            _uiState.update { it.copy(errorMessage = "Укажите сумму экономии") }
+            _uiState.update { it.copy(errorMessage = context.getString(R.string.error_enter_saved_amount)) }
             return
         }
         viewModelScope.launch {
@@ -96,7 +99,10 @@ class SmartSavingsDetailViewModel(
                 load()
             }.onFailure { e ->
                 _uiState.update {
-                    it.copy(isSaving = false, errorMessage = e.message ?: "Ошибка")
+                    it.copy(
+                        isSaving = false,
+                        errorMessage = e.message ?: context.getString(R.string.error_generic),
+                    )
                 }
             }
         }

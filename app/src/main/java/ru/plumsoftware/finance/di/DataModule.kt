@@ -5,6 +5,7 @@ import org.koin.dsl.module
 import ru.plumsoftware.finance.data.firebase.InAppMessagingHandler
 import ru.plumsoftware.finance.data.firebase.NotificationDisplayHelper
 import ru.plumsoftware.finance.data.local.dao.CategoryDao
+import ru.plumsoftware.finance.data.local.dao.GoalDao
 import ru.plumsoftware.finance.data.local.dao.NotificationDao
 import ru.plumsoftware.finance.data.local.dao.SmartAssetDao
 import ru.plumsoftware.finance.data.local.dao.RecurringTransactionDao
@@ -15,6 +16,7 @@ import ru.plumsoftware.finance.data.local.datastore.SettingsDataStore
 import ru.plumsoftware.finance.data.repository.AnalyticsRepositoryImpl
 import ru.plumsoftware.finance.data.repository.CategoryRepositoryImpl
 import ru.plumsoftware.finance.data.repository.BackupRepositoryImpl
+import ru.plumsoftware.finance.data.repository.GoalRepositoryImpl
 import ru.plumsoftware.finance.data.repository.NotificationRepositoryImpl
 import ru.plumsoftware.finance.data.repository.PermissionsRepositoryImpl
 import ru.plumsoftware.finance.data.repository.PushMessagingRepositoryImpl
@@ -25,6 +27,7 @@ import ru.plumsoftware.finance.data.repository.TransactionRepositoryImpl
 import ru.plumsoftware.finance.domain.repository.AnalyticsRepository
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
 import ru.plumsoftware.finance.domain.repository.BackupRepository
+import ru.plumsoftware.finance.domain.repository.GoalRepository
 import ru.plumsoftware.finance.domain.repository.NotificationRepository
 import ru.plumsoftware.finance.domain.repository.PermissionsRepository
 import ru.plumsoftware.finance.domain.repository.PushMessagingRepository
@@ -41,25 +44,27 @@ val dataModule = module {
     single<CategoryDao> { get<FinanceDatabase>().categoryDao() }
     single<TransactionDao> { get<FinanceDatabase>().transactionDao() }
     single<SmartAssetDao> { get<FinanceDatabase>().smartAssetDao() }
+    single<GoalDao> { get<FinanceDatabase>().goalDao() }
     single<NotificationDao> { get<FinanceDatabase>().notificationDao() }
     single<RecurringTransactionDao> { get<FinanceDatabase>().recurringTransactionDao() }
 
     single { SettingsDataStore(androidContext()) }
     single { PushTokenDataStore(androidContext()) }
     single { NotificationDisplayHelper(androidContext()) }
-    single { InAppMessagingHandler(get()) }
+    single { InAppMessagingHandler(get(), androidContext()) }
 
     single<TransactionRepository> { TransactionRepositoryImpl(get()) }
     single<CategoryRepository> { CategoryRepositoryImpl(get(), get()) }
     single<SmartAssetRepository> {
         SmartAssetRepositoryImpl(get(), get(), get())
     }
+    single<GoalRepository> { GoalRepositoryImpl(get(), get()) }
     single<AnalyticsRepository> { AnalyticsRepositoryImpl(get(), get()) }
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
     single<NotificationRepository> { NotificationRepositoryImpl(get()) }
     single<PushMessagingRepository> { PushMessagingRepositoryImpl(get()) }
     single<BackupRepository> {
-        BackupRepositoryImpl(androidContext(), get(), get(), get(), get(), get())
+        BackupRepositoryImpl(androidContext(), get(), get(), get(), get(), get(), get())
     }
     single<RecurringRepository> { RecurringRepositoryImpl(get(), get()) }
     single<PermissionsRepository> { PermissionsRepositoryImpl(androidContext()) }

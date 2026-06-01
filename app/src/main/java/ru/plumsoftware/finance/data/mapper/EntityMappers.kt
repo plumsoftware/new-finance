@@ -3,12 +3,16 @@ package ru.plumsoftware.finance.data.mapper
 import ru.plumsoftware.finance.data.local.dao.CategorySpendingRow
 import ru.plumsoftware.finance.data.local.dao.DailySummaryRow
 import ru.plumsoftware.finance.data.local.entity.CategoryEntity
+import ru.plumsoftware.finance.data.local.entity.GoalDepositEntity
+import ru.plumsoftware.finance.data.local.entity.GoalEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetUsageEntity
 import ru.plumsoftware.finance.data.local.entity.TransactionEntity
 import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.CategorySpending
 import ru.plumsoftware.finance.domain.model.DailySummary
+import ru.plumsoftware.finance.domain.model.Goal
+import ru.plumsoftware.finance.domain.model.GoalDeposit
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.SmartAssetUsage
 import ru.plumsoftware.finance.domain.model.Transaction
@@ -105,6 +109,50 @@ fun SmartAssetUsage.toEntity(): SmartAssetUsageEntity = SmartAssetUsageEntity(
     savedAmountMinor = savedAmountMinor,
     usedAtMillis = usedAtMillis,
     note = note,
+)
+
+fun GoalEntity.toDomain(): Goal = Goal(
+    id = id,
+    name = name,
+    emoji = emoji,
+    targetAmountMinor = targetAmountMinor,
+    savedAmountMinor = savedAmountMinor,
+    colorHex = colorHex,
+    deadline = deadline,
+    note = note,
+    showOnHome = showOnHome,
+    isCompleted = isCompleted,
+    createdAtMillis = createdAtMillis,
+)
+
+fun Goal.toEntity(): GoalEntity = GoalEntity(
+    id = id,
+    name = name,
+    emoji = emoji,
+    targetAmountMinor = targetAmountMinor,
+    savedAmountMinor = savedAmountMinor,
+    colorHex = colorHex,
+    deadline = deadline,
+    note = note,
+    showOnHome = showOnHome,
+    isCompleted = isCompleted,
+    createdAtMillis = createdAtMillis,
+)
+
+fun GoalDepositEntity.toDomain(): GoalDeposit = GoalDeposit(
+    id = id,
+    goalId = goalId,
+    amountMinor = amountMinor,
+    note = note,
+    createdAtMillis = createdAtMillis,
+)
+
+fun GoalDeposit.toEntity(): GoalDepositEntity = GoalDepositEntity(
+    id = id,
+    goalId = goalId,
+    amountMinor = amountMinor,
+    note = note,
+    createdAtMillis = createdAtMillis,
 )
 
 fun DailySummaryRow.toDomain(): DailySummary = DailySummary(

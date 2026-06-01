@@ -21,6 +21,7 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DonutSmall
 import androidx.compose.material.icons.rounded.Eco
 import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.InsertDriveFile
 import androidx.compose.material.icons.rounded.Receipt
 import androidx.compose.material.icons.rounded.Repeat
@@ -247,6 +248,7 @@ private fun ImportPreviewContent(
                                 Triple(Icons.Rounded.Repeat, R.string.import_will_recurring, counts.recurring),
                                 Triple(Icons.Rounded.Eco, R.string.import_will_assets, counts.assets),
                                 Triple(Icons.Rounded.DonutSmall, R.string.import_will_limits, counts.limits),
+                                Triple(Icons.Rounded.Flag, R.string.import_will_goals, counts.goals),
                             )
                             rows.forEachIndexed { index, (icon, labelRes, count) ->
                                 Row(

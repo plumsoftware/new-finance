@@ -5,7 +5,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -25,8 +24,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.WarningAmber
@@ -66,11 +67,8 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -82,21 +80,22 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.AppSettings
+import ru.plumsoftware.finance.domain.model.Goal
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.SmartAssetStatus
-import ru.plumsoftware.finance.domain.model.Transaction
+import ru.plumsoftware.finance.domain.model.daysLeft
+import ru.plumsoftware.finance.domain.model.isOverdue
+import ru.plumsoftware.finance.domain.model.progress
 import ru.plumsoftware.finance.presentation.notifications.NotificationsViewModel
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.presentation.common.hasPendingPermissions
-import ru.plumsoftware.finance.presentation.history.TransactionDetailSheet
 import ru.plumsoftware.finance.presentation.permissions.PermissionsBottomSheet
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
-import ru.plumsoftware.finance.presentation.transactions.TransactionRow
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
-import ru.plumsoftware.finance.ui.theme.MascotAssets
+import ru.plumsoftware.finance.ui.theme.IosGreen
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -107,11 +106,14 @@ import kotlin.math.roundToInt
 @Composable
 fun HomeScreen(
     onOpenSmartSavingsClick: () -> Unit = {},
+    onOpenGoalsClick: () -> Unit = {},
     onOpenHistoryClick: () -> Unit = {},
     onOpenAnalyticsClick: () -> Unit = {},
     onOpenLimitsClick: () -> Unit = {},
     onOpenNotificationsClick: () -> Unit = {},
     onCreateAssetClick: () -> Unit = {},
+    onCreateGoalClick: () -> Unit = {},
+    onGoalClick: (Long) -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel(),
     notificationsViewModel: NotificationsViewModel = koinViewModel(),
     settingsRepository: SettingsRepository = koinInject(),
@@ -123,7 +125,6 @@ fun HomeScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val unreadCount by notificationsViewModel.unreadCount.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
-    var selectedTransaction by remember { mutableStateOf<Transaction?>(null) }
     var showPermissionsSheet by remember { mutableStateOf(false) }
     var permissionResumeTick by remember { mutableIntStateOf(0) }
     val colors = MaterialTheme.colorScheme
@@ -173,19 +174,6 @@ fun HomeScreen(
         }
     }
 
-    selectedTransaction?.let { tx ->
-        TransactionDetailSheet(
-            transaction = tx,
-            category = state.categoryMap[tx.categoryId],
-            currencyCode = state.currencyCode,
-            onDismiss = { selectedTransaction = null },
-            onDelete = {
-                viewModel.deleteTransaction(tx.id)
-                selectedTransaction = null
-            },
-        )
-    }
-
     val listState = rememberSaveable(saver = androidx.compose.foundation.lazy.LazyListState.Saver) {
         androidx.compose.foundation.lazy.LazyListState()
     }
@@ -218,6 +206,30 @@ fun HomeScreen(
                     currencyCode = state.currencyCode,
                     onMonthClick = onOpenAnalyticsClick,
                 )
+            }
+            item {
+                HomeQuickActionsRow(
+                    onLimitsClick = onOpenLimitsClick,
+                    onOperationsClick = onOpenHistoryClick,
+                    hasBudgetWarnings = state.hasBudgetWarnings,
+                    operationCount = state.recentTransactions.size,
+                )
+            }
+            item {
+                SectionWithAction(
+                    sectionLabel = { SectionLabel(text = stringResource(R.string.goals_home_section)) },
+                    actionLabel = stringResource(R.string.dashboard_see_all),
+                    onActionClick = onOpenGoalsClick,
+                )
+            }
+            item {
+                state.featuredGoal?.let { featured ->
+                    HomeFeaturedGoalCard(
+                        goal = featured,
+                        currencyCode = state.currencyCode,
+                        onClick = { onGoalClick(featured.id) },
+                    )
+                } ?: HomeCreateGoalCard(onClick = onCreateGoalClick)
             }
             item {
                 AnimatedVisibility(visible = state.hasBudgetWarnings) {
@@ -264,37 +276,6 @@ fun HomeScreen(
                     }
                 }
             }
-            item {
-                RecentTransactionsSectionHeader(onLimitsClick = onOpenLimitsClick)
-            }
-            item {
-                if (state.recentTransactions.isEmpty()) {
-                    RecentTransactionsEmptyState()
-                } else {
-                    AppCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Dimens.SpacingL),
-                    ) {
-                        val recent = state.recentTransactions.take(5)
-                        recent.forEachIndexed { index, tx ->
-                            TransactionRow(
-                                transaction = tx,
-                                category = state.categoryMap[tx.categoryId],
-                                currencyCode = state.currencyCode,
-                                onClick = { selectedTransaction = tx },
-                            )
-                            if (index != recent.lastIndex) {
-                                HorizontalDivider(
-                                    color = colors.outline,
-                                    thickness = 1.dp,
-                                    modifier = Modifier.padding(start = 72.dp),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
@@ -302,20 +283,26 @@ fun HomeScreen(
 @Composable
 fun DashboardScreen(
     onOpenSmartSavingsClick: () -> Unit = {},
+    onOpenGoalsClick: () -> Unit = {},
     onOpenHistoryClick: () -> Unit = {},
     onOpenAnalyticsClick: () -> Unit = {},
     onOpenLimitsClick: () -> Unit = {},
     onOpenNotificationsClick: () -> Unit = {},
     onCreateAssetClick: () -> Unit = {},
+    onCreateGoalClick: () -> Unit = {},
+    onGoalClick: (Long) -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel(),
 ) {
     HomeScreen(
         onOpenSmartSavingsClick = onOpenSmartSavingsClick,
+        onOpenGoalsClick = onOpenGoalsClick,
         onOpenHistoryClick = onOpenHistoryClick,
         onOpenAnalyticsClick = onOpenAnalyticsClick,
         onOpenLimitsClick = onOpenLimitsClick,
         onOpenNotificationsClick = onOpenNotificationsClick,
         onCreateAssetClick = onCreateAssetClick,
+        onCreateGoalClick = onCreateGoalClick,
+        onGoalClick = onGoalClick,
         viewModel = viewModel,
     )
 }
@@ -408,14 +395,15 @@ private fun BalanceCard(
         .format(Date())
         .replaceFirstChar { it.uppercase() }
 
+    val balancePadding = Dimens.SpacingL * 0.9f
     AppCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = Dimens.SpacingL),
     ) {
         Column(
-            modifier = Modifier.padding(Dimens.SpacingL),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+            modifier = Modifier.padding(balancePadding),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS * 0.9f),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -443,7 +431,7 @@ private fun BalanceCard(
             HorizontalDivider(
                 color = colors.surfaceVariant,
                 thickness = 1.dp,
-                modifier = Modifier.padding(vertical = Dimens.SpacingM),
+                modifier = Modifier.padding(vertical = Dimens.SpacingS),
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -478,6 +466,82 @@ private fun BalanceCard(
                     color = colors.onSurfaceVariant,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun HomeQuickActionsRow(
+    onLimitsClick: () -> Unit,
+    onOperationsClick: () -> Unit,
+    hasBudgetWarnings: Boolean,
+    operationCount: Int,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Dimens.SpacingL),
+        horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+    ) {
+        HomeQuickActionCard(
+            title = stringResource(R.string.limits),
+            subtitle = if (hasBudgetWarnings) {
+                stringResource(R.string.budget_warning_title)
+            } else {
+                stringResource(R.string.current_month_limits)
+            },
+            icon = Icons.Outlined.WarningAmber,
+            onClick = onLimitsClick,
+            modifier = Modifier.weight(1f),
+        )
+        HomeQuickActionCard(
+            title = stringResource(R.string.home_all_operations),
+            subtitle = stringResource(R.string.home_operations_count, operationCount),
+            icon = Icons.Outlined.History,
+            onClick = onOperationsClick,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun HomeQuickActionCard(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    AppCard(
+        modifier = modifier,
+        onClick = onClick,
+    ) {
+        Column(
+            modifier = Modifier.padding(Dimens.SpacingM),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = colors.primary,
+                modifier = Modifier.size(Dimens.IconSizeM),
+            )
+            Text(
+                text = title,
+                style = typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = subtitle,
+                style = typography.bodySmall,
+                color = colors.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
@@ -600,26 +664,6 @@ private fun BudgetWarningBanner(
 }
 
 @Composable
-private fun RecentTransactionsSectionHeader(
-    onLimitsClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(end = Dimens.SpacingS),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        SectionLabel(text = stringResource(R.string.recent_transactions))
-        IosTextButton(
-            text = stringResource(R.string.limits),
-            onClick = onLimitsClick,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
-}
-
-@Composable
 private fun SectionWithAction(
     sectionLabel: @Composable () -> Unit,
     actionLabel: String,
@@ -682,6 +726,146 @@ private fun EmptyAssetCard(onClick: () -> Unit) {
                     text = stringResource(R.string.track_roi),
                     style = typography.bodySmall,
                     color = colors.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeCreateGoalCard(onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    AppCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Dimens.SpacingL),
+        onClick = onClick,
+    ) {
+        Row(
+            modifier = Modifier.padding(Dimens.SpacingM),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(colors.primary.copy(alpha = 0.14f), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = null,
+                    tint = colors.primary,
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.goals_add_button),
+                    style = typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.onSurface,
+                )
+                Text(
+                    text = stringResource(R.string.goals_empty_subtitle),
+                    style = typography.bodySmall,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = colors.outlineVariant,
+                modifier = Modifier.size(Dimens.IconSizeS),
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeFeaturedGoalCard(
+    goal: Goal,
+    currencyCode: String,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val leftDays = goal.daysLeft
+    val deadlineText = when {
+        leftDays == null -> stringResource(R.string.goal_no_deadline)
+        goal.isOverdue -> stringResource(R.string.goal_days_overdue, kotlin.math.abs(leftDays))
+        else -> stringResource(R.string.goal_days_left, leftDays)
+    }
+    val accent = if (goal.isCompleted) IosGreen else colors.primary
+    AppCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Dimens.SpacingL),
+        onClick = onClick,
+    ) {
+        Column(
+            modifier = Modifier.padding(Dimens.SpacingM),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(46.dp)
+                        .background(colors.primary.copy(alpha = 0.12f), CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(text = goal.emoji, style = typography.titleLarge)
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = Dimens.SpacingS),
+                ) {
+                    Text(
+                        text = goal.name,
+                        style = typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.goal_saved_of,
+                            MoneyFormat.format(goal.savedAmountMinor, currencyCode),
+                            MoneyFormat.format(goal.targetAmountMinor, currencyCode),
+                        ),
+                        style = typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            LinearProgressIndicator(
+                progress = { goal.progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(Dimens.progressHeightThin)
+                    .clip(RoundedCornerShape(Dimens.RadiusPill)),
+                color = accent,
+                trackColor = colors.outline,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = stringResource(R.string.percent_short, (goal.progress * 100).roundToInt()),
+                    style = typography.labelSmall,
+                    color = accent,
+                )
+                Text(
+                    text = deadlineText,
+                    style = typography.labelSmall,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -777,36 +961,3 @@ private fun AssetMiniCard(
     }
 }
 
-@Composable
-private fun RecentTransactionsEmptyState() {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Dimens.SpacingL, vertical = Dimens.SpacingM),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
-    ) {
-        Image(
-            painter = painterResource(MascotAssets.emptyTransactions),
-            contentDescription = null,
-            modifier = Modifier.size(Dimens.mascotEmptyState),
-            contentScale = ContentScale.Fit,
-        )
-        Text(
-            text = stringResource(R.string.no_transactions_yet),
-            style = typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = colors.onSurface,
-            textAlign = TextAlign.Center,
-        )
-        Text(
-            text = stringResource(R.string.tap_plus_to_add),
-            style = typography.bodyMedium,
-            color = colors.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-    }
-}

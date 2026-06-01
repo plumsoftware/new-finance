@@ -66,6 +66,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import ru.plumsoftware.finance.R
@@ -179,16 +180,27 @@ fun CreateSmartSavingsScreen(
             )
         },
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
         ) {
             Column(
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxSize()
                     .verticalScroll(scrollState)
-                    .padding(horizontal = Dimens.formHorizontalInset),
+                    .padding(horizontal = Dimens.formHorizontalInset)
+                    .padding(
+                        bottom = if (showNumPad) {
+                            Dimens.amountPreviewBarHeight +
+                                (Dimens.numPadKeyHeightCompact * 4) +
+                                (Dimens.numPadGapVertical * 3) +
+                                Dimens.iconSizeStandard +
+                                Dimens.SpacingXl
+                        } else {
+                            Dimens.ButtonHeight + Dimens.SpacingXl
+                        },
+                    ),
             ) {
                 Spacer(Modifier.height(Dimens.headerContentGap))
                 FormSectionLabel(
@@ -330,7 +342,7 @@ fun CreateSmartSavingsScreen(
                     Spacer(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(Dimens.sectionGapLarge)
+                            .height(Dimens.SpacingXl)
                             .then(dismissTapModifier),
                     )
                 } else {
@@ -338,6 +350,28 @@ fun CreateSmartSavingsScreen(
                 }
             }
 
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
+            ) {
+                IosPrimaryButton(
+                    text = if (state.isEditMode) stringResource(R.string.save) else stringResource(R.string.create),
+                    onClick = {
+                        dismissNumPad()
+                        viewModel.save()
+                    },
+                    loading = state.isSaving,
+                    enabled = canSave,
+                    color = colors.secondary,
+                    modifier = Modifier.padding(horizontal = Dimens.SpacingM),
+                )
+                Spacer(
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        .height(Dimens.paddingMedium),
+                )
+            }
             AnimatedVisibility(
                 visible = showNumPad,
                 enter = slideInVertically(
@@ -351,6 +385,9 @@ fun CreateSmartSavingsScreen(
                     targetOffsetY = { fullHeight -> fullHeight },
                     animationSpec = tween(220),
                 ) + fadeOut(animationSpec = tween(180)),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .zIndex(1f),
             ) {
                 Column {
                     CreateAssetAmountBar(
@@ -393,22 +430,6 @@ fun CreateSmartSavingsScreen(
                     Spacer(Modifier.height(Dimens.spacingList))
                 }
             }
-            IosPrimaryButton(
-                text = if (state.isEditMode) stringResource(R.string.save) else stringResource(R.string.create),
-                onClick = {
-                    dismissNumPad()
-                    viewModel.save()
-                },
-                loading = state.isSaving,
-                enabled = canSave,
-                color = colors.secondary,
-                modifier = Modifier.padding(horizontal = Dimens.SpacingM),
-            )
-            Spacer(
-                Modifier
-                    .navigationBarsPadding()
-                    .height(Dimens.paddingMedium),
-            )
         }
     }
 }

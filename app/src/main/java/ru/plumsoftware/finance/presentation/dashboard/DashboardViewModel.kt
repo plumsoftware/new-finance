@@ -1,5 +1,6 @@
 package ru.plumsoftware.finance.presentation.dashboard
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import java.util.Calendar
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.CategoryBudgetSpending
 import ru.plumsoftware.finance.domain.model.CategoryType
+import ru.plumsoftware.finance.domain.model.Goal
 import ru.plumsoftware.finance.domain.model.Insight
 import ru.plumsoftware.finance.domain.model.MonthPeriod
 import ru.plumsoftware.finance.domain.model.SmartAsset
@@ -22,9 +24,11 @@ import ru.plumsoftware.finance.domain.model.Transaction
 import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.domain.insights.InsightsEngine
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
+import ru.plumsoftware.finance.domain.repository.GoalRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.domain.repository.SmartAssetRepository
 import ru.plumsoftware.finance.domain.repository.TransactionRepository
+import ru.plumsoftware.finance.R
 
 data class DashboardUiState(
     val totalBalanceMinor: Long = 0L,
@@ -34,6 +38,7 @@ data class DashboardUiState(
     val recentTransactions: List<Transaction> = emptyList(),
     val categoryMap: Map<Long, Category> = emptyMap(),
     val smartAssets: List<SmartAsset> = emptyList(),
+    val featuredGoal: Goal? = null,
     val insights: List<Insight> = emptyList(),
     val hasBudgetWarnings: Boolean = false,
     val isLoading: Boolean = true,
@@ -43,9 +48,11 @@ data class DashboardUiState(
 class DashboardViewModel(
     private val transactionRepository: TransactionRepository,
     private val smartAssetRepository: SmartAssetRepository,
+    private val goalRepository: GoalRepository,
     private val categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository,
     private val insightsEngine: InsightsEngine,
+    private val context: Context,
 ) : ViewModel() {
 
     private val _snackbar = MutableStateFlow<String?>(null)
@@ -54,6 +61,7 @@ class DashboardViewModel(
     val uiState: StateFlow<DashboardUiState> = combine(
         transactionRepository.observeAll(),
         smartAssetRepository.observeByStatus(SmartAssetStatus.PAYING_OFF),
+        goalRepository.observeFeaturedOnHome(),
         categoryRepository.observeByType(CategoryType.EXPENSE, includeHidden = true),
         categoryRepository.observeByType(CategoryType.INCOME, includeHidden = true),
         categoryRepository.getCategoryWithSpending(MonthPeriod.current()),
@@ -63,12 +71,13 @@ class DashboardViewModel(
     ) { values ->
         val transactions = values[0] as List<Transaction>
         val assets = values[1] as List<SmartAsset>
-        val expenseCategories = values[2] as List<Category>
-        val incomeCategories = values[3] as List<Category>
-        val budgetSpending = values[4] as List<CategoryBudgetSpending>
-        val settings = values[5] as ru.plumsoftware.finance.domain.model.AppSettings
-        val snackbar = values[6] as String?
-        val warningDismissed = values[7] as Boolean
+        val featuredGoal = values[2] as Goal?
+        val expenseCategories = values[3] as List<Category>
+        val incomeCategories = values[4] as List<Category>
+        val budgetSpending = values[5] as List<CategoryBudgetSpending>
+        val settings = values[6] as ru.plumsoftware.finance.domain.model.AppSettings
+        val snackbar = values[7] as String?
+        val warningDismissed = values[8] as Boolean
         val monthRange = currentMonthRange()
         val previousRange = previousMonthRange()
         val monthTx = transactions.filter { it.dateMillis in monthRange.first..monthRange.second }
@@ -93,6 +102,7 @@ class DashboardViewModel(
             recentTransactions = transactions.take(5),
             categoryMap = (expenseCategories + incomeCategories).associateBy { it.id },
             smartAssets = assets,
+            featuredGoal = featuredGoal,
             insights = insights,
             hasBudgetWarnings = hasBudgetWarnings,
             isLoading = false,
@@ -115,10 +125,10 @@ class DashboardViewModel(
                 )
             }
                 .onSuccess {
-                    _snackbar.value = "Сэкономлено! +1 использование"
+                    _snackbar.value = context.getString(R.string.smart_usage_saved)
                 }
                 .onFailure {
-                    _snackbar.value = it.message ?: "Не удалось сохранить"
+                    _snackbar.value = it.message ?: context.getString(R.string.error_save_failed)
                 }
         }
     }
@@ -134,7 +144,7 @@ class DashboardViewModel(
     fun deleteTransaction(id: Long) {
         viewModelScope.launch {
             transactionRepository.delete(id)
-            _snackbar.value = "Операция удалена"
+            _snackbar.value = context.getString(R.string.transaction_deleted)
         }
     }
 

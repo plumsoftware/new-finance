@@ -1,6 +1,8 @@
 package ru.plumsoftware.finance.presentation.addtransaction
 
 import android.content.Context
+import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,11 +35,16 @@ data class AddTransactionUiState(
 )
 
 class AddTransactionViewModel(
+    savedStateHandle: SavedStateHandle,
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository,
     private val context: Context,
 ) : ViewModel() {
+    private val quickCategoryName: String? = savedStateHandle.get<String>("quickCategory")
+        ?.let(Uri::decode)
+        ?.trim()
+        ?.takeIf { it.isNotBlank() }
 
     private val _uiState = MutableStateFlow(AddTransactionUiState())
     val uiState: StateFlow<AddTransactionUiState> = _uiState.asStateFlow()
@@ -51,7 +58,7 @@ class AddTransactionViewModel(
                 it.copy(
                     currencyCode = currency,
                     categories = categories,
-                    selectedCategoryId = categories.firstOrNull()?.id,
+                    selectedCategoryId = resolveInitialCategoryId(categories),
                 )
             }
         }
@@ -70,7 +77,7 @@ class AddTransactionViewModel(
             _uiState.update {
                 it.copy(
                     categories = categories,
-                    selectedCategoryId = categories.firstOrNull()?.id,
+                    selectedCategoryId = resolveInitialCategoryId(categories),
                 )
             }
         }
@@ -125,12 +132,19 @@ class AddTransactionViewModel(
         _uiState.update { it.copy(errorMessage = null) }
     }
 
+    private fun resolveInitialCategoryId(categories: List<Category>): Long? {
+        val quickName = quickCategoryName ?: return categories.firstOrNull()?.id
+        return categories.firstOrNull { category ->
+            category.name.equals(quickName, ignoreCase = true)
+        }?.id ?: categories.firstOrNull()?.id
+    }
+
     fun save() {
         val state = _uiState.value
         val amount = MoneyFormat.majorDigitsToMinor(state.amountMajorDigits, state.currencyCode)
         when {
             amount <= 0L -> {
-                _uiState.update { it.copy(errorMessage = "Укажите сумму") }
+                _uiState.update { it.copy(errorMessage = context.getString(R.string.error_enter_amount)) }
             }
             else -> viewModelScope.launch {
                 _uiState.update { it.copy(isSaving = true, errorMessage = null) }
@@ -152,7 +166,7 @@ class AddTransactionViewModel(
                     _uiState.update {
                         it.copy(
                             isSaving = false,
-                            errorMessage = e.message ?: "Ошибка сохранения",
+                            errorMessage = e.message ?: context.getString(R.string.error_save_failed),
                         )
                     }
                 }
@@ -167,7 +181,9 @@ class AddTransactionViewModel(
         onCreated: () -> Unit = {},
     ) {
         if (name.isBlank()) {
-            _uiState.update { it.copy(errorMessage = "Укажите название категории") }
+            _uiState.update {
+                it.copy(errorMessage = context.getString(R.string.error_enter_category_name))
+            }
             return
         }
         viewModelScope.launch {
@@ -207,7 +223,7 @@ class AddTransactionViewModel(
                 _uiState.update {
                     it.copy(
                         quickCategorySaving = false,
-                        errorMessage = e.message ?: "Ошибка создания категории",
+                        errorMessage = e.message ?: context.getString(R.string.error_create_category_failed),
                     )
                 }
             }

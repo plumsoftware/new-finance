@@ -9,6 +9,8 @@ import ru.plumsoftware.finance.domain.model.BackupCategoryDto
 import ru.plumsoftware.finance.domain.model.BackupLimitDto
 import ru.plumsoftware.finance.domain.model.BackupMeta
 import ru.plumsoftware.finance.domain.model.BackupModel
+import ru.plumsoftware.finance.domain.model.BackupGoalDto
+import ru.plumsoftware.finance.domain.model.BackupGoalDepositDto
 import ru.plumsoftware.finance.domain.model.BackupRecordCounts
 import ru.plumsoftware.finance.domain.model.BackupRecurringDto
 import ru.plumsoftware.finance.domain.model.BackupTransactionDto
@@ -24,6 +26,8 @@ object BackupSerializer {
         root.put("assets", assetsToJson(backup.assets))
         root.put("assetUsageHistory", assetUsageToJson(backup.assetUsageHistory))
         root.put("limits", limitsToJson(backup.limits))
+        root.put("goals", goalsToJson(backup.goals))
+        root.put("goalDeposits", goalDepositsToJson(backup.goalDeposits))
         return root.toString(2)
     }
 
@@ -42,6 +46,8 @@ object BackupSerializer {
                 recurring = countsJson?.optInt("recurring") ?: 0,
                 assets = countsJson?.optInt("assets") ?: 0,
                 limits = countsJson?.optInt("limits") ?: 0,
+                goals = countsJson?.optInt("goals") ?: 0,
+                goalDeposits = countsJson?.optInt("goalDeposits") ?: 0,
             ),
             fileName = fileName,
         )
@@ -56,6 +62,8 @@ object BackupSerializer {
             assets = parseAssets(root.optJSONArray("assets")),
             assetUsageHistory = parseAssetUsage(root.optJSONArray("assetUsageHistory")),
             limits = parseLimits(root.optJSONArray("limits")),
+            goals = parseGoals(root.optJSONArray("goals")),
+            goalDeposits = parseGoalDeposits(root.optJSONArray("goalDeposits")),
         )
     }
 
@@ -71,7 +79,9 @@ object BackupSerializer {
                 .put("transactions", meta.recordCounts.transactions)
                 .put("recurring", meta.recordCounts.recurring)
                 .put("assets", meta.recordCounts.assets)
-                .put("limits", meta.recordCounts.limits),
+                .put("limits", meta.recordCounts.limits)
+                .put("goals", meta.recordCounts.goals)
+                .put("goalDeposits", meta.recordCounts.goalDeposits),
         )
 
     private fun categoriesToJson(items: List<BackupCategoryDto>): JSONArray {
@@ -170,6 +180,42 @@ object BackupSerializer {
                 JSONObject()
                     .put("categoryId", item.categoryId)
                     .put("monthlyLimit", item.monthlyLimit),
+            )
+        }
+        return array
+    }
+
+    private fun goalsToJson(items: List<BackupGoalDto>): JSONArray {
+        val array = JSONArray()
+        items.forEach { item ->
+            array.put(
+                JSONObject()
+                    .put("id", item.id)
+                    .put("name", item.name)
+                    .put("emoji", item.emoji)
+                    .put("targetAmount", item.targetAmount)
+                    .put("savedAmount", item.savedAmount)
+                    .put("colorHex", item.colorHex)
+                    .put("deadlineMillis", item.deadlineMillis)
+                    .put("note", item.note)
+                    .put("showOnHome", item.showOnHome)
+                    .put("isCompleted", item.isCompleted)
+                    .put("createdAtMillis", item.createdAtMillis),
+            )
+        }
+        return array
+    }
+
+    private fun goalDepositsToJson(items: List<BackupGoalDepositDto>): JSONArray {
+        val array = JSONArray()
+        items.forEach { item ->
+            array.put(
+                JSONObject()
+                    .put("id", item.id)
+                    .put("goalId", item.goalId)
+                    .put("amount", item.amount)
+                    .put("note", item.note)
+                    .put("createdAtMillis", item.createdAtMillis),
             )
         }
         return array
@@ -288,6 +334,55 @@ object BackupSerializer {
                     BackupLimitDto(
                         categoryId = obj.getLong("categoryId"),
                         monthlyLimit = obj.getDouble("monthlyLimit"),
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun parseGoals(array: JSONArray?): List<BackupGoalDto> {
+        if (array == null) return emptyList()
+        return buildList {
+            for (i in 0 until array.length()) {
+                val obj = array.getJSONObject(i)
+                add(
+                    BackupGoalDto(
+                        id = obj.getLong("id"),
+                        name = obj.getString("name"),
+                        emoji = obj.optString("emoji", "🎯"),
+                        targetAmount = obj.getDouble("targetAmount"),
+                        savedAmount = obj.optDouble("savedAmount", 0.0),
+                        colorHex = obj.optString("colorHex", "#007AFF"),
+                        deadlineMillis = obj.optLong("deadlineMillis")
+                            .takeIf { obj.has("deadlineMillis") && !obj.isNull("deadlineMillis") },
+                        note = obj.optString("note").takeIf { it.isNotBlank() },
+                        showOnHome = obj.optBoolean("showOnHome", false),
+                        isCompleted = obj.optBoolean("isCompleted", false),
+                        createdAtMillis = obj.optLong(
+                            "createdAtMillis",
+                            System.currentTimeMillis(),
+                        ),
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun parseGoalDeposits(array: JSONArray?): List<BackupGoalDepositDto> {
+        if (array == null) return emptyList()
+        return buildList {
+            for (i in 0 until array.length()) {
+                val obj = array.getJSONObject(i)
+                add(
+                    BackupGoalDepositDto(
+                        id = obj.getLong("id"),
+                        goalId = obj.getLong("goalId"),
+                        amount = obj.getDouble("amount"),
+                        note = obj.optString("note").takeIf { it.isNotBlank() },
+                        createdAtMillis = obj.optLong(
+                            "createdAtMillis",
+                            System.currentTimeMillis(),
+                        ),
                     ),
                 )
             }

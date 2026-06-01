@@ -1,5 +1,6 @@
 package ru.plumsoftware.finance.presentation.smartsavings
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.SmartAssetStatus
 import ru.plumsoftware.finance.domain.model.SmartAssetTrackingMode
@@ -39,6 +41,7 @@ class CreateSmartSavingsViewModel(
     savedStateHandle: SavedStateHandle,
     private val smartAssetRepository: SmartAssetRepository,
     private val settingsRepository: SettingsRepository,
+    private val context: Context,
 ) : ViewModel() {
     private val editAssetId: Long? = savedStateHandle.get<String>("assetId")?.toLongOrNull()
 
@@ -92,9 +95,15 @@ class CreateSmartSavingsViewModel(
         val saving = MoneyFormat.majorDigitsToMinor(savingDigits, currency)
 
         when {
-            state.name.isBlank() -> _uiState.update { it.copy(errorMessage = "Укажите название") }
-            purchase <= 0 -> _uiState.update { it.copy(errorMessage = "Укажите стоимость покупки") }
-            saving <= 0 -> _uiState.update { it.copy(errorMessage = "Укажите экономию за раз") }
+            state.name.isBlank() -> _uiState.update {
+                it.copy(errorMessage = context.getString(R.string.error_enter_name))
+            }
+            purchase <= 0 -> _uiState.update {
+                it.copy(errorMessage = context.getString(R.string.error_enter_purchase_cost))
+            }
+            saving <= 0 -> _uiState.update {
+                it.copy(errorMessage = context.getString(R.string.error_enter_saving_per_use))
+            }
             else -> viewModelScope.launch {
                 _uiState.update { it.copy(isSaving = true, errorMessage = null, saved = false) }
 
@@ -136,7 +145,12 @@ class CreateSmartSavingsViewModel(
                     _uiState.update { it.copy(saved = true, isSaving = false) }
                 } catch (e: Exception) {
                     if (e !is CancellationException) {
-                        _uiState.update { it.copy(errorMessage = e.message ?: "Ошибка", isSaving = false) }
+                        _uiState.update {
+                            it.copy(
+                                errorMessage = e.message ?: context.getString(R.string.error_generic),
+                                isSaving = false,
+                            )
+                        }
                     }
                 }
             }

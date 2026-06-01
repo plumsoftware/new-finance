@@ -84,6 +84,7 @@ import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.presentation.transactions.TransactionRow
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.PrimaryButton
+import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.MascotAssets
@@ -111,6 +112,7 @@ private data class HistoryGroup(
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HistoryScreen(
+    onBack: () -> Unit = {},
     onNavigateToAdd: () -> Unit = {},
     viewModel: HistoryViewModel = koinViewModel(),
 ) {
@@ -369,14 +371,26 @@ fun HistoryScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
+        topBar = {
+            IosEditorTopBar(
+                title = stringResource(R.string.history),
+                backLabel = stringResource(R.string.nav_home),
+                onBack = onBack,
+            )
+        },
     ) {
         if (state.transactions.isEmpty()) {
-            HistoryEmptyState(onNavigateToAdd = onNavigateToAdd)
+            HistoryEmptyState(
+                modifier = Modifier.padding(it),
+                onNavigateToAdd = onNavigateToAdd,
+            )
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(it),
                 contentPadding = PaddingValues(
-                    top = Dimens.statusBarInset,
+                    top = Dimens.SpacingXs,
                     bottom = Dimens.SpacingM,
                 ),
             ) {
@@ -388,19 +402,11 @@ fun HistoryScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.last_n_transactions),
-                                style = typography.bodySmall,
-                                color = colors.onSurfaceVariant,
-                            )
-                            Text(
-                                text = stringResource(R.string.history),
-                                style = typography.headlineLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onSurface,
-                            )
-                        }
+                        Text(
+                            text = stringResource(R.string.last_n_transactions),
+                            style = typography.bodySmall,
+                            color = colors.onSurfaceVariant,
+                        )
                         IconButton(onClick = { showDateRangePicker = true }) {
                             Icon(
                                 imageVector = Icons.Rounded.CalendarMonth,
@@ -604,15 +610,18 @@ fun HistoryScreen(
 }
 
 @Composable
-private fun HistoryEmptyState(onNavigateToAdd: () -> Unit) {
+private fun HistoryEmptyState(
+    modifier: Modifier = Modifier,
+    onNavigateToAdd: () -> Unit,
+) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(
-                top = Dimens.statusBarInset,
+                top = Dimens.SpacingM,
                 start = Dimens.SpacingL,
                 end = Dimens.SpacingL,
                 bottom = Dimens.SpacingL,

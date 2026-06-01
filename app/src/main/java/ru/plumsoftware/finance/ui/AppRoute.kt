@@ -6,6 +6,8 @@ sealed class AppRoute(val route: String) {
     object History : AppRoute("history")
     object SmartSavings : AppRoute("smart_savings")
     object SmartSavingsCreate : AppRoute("smart_savings/create") // Базовый роут
+    object Goals : AppRoute("goals")
+    object GoalsCreate : AppRoute("goals/create")
     object Analytics : AppRoute("analytics")
     object Settings : AppRoute("settings")
     object Categories : AppRoute("settings/categories")
@@ -29,6 +31,18 @@ sealed class AppRoute(val route: String) {
         const val SMART_CREATE_WITH_ARGS = "smart_savings/create?assetId={assetId}"
         fun smartCreate(assetId: Long? = null) =
             if (assetId != null) "smart_savings/create?assetId=$assetId" else "smart_savings/create"
+
+        const val GOAL_DETAIL = "goals/detail/{goalId}"
+        fun goalDetail(goalId: Long) = "goals/detail/$goalId"
+
+        const val GOAL_CREATE_WITH_ARGS = "goals/create?goalId={goalId}"
+        fun goalCreate(goalId: Long? = null) =
+            if (goalId != null) "goals/create?goalId=$goalId" else "goals/create"
+
+        const val ADD_TRANSACTION_WITH_ARGS = "add_transaction?quickCategory={quickCategory}"
+        fun addTransaction(quickCategory: String? = null): String =
+            if (quickCategory.isNullOrBlank()) "add_transaction"
+            else "add_transaction?quickCategory=${android.net.Uri.encode(quickCategory)}"
 
         const val CATEGORY_EDIT = "settings/categories/edit?categoryId={categoryId}&type={type}"
         fun categoryEdit(categoryId: Long? = null, type: String? = null): String {

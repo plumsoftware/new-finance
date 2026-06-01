@@ -45,6 +45,7 @@ import androidx.compose.material.icons.rounded.DarkMode
 
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.FileUpload
+import androidx.compose.material.icons.rounded.Flag
 
 import androidx.compose.material.icons.rounded.Fingerprint
 
@@ -158,6 +159,8 @@ fun SettingsScreen(
     onOpenCategories: () -> Unit = {},
 
     onOpenLimits: () -> Unit = {},
+
+    onOpenGoals: () -> Unit = {},
 
     onOpenRecurring: () -> Unit = {},
 
@@ -428,6 +431,20 @@ fun SettingsScreen(
                         title = stringResource(R.string.limits),
 
                         onClick = onOpenLimits,
+
+                    )
+
+                    SettingsRowDivider()
+
+                    SettingsNavRow(
+
+                        icon = Icons.Rounded.Flag,
+
+                        iconBackground = Color(0xFF5856D6),
+
+                        title = stringResource(R.string.goals_title),
+
+                        onClick = onOpenGoals,
 
                     )
 

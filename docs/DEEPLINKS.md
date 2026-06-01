@@ -48,6 +48,14 @@ finance://app/{path}?{query}
 | Редактировать экопокупку | `finance://app/smart_savings/create?assetId=42` | `smart_savings/create?assetId=42` |
 | Детали экопокупки | `finance://app/smart_savings/detail/42` | `smart_savings/detail/42` |
 
+### Цели
+
+| Экран | URI | Маршрут |
+|-------|-----|---------|
+| Все цели | `finance://app/goals` | `goals` |
+| Создать цель | `finance://app/goals/create` | `goals/create?goalId=` |
+| Редактировать цель | `finance://app/goals/create?goalId=7` | `goals/create?goalId=7` |
+
 ### Настройки — подразделы
 
 | Экран | URI | Маршрут |
@@ -84,6 +92,10 @@ Long — ID существующей категории. Если не указ�
 
 Long — ID экопокупки для деталей или редактирования.
 
+### `goalId` (цели)
+
+Long — ID цели для редактирования.
+
 ---
 
 ## Тестирование через ADB
@@ -97,6 +109,9 @@ adb shell am start -a android.intent.action.VIEW -d "finance://app/limits" ru.pl
 
 # Детали экопокупки (id=1)
 adb shell am start -a android.intent.action.VIEW -d "finance://app/smart_savings/detail/1" ru.plumsoftware.finance
+
+# Создать цель
+adb shell am start -a android.intent.action.VIEW -d "finance://app/goals/create" ru.plumsoftware.finance
 
 # Импорт
 adb shell am start -a android.intent.action.VIEW -d "finance://app/settings/import" ru.plumsoftware.finance
@@ -166,6 +181,8 @@ import ru.plumsoftware.finance.navigation.AppDeepLinks
 AppDeepLinks.home()
 AppDeepLinks.limits()
 AppDeepLinks.smartSavingsDetail(assetId = 42L)
+AppDeepLinks.goals()
+AppDeepLinks.goalsCreate(goalId = 7L)
 AppDeepLinks.categoryEdit(categoryId = 5L, type = "EXPENSE")
 AppDeepLinks.importPicker()
 ```

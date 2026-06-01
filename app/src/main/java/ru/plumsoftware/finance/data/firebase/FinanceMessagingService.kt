@@ -8,6 +8,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.java.KoinJavaComponent.inject
+import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.repository.NotificationRepository
 import ru.plumsoftware.finance.domain.repository.PushMessagingRepository
 
@@ -21,7 +22,10 @@ class FinanceMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(message: RemoteMessage) {
         serviceScope.launch {
-            val appNotification = FirebaseNotificationMapper.fromRemoteMessage(message)
+            val appNotification = FirebaseNotificationMapper.fromRemoteMessage(
+                message = message,
+                fallbackTitle = getString(R.string.notification_fallback_title),
+            )
             val savedId = notificationRepository.save(appNotification)
             if (savedId <= 0L) return@launch
 

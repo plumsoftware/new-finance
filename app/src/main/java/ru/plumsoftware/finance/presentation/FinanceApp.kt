@@ -65,6 +65,9 @@ import ru.plumsoftware.finance.presentation.export.ExportScreen
 import ru.plumsoftware.finance.presentation.importdata.ImportPickerDeepLinkScreen
 import ru.plumsoftware.finance.presentation.importdata.ImportPreviewScreen
 import ru.plumsoftware.finance.presentation.history.HistoryScreen
+import ru.plumsoftware.finance.presentation.goals.CreateGoalScreen
+import ru.plumsoftware.finance.presentation.goals.GoalDetailScreen
+import ru.plumsoftware.finance.presentation.goals.GoalsScreen
 import ru.plumsoftware.finance.presentation.notifications.NotificationsScreen
 import ru.plumsoftware.finance.presentation.onboarding.OnboardingScreen
 import ru.plumsoftware.finance.presentation.permissions.PermissionsScreen
@@ -139,6 +142,28 @@ fun FinanceApp(
         val bottomNavRoutes = BottomNavItems.map { it.route }
         val showBottomBar = currentRoute in bottomNavRoutes
         val colors = MaterialTheme.colorScheme
+        val navigateFromBottomBar: (String) -> Unit = { route ->
+            if (route == AppRoute.Home.route) {
+                val navigatedToExistingHome = navController.popBackStack(AppRoute.Home.route, false)
+                if (!navigatedToExistingHome) {
+                    navController.navigate(AppRoute.Home.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            } else {
+                navController.navigate(route) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
+        }
 
         Scaffold(
             modifier = modifier.fillMaxSize(),
@@ -156,24 +181,16 @@ fun FinanceApp(
                             windowInsets = NavigationBarDefaults.windowInsets,
                         ) {
                             val homeItem = BottomNavItems[0]
-                            val historyItem = BottomNavItems[1]
+                            val goalsItem = BottomNavItems[1]
                             val analyticsItem = BottomNavItems[2]
                             val settingsItem = BottomNavItems[3]
 
-                            listOf(homeItem, historyItem).forEach { item ->
+                            listOf(homeItem, goalsItem).forEach { item ->
                                 val isSelected =
                                     navBackStackEntry?.destination?.hierarchy?.any { it.route == item.route } == true
                                 NavigationBarItem(
                                     selected = isSelected,
-                                    onClick = {
-                                        navController.navigate(item.route) {
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = true
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                    },
+                                    onClick = { navigateFromBottomBar(item.route) },
                                     icon = {
                                         Icon(
                                             item.icon,
@@ -226,15 +243,7 @@ fun FinanceApp(
                                     navBackStackEntry?.destination?.hierarchy?.any { it.route == item.route } == true
                                 NavigationBarItem(
                                     selected = isSelected,
-                                    onClick = {
-                                        navController.navigate(item.route) {
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = true
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                    },
+                                    onClick = { navigateFromBottomBar(item.route) },
                                     icon = {
                                         Icon(
                                             item.icon,
@@ -286,11 +295,14 @@ fun FinanceApp(
                     ) {
                         HomeScreen(
                             onOpenSmartSavingsClick = { navController.navigate(AppRoute.SmartSavings.route) },
+                            onOpenGoalsClick = { navController.navigate(AppRoute.Goals.route) },
                             onOpenHistoryClick = { navController.navigate(AppRoute.History.route) },
                             onOpenAnalyticsClick = { navController.navigate(AppRoute.Analytics.route) },
                             onOpenLimitsClick = { navController.navigate(AppRoute.Limits.route) },
                             onOpenNotificationsClick = { navController.navigate(AppRoute.Notifications.route) },
                             onCreateAssetClick = { navController.navigate(AppRoute.smartCreate(null)) },
+                            onCreateGoalClick = { navController.navigate(AppRoute.goalCreate()) },
+                            onGoalClick = { id -> navController.navigate(AppRoute.goalDetail(id)) },
                         )
                     }
                     composable(
@@ -298,6 +310,7 @@ fun FinanceApp(
                         deepLinks = listOf(NavDeepLinks.history),
                     ) {
                         HistoryScreen(
+                            onBack = { navController.popBackStack() },
                             onNavigateToAdd = { navController.navigate(AppRoute.AddTransaction.route) },
                         )
                     }
@@ -314,6 +327,7 @@ fun FinanceApp(
                                 // ИЗМЕНЕНО: Используем новую функцию-помощник
                                 navController.navigate(AppRoute.smartCreate(null))
                             },
+                            onOpenGoalsClick = { navController.navigate(AppRoute.Goals.route) },
                             onAssetClick = { id ->
                                 navController.navigate(AppRoute.smartDetail(id))
                             },
@@ -403,6 +417,43 @@ fun FinanceApp(
                         )
                     }
                     composable(
+                        route = AppRoute.Goals.route,
+                        deepLinks = listOf(NavDeepLinks.goals),
+                    ) {
+                        GoalsScreen(
+                            onCreateClick = { navController.navigate(AppRoute.goalCreate()) },
+                            onGoalClick = { id -> navController.navigate(AppRoute.goalDetail(id)) },
+                        )
+                    }
+                    composable(
+                        route = AppRoute.GOAL_CREATE_WITH_ARGS,
+                        deepLinks = listOf(NavDeepLinks.goalsCreate, NavDeepLinks.goalsCreateNew),
+                        arguments = listOf(
+                            navArgument("goalId") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            },
+                        ),
+                    ) {
+                        CreateGoalScreen(
+                            onBack = { navController.popBackStack() },
+                            backLabel = stringResource(R.string.goals_title),
+                        )
+                    }
+                    composable(
+                        route = AppRoute.GOAL_DETAIL,
+                        arguments = listOf(navArgument("goalId") { type = NavType.LongType }),
+                    ) { goalEntry ->
+                        val goalId = goalEntry.arguments?.getLong("goalId") ?: 0L
+                        GoalDetailScreen(
+                            goalId = goalId,
+                            onBack = { navController.popBackStack() },
+                            onEdit = { id -> navController.navigate(AppRoute.goalCreate(id)) },
+                            onDeleted = { navController.popBackStack() },
+                        )
+                    }
+                    composable(
                         route = AppRoute.Analytics.route,
                         deepLinks = listOf(NavDeepLinks.analytics),
                     ) {
@@ -428,6 +479,7 @@ fun FinanceApp(
                             navController = navController,
                             onOpenCategories = { navController.navigate(AppRoute.Categories.route) },
                             onOpenLimits = { navController.navigate(AppRoute.Limits.route) },
+                            onOpenGoals = { navController.navigate(AppRoute.Goals.route) },
                             onOpenRecurring = { navController.navigate(AppRoute.Recurring.route) },
                             onOpenExport = { navController.navigate(AppRoute.Export.route) },
                             onOpenPermissions = { navController.navigate(AppRoute.Permissions.route) },
@@ -504,8 +556,15 @@ fun FinanceApp(
                         )
                     }
                     composable(
-                        route = AppRoute.AddTransaction.route,
-                        deepLinks = listOf(NavDeepLinks.addTransaction),
+                        route = AppRoute.ADD_TRANSACTION_WITH_ARGS,
+                        deepLinks = listOf(NavDeepLinks.addTransaction, NavDeepLinks.addTransactionWithQuickCategory),
+                        arguments = listOf(
+                            navArgument("quickCategory") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            },
+                        ),
                         enterTransition = {
                             slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn(
                                 tween(

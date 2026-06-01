@@ -7,4 +7,13 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Widget palette -->
+    <color name="widget_primary">#0A84FF</color>
+    <color name="widget_primary_dark">#0067D9</color>
+    <color name="widget_text_primary">#FFFFFFFF</color>
+    <color name="widget_text_secondary">#CDE4FF</color>
+    <color name="widget_chip_bg">#4FA6FF</color>
+    <color name="widget_chip_text">#EAF4FF</color>
+    <color name="widget_add_bg">#5AB0FF</color>
 </resources>

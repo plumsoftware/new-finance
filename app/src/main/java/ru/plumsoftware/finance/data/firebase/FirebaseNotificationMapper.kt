@@ -11,12 +11,15 @@ import ru.plumsoftware.finance.domain.model.NotificationSource
 
 object FirebaseNotificationMapper {
 
-    fun fromRemoteMessage(message: RemoteMessage): AppNotification {
+    fun fromRemoteMessage(
+        message: RemoteMessage,
+        fallbackTitle: String,
+    ): AppNotification {
         val notification = message.notification
         val title = notification?.title
             ?: message.data["title"]
             ?: message.data["gcm.notification.title"]
-            ?: "Уведомление"
+            ?: fallbackTitle
         val body = notification?.body
             ?: message.data["body"]
             ?: message.data["gcm.notification.body"]
@@ -39,8 +42,8 @@ object FirebaseNotificationMapper {
         )
     }
 
-    fun fromInAppMessage(message: InAppMessage): AppNotification {
-        val (title, body) = extractInAppText(message)
+    fun fromInAppMessage(message: InAppMessage, fallbackInAppTitle: String): AppNotification {
+        val (title, body) = extractInAppText(message, fallbackInAppTitle)
         return AppNotification(
             title = title,
             body = body,
@@ -58,28 +61,31 @@ object FirebaseNotificationMapper {
         )
     }
 
-    private fun extractInAppText(message: InAppMessage): Pair<String, String> {
+    private fun extractInAppText(
+        message: InAppMessage,
+        fallbackInAppTitle: String,
+    ): Pair<String, String> {
         val campaignName = message.campaignMetadata?.campaignName
         return when (message) {
             is ModalMessage -> {
-                val title = message.title.text ?: campaignName ?: "In-App"
+                val title = message.title.text ?: campaignName ?: fallbackInAppTitle
                 val body = message.body?.text.orEmpty()
                 title to body
             }
             is BannerMessage -> {
-                val title = message.title.text ?: campaignName ?: "In-App"
+                val title = message.title.text ?: campaignName ?: fallbackInAppTitle
                 val body = message.body?.text.orEmpty()
                 title to body
             }
             is CardMessage -> {
-                val title = message.title.text ?: campaignName ?: "In-App"
+                val title = message.title.text ?: campaignName ?: fallbackInAppTitle
                 val body = message.body?.text.orEmpty()
                 title to body
             }
             is ImageOnlyMessage -> {
-                (campaignName ?: "In-App") to ""
+                (campaignName ?: fallbackInAppTitle) to ""
             }
-            else -> (campaignName ?: "In-App") to ""
+            else -> (campaignName ?: fallbackInAppTitle) to ""
         }
     }
 }

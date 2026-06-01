@@ -1,0 +1,66 @@
+package ru.plumsoftware.finance.data.repository
+
+import androidx.room.withTransaction
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import ru.plumsoftware.finance.data.local.dao.GoalDao
+import ru.plumsoftware.finance.data.local.database.FinanceDatabase
+import ru.plumsoftware.finance.data.mapper.toDomain
+import ru.plumsoftware.finance.data.mapper.toEntity
+import ru.plumsoftware.finance.domain.model.Goal
+import ru.plumsoftware.finance.domain.model.GoalDeposit
+import ru.plumsoftware.finance.domain.repository.GoalRepository
+
+class GoalRepositoryImpl(
+    private val database: FinanceDatabase,
+    private val goalDao: GoalDao,
+) : GoalRepository {
+    override fun observeGoals(): Flow<List<Goal>> =
+        goalDao.observeGoals().map { rows -> rows.map { it.toDomain() } }
+
+    override fun observeFeaturedOnHome(): Flow<Goal?> =
+        goalDao.observeFeaturedOnHome().map { row -> row?.toDomain() }
+
+    override fun observeGoal(goalId: Long): Flow<Goal?> =
+        goalDao.observeGoal(goalId).map { row -> row?.toDomain() }
+
+    override fun observeDeposits(goalId: Long): Flow<List<GoalDeposit>> =
+        goalDao.observeDeposits(goalId).map { rows -> rows.map { it.toDomain() } }
+
+    override suspend fun getGoal(goalId: Long): Goal? =
+        goalDao.getGoal(goalId)?.toDomain()
+
+    override suspend fun upsertGoal(goal: Goal): Long {
+        val correctedSaved = goal.savedAmountMinor.coerceAtMost(goal.targetAmountMinor).coerceAtLeast(0L)
+        val corrected = goal.copy(
+            savedAmountMinor = correctedSaved,
+            isCompleted = correctedSaved >= goal.targetAmountMinor && goal.targetAmountMinor > 0L,
+        )
+        return goalDao.upsertGoal(corrected.toEntity())
+    }
+
+    override suspend fun addDeposit(goalId: Long, amountMinor: Long, note: String?): Goal =
+        database.withTransaction {
+            val current = goalDao.getGoal(goalId)?.toDomain()
+                ?: error("Goal $goalId not found")
+            val updatedSaved = (current.savedAmountMinor + amountMinor).coerceAtMost(current.targetAmountMinor)
+            val updated = current.copy(
+                savedAmountMinor = updatedSaved,
+                isCompleted = updatedSaved >= current.targetAmountMinor && current.targetAmountMinor > 0L,
+            )
+            goalDao.updateGoal(updated.toEntity())
+            goalDao.insertDeposit(
+                GoalDeposit(
+                    goalId = goalId,
+                    amountMinor = amountMinor,
+                    note = note?.takeIf { it.isNotBlank() },
+                    createdAtMillis = System.currentTimeMillis(),
+                ).toEntity(),
+            )
+            updated
+        }
+
+    override suspend fun deleteGoal(goalId: Long) {
+        goalDao.deleteGoal(goalId)
+    }
+}

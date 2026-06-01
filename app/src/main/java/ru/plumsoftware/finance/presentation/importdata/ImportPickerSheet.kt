@@ -12,11 +12,14 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.DonutSmall
 import androidx.compose.material.icons.rounded.Eco
+import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.FileUpload
 import androidx.compose.material.icons.rounded.Receipt
 import androidx.compose.material.icons.rounded.Repeat
@@ -97,6 +100,7 @@ fun ImportPickerSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
                 .padding(Dimens.SpacingL)
                 .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -141,6 +145,7 @@ fun ImportPickerSheet(
                     Icons.Rounded.Repeat to R.string.import_will_recurring,
                     Icons.Rounded.Eco to R.string.import_will_assets,
                     Icons.Rounded.DonutSmall to R.string.import_will_limits,
+                    Icons.Rounded.Flag to R.string.import_will_goals,
                 )
                 rows.forEachIndexed { index, (icon, labelRes) ->
                     Row(

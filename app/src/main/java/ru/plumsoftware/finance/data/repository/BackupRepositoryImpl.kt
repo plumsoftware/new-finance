@@ -8,11 +8,14 @@ import ru.plumsoftware.finance.BuildConfig
 import ru.plumsoftware.finance.data.backup.BackupFileWriter
 import ru.plumsoftware.finance.data.backup.BackupSerializer
 import ru.plumsoftware.finance.data.local.dao.CategoryDao
+import ru.plumsoftware.finance.data.local.dao.GoalDao
 import ru.plumsoftware.finance.data.local.dao.RecurringTransactionDao
 import ru.plumsoftware.finance.data.local.dao.SmartAssetDao
 import ru.plumsoftware.finance.data.local.dao.TransactionDao
 import ru.plumsoftware.finance.data.local.database.FinanceDatabase
 import ru.plumsoftware.finance.data.local.entity.CategoryEntity
+import ru.plumsoftware.finance.data.local.entity.GoalDepositEntity
+import ru.plumsoftware.finance.data.local.entity.GoalEntity
 import ru.plumsoftware.finance.data.local.entity.RecurringTransactionEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetUsageEntity
@@ -24,6 +27,8 @@ import ru.plumsoftware.finance.domain.model.BACKUP_FORMAT_VERSION
 import ru.plumsoftware.finance.domain.model.BackupAssetDto
 import ru.plumsoftware.finance.domain.model.BackupAssetUsageDto
 import ru.plumsoftware.finance.domain.model.BackupCategoryDto
+import ru.plumsoftware.finance.domain.model.BackupGoalDepositDto
+import ru.plumsoftware.finance.domain.model.BackupGoalDto
 import ru.plumsoftware.finance.domain.model.BackupLimitDto
 import ru.plumsoftware.finance.domain.model.BackupMeta
 import ru.plumsoftware.finance.domain.model.BackupModel
@@ -54,6 +59,7 @@ class BackupRepositoryImpl(
     private val transactionDao: TransactionDao,
     private val recurringDao: RecurringTransactionDao,
     private val smartAssetDao: SmartAssetDao,
+    private val goalDao: GoalDao,
 ) : BackupRepository {
 
     override suspend fun buildBackup(
@@ -71,6 +77,8 @@ class BackupRepositoryImpl(
         val recurring = recurringDao.getAllSync().map { it.toDomain() }
         val assets = smartAssetDao.getAllSync().map { it.toDomain() }
         val usages = smartAssetDao.getAllUsagesSync().map { it.toDomain() }
+        val goals = goalDao.getAllGoalsSync()
+        val goalDeposits = goalDao.getAllDepositsSync()
         val limits = categories.mapNotNull { category ->
             category.monthlyLimitMinor?.let { limit ->
                 BackupLimitDto(
@@ -139,6 +147,30 @@ class BackupRepositoryImpl(
                 note = usage.note,
             )
         }
+        val backupGoals = goals.map { goal ->
+            BackupGoalDto(
+                id = goal.id,
+                name = goal.name,
+                emoji = goal.emoji,
+                targetAmount = minorToMajor(goal.targetAmountMinor),
+                savedAmount = minorToMajor(goal.savedAmountMinor),
+                colorHex = goal.colorHex,
+                deadlineMillis = goal.deadline,
+                note = goal.note,
+                showOnHome = goal.showOnHome,
+                isCompleted = goal.isCompleted,
+                createdAtMillis = goal.createdAtMillis,
+            )
+        }
+        val backupGoalDeposits = goalDeposits.map { deposit ->
+            BackupGoalDepositDto(
+                id = deposit.id,
+                goalId = deposit.goalId,
+                amount = minorToMajor(deposit.amountMinor),
+                note = deposit.note,
+                createdAtMillis = deposit.createdAtMillis,
+            )
+        }
 
         val meta = BackupMeta(
             version = BACKUP_FORMAT_VERSION,
@@ -151,6 +183,8 @@ class BackupRepositoryImpl(
                 recurring = backupRecurring.size,
                 assets = backupAssets.size,
                 limits = limits.size,
+                goals = backupGoals.size,
+                goalDeposits = backupGoalDeposits.size,
             ),
         )
 
@@ -162,6 +196,8 @@ class BackupRepositoryImpl(
             assets = backupAssets,
             assetUsageHistory = backupUsages,
             limits = limits,
+            goals = backupGoals,
+            goalDeposits = backupGoalDeposits,
         )
     }
 
@@ -196,12 +232,14 @@ class BackupRepositoryImpl(
                 recurringDao.deleteAll()
                 smartAssetDao.deleteAllUsages()
                 smartAssetDao.deleteAllAssets()
+                goalDao.deleteAllDeposits()
+                goalDao.deleteAllGoals()
                 categoryDao.deleteAll()
             }
 
             val existingCategories = categoryDao.getAllSync()
             val categoryIdMap = mutableMapOf<Long, Long>()
-            val totalSteps = 5f
+            val totalSteps = 7f
             var step = 0f
 
             backup.categories.forEach { dto ->
@@ -350,6 +388,66 @@ class BackupRepositoryImpl(
             step++
             onProgress(step / totalSteps)
 
+            val goalIdMap = mutableMapOf<Long, Long>()
+            val existingGoals = if (strategy == ImportStrategy.OVERWRITE) {
+                emptyList()
+            } else {
+                goalDao.getAllGoalsSync()
+            }
+            backup.goals.forEach { dto ->
+                val existing = existingGoals.find {
+                    it.name.equals(dto.name, ignoreCase = true) &&
+                        it.createdAtMillis == dto.createdAtMillis
+                }
+                val entity = goalEntityFromDto(dto)
+                when {
+                    strategy == ImportStrategy.OVERWRITE -> {
+                        goalDao.insertGoal(entity.copy(id = dto.id))
+                        goalIdMap[dto.id] = dto.id
+                        added++
+                    }
+                    existing == null -> {
+                        val newId = goalDao.insertGoal(entity)
+                        goalIdMap[dto.id] = newId
+                        added++
+                    }
+                    strategy == ImportStrategy.MERGE -> {
+                        goalIdMap[dto.id] = existing.id
+                        skipped++
+                    }
+                    else -> {
+                        goalDao.updateGoal(entity.copy(id = existing.id))
+                        goalIdMap[dto.id] = existing.id
+                        updated++
+                    }
+                }
+            }
+            step++
+            onProgress(step / totalSteps)
+
+            val existingGoalDeposits = if (strategy == ImportStrategy.OVERWRITE) {
+                emptyList()
+            } else {
+                goalDao.getAllDepositsSync()
+            }
+            backup.goalDeposits.forEach { dto ->
+                val localGoalId = goalIdMap[dto.goalId] ?: return@forEach
+                val duplicate = existingGoalDeposits.any {
+                    it.goalId == localGoalId &&
+                        it.createdAtMillis == dto.createdAtMillis &&
+                        it.amountMinor == majorToMinor(dto.amount) &&
+                        it.note.orEmpty() == dto.note.orEmpty()
+                }
+                if (duplicate && strategy == ImportStrategy.MERGE) {
+                    skipped++
+                } else {
+                    goalDao.insertDeposit(goalDepositEntityFromDto(dto, localGoalId))
+                    if (duplicate) updated++ else added++
+                }
+            }
+            step++
+            onProgress(step / totalSteps)
+
             backup.transactions.forEach { dto ->
                 val categoryId = dto.categoryId?.let { categoryIdMap[it] }
                 val smartAssetId = dto.smartAssetId?.let { assetIdMap[it] }
@@ -455,6 +553,31 @@ class BackupRepositoryImpl(
             usedAtMillis = parseDateMillis(dto.date),
             note = dto.note,
         )
+
+    private fun goalEntityFromDto(dto: BackupGoalDto): GoalEntity = GoalEntity(
+        id = 0,
+        name = dto.name,
+        emoji = dto.emoji,
+        targetAmountMinor = majorToMinor(dto.targetAmount),
+        savedAmountMinor = majorToMinor(dto.savedAmount),
+        colorHex = dto.colorHex,
+        deadline = dto.deadlineMillis,
+        note = dto.note,
+        showOnHome = dto.showOnHome,
+        isCompleted = dto.isCompleted,
+        createdAtMillis = dto.createdAtMillis,
+    )
+
+    private fun goalDepositEntityFromDto(
+        dto: BackupGoalDepositDto,
+        goalId: Long,
+    ): GoalDepositEntity = GoalDepositEntity(
+        id = 0,
+        goalId = goalId,
+        amountMinor = majorToMinor(dto.amount),
+        note = dto.note,
+        createdAtMillis = dto.createdAtMillis,
+    )
 
     private fun resolvePeriodMillis(
         period: ExportPeriod,

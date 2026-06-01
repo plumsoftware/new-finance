@@ -150,7 +150,7 @@
     <string name="export_data">Экспорт\nданных</string>
     <string name="export_section_format">Формат</string>
     <string name="export_section_period">Период операций</string>
-    <string name="export_period_hint">Период влияет только на операции. Остальные данные экспортируются полностью.</string>
+    <string name="export_period_hint">Период влияет только на операции. Категории, лимиты, цели и другие справочные данные экспортируются полностью.</string>
     <string name="export_section_include">Включить</string>
     <string name="export_format_backup">Резервная копия (.owlbackup)</string>
     <string name="export_format_json">JSON (.json)</string>
@@ -177,6 +177,7 @@
     <string name="import_will_recurring">Повторяющиеся операции</string>
     <string name="import_will_assets">Эко-покупки</string>
     <string name="import_will_limits">Лимиты</string>
+    <string name="import_will_goals">Цели</string>
     <string name="import_preview_title">Предпросмотр</string>
     <string name="import_contents">Содержимое файла</string>
     <string name="import_meta_info">Экспорт от %1$s · версия %2$s</string>
@@ -223,6 +224,7 @@
 
     <string name="nav_home">Главная</string>
     <string name="nav_history">История</string>
+    <string name="nav_goals">Цели</string>
     <string name="nav_analytics">Аналитика</string>
     <string name="nav_settings">Настройки</string>
 
@@ -241,6 +243,8 @@
     <string name="savings_rate_saved">%1$d%% сохранено</string>
     <string name="dashboard_record">+ Записать</string>
     <string name="dashboard_saved_amount">%1$s сэкономлено</string>
+    <string name="home_all_operations">Все операции</string>
+    <string name="home_operations_count">%1$d записей</string>
 
     <string name="transaction_default">Операция</string>
     <string name="transaction_account_time">Счёт · %1$s</string>
@@ -447,4 +451,98 @@
     <string name="notif_time_just_now">Только что</string>
     <string name="notif_time_minutes_ago">%1$d мин назад</string>
     <string name="cd_back">Назад</string>
+
+    <!-- Goals -->
+    <string name="goals_title">Цели</string>
+    <string name="goals_empty_title">Нет активных целей</string>
+    <string name="goals_empty_subtitle">Создайте первую цель и начните откладывать</string>
+    <string name="goals_add_button">Новая цель</string>
+    <string name="goal_add_action">Добавить цель</string>
+    <string name="goals_completed_section">ВЫПОЛНЕННЫЕ</string>
+    <string name="goals_active_section">АКТИВНЫЕ</string>
+    <string name="goals_total_saved">Всего накоплено</string>
+    <string name="goal_progress_percent">%1$d%%</string>
+    <string name="goal_saved_of">%1$s из %2$s</string>
+    <string name="goal_days_left">%1$d дн. осталось</string>
+    <string name="goal_days_overdue">Просрочена на %1$d дн.</string>
+    <string name="goal_no_deadline">Без срока</string>
+    <string name="goal_completed_badge">Выполнена 🎉</string>
+    <string name="goal_deposit_button">Пополнить</string>
+    <string name="goal_create_title">Новая цель</string>
+    <string name="goal_edit_title">Изменить цель</string>
+    <string name="goal_save_button">Готово</string>
+    <string name="goal_section_main">ОСНОВНОЕ</string>
+    <string name="goal_section_finance">СУММА</string>
+    <string name="goal_section_deadline">СРОК</string>
+    <string name="goal_section_icon">ИКОНКА</string>
+    <string name="goal_section_color">ЦВЕТ</string>
+    <string name="goal_field_name">Название</string>
+    <string name="goal_field_name_placeholder">Напр. Новый iPhone</string>
+    <string name="goal_field_note">Заметка</string>
+    <string name="goal_field_note_placeholder">Необязательно</string>
+    <string name="goal_field_show_on_home">Показывать на главной</string>
+    <string name="goal_field_target">Целевая сумма</string>
+    <string name="goal_field_saved">Уже накоплено</string>
+    <string name="goal_field_deadline_toggle">Установить срок</string>
+    <string name="goal_field_deadline_value">Дата дедлайна</string>
+    <string name="goal_name_counter">%1$d/40</string>
+    <string name="goal_detail_deposited">Пополнения</string>
+    <string name="goal_detail_history_empty">Пополнений ещё не было</string>
+    <string name="goal_detail_delete">Удалить цель</string>
+    <string name="goal_detail_edit">Изменить</string>
+    <string name="goal_detail_remaining">Осталось накопить</string>
+    <string name="goal_detail_daily_needed">%1$s в день для достижения цели</string>
+    <string name="goal_deposit_title">Пополнить цель</string>
+    <string name="goal_deposit_confirm">Добавить</string>
+    <string name="goal_deposit_note_placeholder">Комментарий (необязательно)</string>
+    <string name="goal_deposit_quick_10">+10%</string>
+    <string name="goal_deposit_quick_25">+25%</string>
+    <string name="goal_deposit_quick_50">+50%</string>
+    <string name="goal_delete_title">Удалить «%1$s»?</string>
+    <string name="goal_delete_message">История пополнений также будет удалена</string>
+    <string name="goal_delete_confirm">Удалить</string>
+    <string name="goal_delete_cancel">Отмена</string>
+    <string name="goal_completed_title">Цель достигнута! 🎉</string>
+    <string name="goal_completed_message">Вы накопили %1$s на «%2$s»</string>
+    <string name="goal_completed_ok">Отлично!</string>
+    <string name="goals_home_section">Цели</string>
+    <string name="goal_deposit_transaction_note_prefix">Пополнение цели: %1$s</string>
+
+    <!-- Common / error texts -->
+    <string name="error_generic">Ошибка</string>
+    <string name="error_save_failed">Ошибка сохранения</string>
+    <string name="error_enter_amount">Укажите сумму</string>
+    <string name="error_enter_name">Укажите название</string>
+    <string name="error_enter_category_name">Укажите название категории</string>
+    <string name="error_create_category_failed">Ошибка создания категории</string>
+    <string name="error_enter_purchase_cost">Укажите стоимость покупки</string>
+    <string name="error_enter_saving_per_use">Укажите экономию за раз</string>
+    <string name="error_enter_saved_amount">Укажите сумму экономии</string>
+    <string name="transaction_deleted">Операция удалена</string>
+    <string name="smart_usage_saved">Сэкономлено! +1 использование</string>
+    <string name="common_dash_separator"> – </string>
+    <string name="analytics_period_chip_default">📅 Период</string>
+    <string name="notification_fallback_title">Уведомление</string>
+    <string name="notification_fallback_in_app">In-App</string>
+
+    <!-- Default categories -->
+    <string name="default_category_products">Продукты</string>
+    <string name="default_category_cafe_restaurants">Кафе и рестораны</string>
+    <string name="default_category_transport">Транспорт</string>
+    <string name="default_category_housing">Жильё</string>
+    <string name="default_category_subscriptions">Подписки</string>
+    <string name="default_category_health">Здоровье</string>
+    <string name="default_category_entertainment">Развлечения</string>
+    <string name="default_category_shopping">Шоппинг</string>
+    <string name="default_category_salary">Зарплата</string>
+    <string name="default_category_freelance">Фриланс</string>
+    <string name="default_category_gifts">Подарки</string>
+    <string name="default_category_cashback_interest">Кэшбек и проценты</string>
+
+    <!-- Quick add widget -->
+    <string name="widget_quick_add_name">Добавить</string>
+    <string name="widget_quick_add_subtitle">Новая операция</string>
+    <string name="widget_category_products">Продукты</string>
+    <string name="widget_category_cafe">Кафе</string>
+    <string name="widget_category_transport">Транспорт</string>
 </resources>

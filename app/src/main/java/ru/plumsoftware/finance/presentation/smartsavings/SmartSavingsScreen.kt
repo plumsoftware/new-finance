@@ -49,6 +49,7 @@ import ru.plumsoftware.finance.ui.components.MascotEmptyState
 import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.components.ios.IosFilterChip
+import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.MascotAssets
 
@@ -57,6 +58,7 @@ import ru.plumsoftware.finance.ui.theme.MascotAssets
 fun SmartSavingsScreen(
     onBack: () -> Unit,
     onCreateClick: () -> Unit,
+    onOpenGoalsClick: () -> Unit,
     onAssetClick: (Long) -> Unit,
     snackbarMessage: String? = null,
     onSnackbarShown: () -> Unit = {},
@@ -102,6 +104,31 @@ fun SmartSavingsScreen(
         ) {
             item {
                 HeroCard(totalSaved = MoneyFormat.format(state.totalSavedMinor, state.currencyCode))
+            }
+            item {
+                AppCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onOpenGoalsClick),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Dimens.SpacingM, vertical = Dimens.SpacingS),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.goals_title),
+                            style = typography.bodyLarge,
+                            color = colors.onSurface,
+                        )
+                        IosTextButton(
+                            text = stringResource(R.string.goals_add_button),
+                            onClick = onOpenGoalsClick,
+                        )
+                    }
+                }
             }
             item {
                 Row(

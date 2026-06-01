@@ -73,6 +73,18 @@
             </intent-filter>
         </service>
 
+        <receiver
+            android:name=".widget.QuickAddWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_quick_add_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quick_add_widget_info" />
+        </receiver>
+
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="finance_push" />
