@@ -16,4 +16,39 @@
     <color name="widget_chip_bg">#4FA6FF</color>
     <color name="widget_chip_text">#EAF4FF</color>
     <color name="widget_add_bg">#5AB0FF</color>
+
+    <!-- Balance summary widget -->
+    <color name="widget_balance_bg">#FFF8F8FA</color>
+    <color name="widget_balance_title_text">#8A8A90</color>
+    <color name="widget_balance_amount_text">#111114</color>
+    <color name="widget_balance_income_bg">#E6F4EA</color>
+    <color name="widget_balance_expense_bg">#F8EAEA</color>
+    <color name="widget_balance_income_label">#4B7A57</color>
+    <color name="widget_balance_expense_label">#8E5C5C</color>
+    <color name="widget_balance_income_value">#34A853</color>
+    <color name="widget_balance_expense_value">#D93025</color>
+
+    <!-- Goals widget -->
+    <color name="widget_goals_bg">#FFF5F5F7</color>
+    <color name="widget_goals_title_text">#7D7D82</color>
+    <color name="widget_goals_total_text">#34A853</color>
+    <color name="widget_goals_text_primary">#1C1C1E</color>
+    <color name="widget_goals_icon_bg">#FFECECEF</color>
+    <color name="widget_goals_divider">#FFDADAE0</color>
+    <color name="widget_goals_progress_track">#FFD8D8DE</color>
+    <color name="widget_goals_percent_blue">#007AFF</color>
+    <color name="widget_goals_percent_green">#34A853</color>
+    <color name="widget_goals_percent_orange">#F29900</color>
+
+    <!-- Monthly summary widget -->
+    <color name="widget_monthly_bg">#FFF5F5F7</color>
+    <color name="widget_monthly_title_text">#7D7D82</color>
+    <color name="widget_monthly_balance_text">#141416</color>
+    <color name="widget_monthly_badge_bg">#E6F4EA</color>
+    <color name="widget_monthly_badge_text">#34A853</color>
+    <color name="widget_monthly_legend_text">#5F6368</color>
+    <color name="widget_monthly_divider">#FFDADAE0</color>
+    <color name="widget_monthly_label_text">#4F4F55</color>
+    <color name="widget_monthly_income_text">#34A853</color>
+    <color name="widget_monthly_expense_text">#D93025</color>
 </resources>

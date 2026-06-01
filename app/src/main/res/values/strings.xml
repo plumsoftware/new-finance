@@ -545,4 +545,25 @@
     <string name="widget_category_products">Продукты</string>
     <string name="widget_category_cafe">Кафе</string>
     <string name="widget_category_transport">Транспорт</string>
+    <string name="widget_balance_description">Баланс и сводка за месяц</string>
+    <string name="widget_balance_title_default">ОБЩИЙ БАЛАНС</string>
+    <string name="widget_balance_title_with_month">ОБЩИЙ БАЛАНС · %1$s</string>
+    <string name="widget_balance_amount_placeholder">0,00 ₽</string>
+    <string name="widget_income_placeholder">+0 ₽</string>
+    <string name="widget_expense_placeholder">−0 ₽</string>
+    <string name="widget_goals_description">Список целей и прогресс</string>
+    <string name="widget_goals_title">МОИ ЦЕЛИ</string>
+    <string name="widget_goals_saved_template">%1$s накоплено</string>
+    <string name="widget_goals_total_placeholder">0 ₽ накоплено</string>
+    <string name="widget_goal_placeholder_title">Цель</string>
+    <string name="widget_goal_placeholder_percent">0%%</string>
+    <string name="widget_monthly_description">Баланс, доходы и расходы за месяц</string>
+    <string name="widget_monthly_title_default">Май 2026</string>
+    <string name="widget_monthly_saved_badge">+%1$d%% сохранено</string>
+    <string name="widget_monthly_saved_placeholder">+0%% сохранено</string>
+    <string name="widget_monthly_balance_placeholder">0 ₽</string>
+    <string name="widget_monthly_income_placeholder">+0 ₽</string>
+    <string name="widget_monthly_expense_placeholder">−0 ₽</string>
+    <string name="widget_monthly_operations">Операций</string>
+    <string name="widget_monthly_ops_placeholder">0</string>
 </resources>
