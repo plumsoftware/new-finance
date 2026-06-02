@@ -57,7 +57,9 @@ import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.CategoryWithSpending
 import ru.plumsoftware.finance.domain.model.LimitStatus
+import ru.plumsoftware.finance.AppConfig
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
+import ru.plumsoftware.finance.ui.ads.AdBannerBottomBar
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.components.SectionLabel
@@ -123,6 +125,9 @@ fun LimitsScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
+        bottomBar = {
+            AdBannerBottomBar(adUnitId = AppConfig.bannerLimits)
+        },
         topBar = {
             IosEditorTopBar(
                 title = stringResource(R.string.limits),

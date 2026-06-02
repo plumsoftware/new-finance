@@ -49,8 +49,10 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
+import ru.plumsoftware.finance.AppConfig
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.Category
+import ru.plumsoftware.finance.ui.ads.AdBannerBottomBar
 import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.PrimaryButton
@@ -74,6 +76,9 @@ fun CategoriesScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
+        bottomBar = {
+            AdBannerBottomBar(adUnitId = AppConfig.bannerCategories)
+        },
         topBar = {
             IosEditorTopBar(
                 title = stringResource(R.string.categories_title),

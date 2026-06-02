@@ -70,7 +70,9 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.ads.InterstitialPlacement
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
+import ru.plumsoftware.finance.ui.ads.InterstitialAdEffect
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
 import ru.plumsoftware.finance.ui.components.SectionLabel
@@ -131,9 +133,11 @@ fun CreateSmartSavingsScreen(
         else -> ""
     }
 
-    LaunchedEffect(state.saved) {
-        if (state.saved) onCreatedUpdated()
-    }
+    InterstitialAdEffect(
+        placement = InterstitialPlacement.SMART_SAVINGS,
+        trigger = state.saved,
+        onContinue = { onCreatedUpdated() },
+    )
 
     LaunchedEffect(activeField) {
         when (activeField) {

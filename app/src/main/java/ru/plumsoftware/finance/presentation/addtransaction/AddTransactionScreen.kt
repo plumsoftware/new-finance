@@ -79,7 +79,9 @@ import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.TransactionType
+import ru.plumsoftware.finance.ads.InterstitialPlacement
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
+import ru.plumsoftware.finance.ui.ads.InterstitialAdEffect
 import ru.plumsoftware.finance.ui.components.ios.IosAlertDialog
 import ru.plumsoftware.finance.ui.components.ios.IosTextField
 import ru.plumsoftware.finance.ui.components.PrimaryButton
@@ -113,9 +115,14 @@ fun AddTransactionScreen(
     LaunchedEffect(state.saved) {
         if (state.saved) {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            onBack()
         }
     }
+
+    InterstitialAdEffect(
+        placement = InterstitialPlacement.TRANSACTION,
+        trigger = state.saved,
+        onContinue = onBack,
+    )
 
     state.errorMessage?.let { message ->
         IosAlertDialog(

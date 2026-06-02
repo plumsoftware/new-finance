@@ -59,7 +59,9 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.ads.InterstitialPlacement
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
+import ru.plumsoftware.finance.ui.ads.InterstitialAdEffect
 import ru.plumsoftware.finance.ui.components.FinanceNumPad
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
 import ru.plumsoftware.finance.ui.components.SectionLabel
@@ -103,9 +105,11 @@ fun CreateGoalScreen(
     }
     val dismissNumPad = { activeField = null }
 
-    LaunchedEffect(state.saved) {
-        if (state.saved) onBack()
-    }
+    InterstitialAdEffect(
+        placement = InterstitialPlacement.GOAL,
+        trigger = state.saved,
+        onContinue = onBack,
+    )
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),

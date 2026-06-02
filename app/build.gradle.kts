@@ -103,6 +103,9 @@ dependencies {
     implementation(libs.vico.compose)
     implementation(libs.vico.compose.m3)
 
+    // Yandex Mobile Ads (RuStore)
+    implementation(libs.yandex.mobileads)
+
     // Tests
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

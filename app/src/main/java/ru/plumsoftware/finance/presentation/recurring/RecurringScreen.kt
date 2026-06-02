@@ -46,7 +46,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import ru.plumsoftware.finance.AppConfig
 import ru.plumsoftware.finance.navigation.popBackStackOrHome
+import ru.plumsoftware.finance.ui.ads.AdBannerBottomBar
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import ru.plumsoftware.finance.R
@@ -98,6 +100,9 @@ fun RecurringScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
+        bottomBar = {
+            AdBannerBottomBar(adUnitId = AppConfig.bannerRecurring)
+        },
         topBar = {
             IosEditorTopBar(
                 title = stringResource(R.string.recurring_transactions),

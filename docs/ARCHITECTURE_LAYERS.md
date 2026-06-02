@@ -59,16 +59,37 @@
 **Что входит:**
 - `DataModule.kt`
 - `PresentationModule.kt`
+- `AdsModule.kt`
 
 **Ответственность:**
 - регистрация зависимостей (Koin)
 - создание `ViewModel`, репозиториев, сервисов
+- `InterstitialAdManager` (singleton)
 
 **Правила:**
 - зависимости задаются через конструкторы
 - `ViewModel` не создаются вручную в UI
 
-## 5) Navigation Layer (`app/src/main/java/.../navigation`, `ui/AppRoute.kt`, `presentation/FinanceApp.kt`)
+## 5) Ads Layer (`app/src/main/java/.../ads`, `ui/ads`, `AppConfig.kt`)
+
+**Что входит:**
+- идентификаторы блоков: `AppConfig` (по `BuildConfig.PLATFORM` и debug/release)
+- `InterstitialAdManager`, `InterstitialPlacement`
+- Compose: `InterstitialAdEffect`, `AdBannerBottomBar`, `StickyAdBanner`
+- инициализация `MobileAds` в `FinanceApplication`
+
+**Ответственность:**
+- загрузка и показ межстраничной рекламы (кулдаун 3 мин между любыми interstitial)
+- sticky-баннеры внизу отдельных экранов
+- для RuStore — боевые `R-M-…`; для других платформ — пустые ID (реклама отключена)
+
+**Правила:**
+- ad unit ID только в `AppConfig`, не хардкодить в экранах
+- межстраничная реклама — через `InterstitialAdEffect`, не дублировать `onContinue` в других эффектах
+- баннеры — через `AdBannerBottomBar` в `Scaffold.bottomBar` (не на `GoalsScreen`)
+- подробности: [YANDEX_ADS.md](YANDEX_ADS.md)
+
+## 6) Navigation Layer (`app/src/main/java/.../navigation`, `ui/AppRoute.kt`, `presentation/FinanceApp.kt`)
 
 **Что входит:**
 - маршруты: `AppRoute`
@@ -84,7 +105,7 @@
 - маршруты должны совпадать между `AppRoute`, `NavDeepLinks`, `DEEPLINKS.md`
 - все новые deeplink-роуты документируются
 
-## 6) Widget Layer (`app/src/main/java/.../widget`, `app/src/main/res/layout|xml|drawable`)
+## 7) Widget Layer (`app/src/main/java/.../widget`, `app/src/main/res/layout|xml|drawable`)
 
 **Что входит:**
 - провайдер виджета (`QuickAddWidgetProvider`)
@@ -95,7 +116,7 @@
 - запуск быстрых сценариев из launcher
 - deeplink-переходы в экраны приложения
 
-## 7) Resource Layer (`app/src/main/res`)
+## 8) Resource Layer (`app/src/main/res`)
 
 **Что входит:**
 - `values/strings.xml`, `colors.xml`, темы, drawable, layout
@@ -108,7 +129,7 @@
 - пользовательский текст хранится в `strings.xml`
 - в коде используются `stringResource(...)` или `context.getString(...)`
 
-## 8) Текущий поток данных
+## 9) Текущий поток данных
 
 1. UI вызывает действие во `ViewModel`.
 2. `ViewModel` обращается к интерфейсу репозитория (`domain/repository`).
@@ -116,7 +137,7 @@
 4. Результат возвращается в `ViewModel`.
 5. `ViewModel` обновляет `StateFlow`, UI перерисовывается.
 
-## 9) Чек-лист при добавлении новой фичи
+## 10) Чек-лист при добавлении новой фичи
 
 - добавить модели и контракты в `domain`
 - реализовать доступ к данным в `data`
@@ -124,4 +145,4 @@
 - сделать экран + `ViewModel` в `presentation`
 - добавить route/deeplink в `navigation`
 - добавить все пользовательские строки в `strings.xml`
-- обновить документацию в `docs/`
+- обновить документацию в `docs/` (при рекламе — [YANDEX_ADS.md](YANDEX_ADS.md))
