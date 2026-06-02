@@ -223,6 +223,21 @@ Deep links и import **не пересекаются**: scheme `finance` обр�
 
 ---
 
+## Ярлыки приложения (App Shortcuts)
+
+Долгое нажатие на иконку лаунчера — 4 шортката (`res/xml/shortcuts.xml`):
+
+| Ярлык | URI |
+|-------|-----|
+| Новая операция | `finance://app/add_transaction` |
+| История операций | `finance://app/history` |
+| Лимиты на месяц | `finance://app/limits` |
+| Аналитика расходов | `finance://app/analytics` |
+
+Открывают [MainActivity](app/src/main/java/ru/plumsoftware/finance/MainActivity.kt) через `ACTION_VIEW`; навигация — `navigateAppDeepLink`.
+
+---
+
 ## Программное построение URI (Kotlin)
 
 ```kotlin

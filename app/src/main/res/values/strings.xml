@@ -45,6 +45,14 @@
     <string name="perm_background_desc">Пуши и напоминания при закрытом приложении</string>
     <string name="perm_background_rationale">Без ограничения батареи пуши\nсохраняются и доставляются надёжнее</string>
     <string name="notification_action_open">Перейти</string>
+    <string name="shortcut_add_short">Операция</string>
+    <string name="shortcut_add_long">Новая операция</string>
+    <string name="shortcut_history_short">История</string>
+    <string name="shortcut_history_long">История операций</string>
+    <string name="shortcut_limits_short">Лимиты</string>
+    <string name="shortcut_limits_long">Лимиты на месяц</string>
+    <string name="shortcut_analytics_short">Аналитика</string>
+    <string name="shortcut_analytics_long">Аналитика расходов</string>
 
     <string name="dashboard_title">Главная</string>
     <string name="income">Доходы</string>
