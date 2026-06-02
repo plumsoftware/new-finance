@@ -33,8 +33,18 @@ android {
         buildConfigField("int", "PLATFORM", "1")
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = rootProject.file("key_store.jks")
+            storePassword = "81abbc2x0BBAc4XtOZzN3uyvU20km6xD9KEXxVJNyQCw1WfIpQ"
+            keyAlias = "key_new_finance"
+            keyPassword = "81abbc2x0BBAc4XtOZzN3uyvU20km6xD9KEXxVJNyQCw1WfIpQ"
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
