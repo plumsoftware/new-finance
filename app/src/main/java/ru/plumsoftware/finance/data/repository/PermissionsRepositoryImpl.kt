@@ -14,6 +14,7 @@ import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.PermissionIconKind
 import ru.plumsoftware.finance.domain.model.PermissionItem
 import ru.plumsoftware.finance.domain.repository.PermissionsRepository
+import ru.plumsoftware.finance.util.isBackgroundWorkAllowed
 
 class PermissionsRepositoryImpl(
     private val context: Context,
@@ -64,6 +65,17 @@ class PermissionsRepositoryImpl(
                 isPermanentlyDenied = storagePermission?.let {
                     isPermanentlyDenied(activity, it)
                 } ?: false,
+            ),
+            PermissionItem(
+                id = "background",
+                permission = null,
+                titleRes = R.string.perm_background_title,
+                descriptionRes = R.string.perm_background_desc,
+                rationaleRes = R.string.perm_background_rationale,
+                iconKind = PermissionIconKind.BACKGROUND,
+                iconColorArgb = 0xFF34C759,
+                isGranted = isBackgroundWorkAllowed(context),
+                isPermanentlyDenied = false,
             ),
         )
     }

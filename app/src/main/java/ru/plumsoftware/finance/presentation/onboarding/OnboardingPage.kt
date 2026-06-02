@@ -7,6 +7,8 @@ enum class OnboardingIllustrationType {
     CONTROL_CHART,
     INCOME_EXPENSE,
     SMART_SAVINGS,
+    GOALS,
+    ACHIEVEMENTS,
     WELCOME,
 }
 

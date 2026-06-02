@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
+import ru.plumsoftware.finance.util.isBackgroundWorkAllowed
 
 fun buildPermissionsToRequest(context: Context): List<String> {
     val list = mutableListOf<String>()
@@ -30,7 +31,7 @@ fun buildPermissionsToRequest(context: Context): List<String> {
 }
 
 fun hasPendingPermissions(context: Context): Boolean =
-    buildPermissionsToRequest(context).isNotEmpty()
+    buildPermissionsToRequest(context).isNotEmpty() || !isBackgroundWorkAllowed(context)
 
 fun isNotificationPermissionGranted(context: Context): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true

@@ -10,6 +10,7 @@ import ru.plumsoftware.finance.domain.model.BackupLimitDto
 import ru.plumsoftware.finance.domain.model.BackupMeta
 import ru.plumsoftware.finance.domain.model.BackupModel
 import ru.plumsoftware.finance.domain.model.BackupGoalDto
+import ru.plumsoftware.finance.domain.model.BackupAchievementUnlockDto
 import ru.plumsoftware.finance.domain.model.BackupGoalDepositDto
 import ru.plumsoftware.finance.domain.model.BackupRecordCounts
 import ru.plumsoftware.finance.domain.model.BackupRecurringDto
@@ -28,6 +29,7 @@ object BackupSerializer {
         root.put("limits", limitsToJson(backup.limits))
         root.put("goals", goalsToJson(backup.goals))
         root.put("goalDeposits", goalDepositsToJson(backup.goalDeposits))
+        root.put("achievements", achievementsToJson(backup.achievements))
         return root.toString(2)
     }
 
@@ -48,6 +50,7 @@ object BackupSerializer {
                 limits = countsJson?.optInt("limits") ?: 0,
                 goals = countsJson?.optInt("goals") ?: 0,
                 goalDeposits = countsJson?.optInt("goalDeposits") ?: 0,
+                achievements = countsJson?.optInt("achievements") ?: 0,
             ),
             fileName = fileName,
         )
@@ -64,6 +67,7 @@ object BackupSerializer {
             limits = parseLimits(root.optJSONArray("limits")),
             goals = parseGoals(root.optJSONArray("goals")),
             goalDeposits = parseGoalDeposits(root.optJSONArray("goalDeposits")),
+            achievements = parseAchievements(root.optJSONArray("achievements")),
         )
     }
 
@@ -81,7 +85,8 @@ object BackupSerializer {
                 .put("assets", meta.recordCounts.assets)
                 .put("limits", meta.recordCounts.limits)
                 .put("goals", meta.recordCounts.goals)
-                .put("goalDeposits", meta.recordCounts.goalDeposits),
+                .put("goalDeposits", meta.recordCounts.goalDeposits)
+                .put("achievements", meta.recordCounts.achievements),
         )
 
     private fun categoriesToJson(items: List<BackupCategoryDto>): JSONArray {
@@ -201,6 +206,18 @@ object BackupSerializer {
                     .put("showOnHome", item.showOnHome)
                     .put("isCompleted", item.isCompleted)
                     .put("createdAtMillis", item.createdAtMillis),
+            )
+        }
+        return array
+    }
+
+    private fun achievementsToJson(items: List<BackupAchievementUnlockDto>): JSONArray {
+        val array = JSONArray()
+        items.forEach { item ->
+            array.put(
+                JSONObject()
+                    .put("key", item.key)
+                    .put("unlockedAtMillis", item.unlockedAtMillis),
             )
         }
         return array
@@ -360,6 +377,24 @@ object BackupSerializer {
                         isCompleted = obj.optBoolean("isCompleted", false),
                         createdAtMillis = obj.optLong(
                             "createdAtMillis",
+                            System.currentTimeMillis(),
+                        ),
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun parseAchievements(array: JSONArray?): List<BackupAchievementUnlockDto> {
+        if (array == null) return emptyList()
+        return buildList {
+            for (i in 0 until array.length()) {
+                val obj = array.getJSONObject(i)
+                add(
+                    BackupAchievementUnlockDto(
+                        key = obj.getString("key"),
+                        unlockedAtMillis = obj.optLong(
+                            "unlockedAtMillis",
                             System.currentTimeMillis(),
                         ),
                     ),

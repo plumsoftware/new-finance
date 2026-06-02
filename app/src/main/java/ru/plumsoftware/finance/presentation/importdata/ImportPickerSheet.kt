@@ -19,6 +19,7 @@ import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.DonutSmall
 import androidx.compose.material.icons.rounded.Eco
+import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.FileUpload
 import androidx.compose.material.icons.rounded.Receipt
@@ -146,6 +147,7 @@ fun ImportPickerSheet(
                     Icons.Rounded.Eco to R.string.import_will_assets,
                     Icons.Rounded.DonutSmall to R.string.import_will_limits,
                     Icons.Rounded.Flag to R.string.import_will_goals,
+                    Icons.Rounded.EmojiEvents to R.string.import_will_achievements,
                 )
                 rows.forEachIndexed { index, (icon, labelRes) ->
                     Row(

@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import ru.plumsoftware.finance.navigation.popBackStackOrHome
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import ru.plumsoftware.finance.R
@@ -101,7 +102,7 @@ fun RecurringScreen(
             IosEditorTopBar(
                 title = stringResource(R.string.recurring_transactions),
                 backLabel = stringResource(R.string.categories_back_settings),
-                onBack = navController::popBackStack,
+                onBack = navController::popBackStackOrHome,
                 actionLabel = stringResource(R.string.categories_add),
                 onAction = { showAddSheet = true },
             )

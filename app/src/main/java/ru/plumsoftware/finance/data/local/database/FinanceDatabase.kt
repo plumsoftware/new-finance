@@ -15,7 +15,10 @@ import ru.plumsoftware.finance.data.local.dao.GoalDao
 import ru.plumsoftware.finance.data.local.dao.NotificationDao
 import ru.plumsoftware.finance.data.local.dao.RecurringTransactionDao
 import ru.plumsoftware.finance.data.local.dao.SmartAssetDao
+import ru.plumsoftware.finance.data.local.dao.StreakDao
 import ru.plumsoftware.finance.data.local.dao.TransactionDao
+import ru.plumsoftware.finance.data.local.dao.AchievementUnlockDao
+import ru.plumsoftware.finance.data.local.entity.AchievementUnlockEntity
 import ru.plumsoftware.finance.data.local.entity.CategoryEntity
 import ru.plumsoftware.finance.data.local.entity.GoalDepositEntity
 import ru.plumsoftware.finance.data.local.entity.GoalEntity
@@ -23,6 +26,7 @@ import ru.plumsoftware.finance.data.local.entity.NotificationEntity
 import ru.plumsoftware.finance.data.local.entity.RecurringTransactionEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetUsageEntity
+import ru.plumsoftware.finance.data.local.entity.StreakDataEntity
 import ru.plumsoftware.finance.data.local.entity.TransactionEntity
 
 @Database(
@@ -35,8 +39,10 @@ import ru.plumsoftware.finance.data.local.entity.TransactionEntity
         RecurringTransactionEntity::class,
         GoalEntity::class,
         GoalDepositEntity::class,
+        StreakDataEntity::class,
+        AchievementUnlockEntity::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = false,
 )
 @TypeConverters(EnumConverters::class)
@@ -47,6 +53,8 @@ abstract class FinanceDatabase : RoomDatabase() {
     abstract fun notificationDao(): NotificationDao
     abstract fun recurringTransactionDao(): RecurringTransactionDao
     abstract fun goalDao(): GoalDao
+    abstract fun streakDao(): StreakDao
+    abstract fun achievementUnlockDao(): AchievementUnlockDao
 
     companion object {
         private const val DATABASE_NAME = "finance.db"

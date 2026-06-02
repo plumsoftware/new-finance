@@ -38,6 +38,8 @@ import androidx.navigation.NavController
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.PermissionItem
+import ru.plumsoftware.finance.navigation.popBackStackOrHome
+import ru.plumsoftware.finance.util.requestBackgroundWorkExemption
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
@@ -84,7 +86,7 @@ fun PermissionsScreen(
             IosEditorTopBar(
                 title = stringResource(R.string.permissions),
                 backLabel = stringResource(R.string.categories_back_settings),
-                onBack = navController::popBackStack,
+                onBack = navController::popBackStackOrHome,
             )
         },
         containerColor = colors.background,
@@ -111,7 +113,7 @@ fun PermissionsScreen(
                         denied.forEachIndexed { index, item ->
                             PermissionScreenRow(
                                 item = item,
-                                onRequest = { requestPermission(item, launcher) },
+                                onRequest = { requestPermission(item, activity, launcher) },
                             )
                             if (index < denied.lastIndex) {
                                 HorizontalDivider(
@@ -181,8 +183,14 @@ fun PermissionsScreen(
 
 private fun requestPermission(
     item: PermissionItem,
+    activity: Activity,
     launcher: androidx.activity.compose.ManagedActivityResultLauncher<String, Boolean>,
 ) {
-    val permission = item.permission ?: return
-    launcher.launch(permission)
+    when (item.id) {
+        "background" -> activity.requestBackgroundWorkExemption()
+        else -> {
+            val permission = item.permission ?: return
+            launcher.launch(permission)
+        }
+    }
 }

@@ -52,6 +52,7 @@ import ru.plumsoftware.finance.ui.components.ios.IosFilterChip
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.MascotAssets
+import ru.plumsoftware.finance.ui.theme.MascotSize
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,103 +91,146 @@ fun SmartSavingsScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHost) },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(
-                start = Dimens.SpacingM,
-                end = Dimens.SpacingM,
-                top = Dimens.SpacingXxs,
-                bottom = Dimens.SpacingXxs,
-            ),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
-        ) {
-            item {
-                HeroCard(totalSaved = MoneyFormat.format(state.totalSavedMinor, state.currencyCode))
-            }
-            item {
-                AppCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onOpenGoalsClick),
+        val horizontalPadding = Modifier.padding(horizontal = Dimens.SpacingM)
+        val showMascotEmpty = displayedAssets.isEmpty() && !state.showCompletedOnly
+
+        if (showMascotEmpty) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+            ) {
+                Column(
+                    modifier = horizontalPadding,
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Dimens.SpacingM, vertical = Dimens.SpacingS),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.goals_title),
-                            style = typography.bodyLarge,
-                            color = colors.onSurface,
-                        )
-                        IosTextButton(
-                            text = stringResource(R.string.goals_add_button),
-                            onClick = onOpenGoalsClick,
-                        )
-                    }
-                }
-            }
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = Dimens.SpacingXxs),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    SectionLabel(text = stringResource(R.string.smart_my_assets))
-                    IosFilterChip(
-                        text = stringResource(R.string.smart_filter_completed),
-                        selected = state.showCompletedOnly,
-                        onClick = viewModel::toggleCompletedFilter,
+                    HeroCard(totalSaved = MoneyFormat.format(state.totalSavedMinor, state.currencyCode))
+                    GoalsEntryCard(onOpenGoalsClick = onOpenGoalsClick)
+                    AssetsSectionHeader(
+                        showCompletedOnly = state.showCompletedOnly,
+                        onToggleCompletedFilter = viewModel::toggleCompletedFilter,
                     )
                 }
-            }
-
-            if (displayedAssets.isEmpty()) {
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = Dimens.SpacingXxl + Dimens.SpacingS),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        if (state.showCompletedOnly) {
-                            Text(
-                                text = stringResource(R.string.smart_profit_empty),
-                                style = typography.bodyMedium,
-                                color = colors.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = Dimens.SpacingL),
-                            )
-                        } else {
-                            MascotEmptyState(
-                                mascotRes = MascotAssets.emptySmartSavings,
-                                title = stringResource(R.string.smart_empty_assets_title),
-                                subtitle = stringResource(R.string.smart_empty_assets_subtitle),
-                            )
-                            Spacer(Modifier.height(Dimens.SpacingXl))
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    MascotEmptyState(
+                        mascotRes = MascotAssets.emptySmartSavings,
+                        title = stringResource(R.string.smart_empty_assets_title),
+                        subtitle = stringResource(R.string.smart_empty_assets_subtitle),
+                        mascotPhrase = stringResource(R.string.mascot_phrase_no_smart),
+                        mascotSize = MascotSize.Medium,
+                        verticalPadding = Dimens.SpacingS,
+                        action = {
                             IosPrimaryButton(
-                                text = stringResource(R.string.smart_add_asset),
+                                text = stringResource(R.string.smart_add_button),
                                 onClick = onCreateClick,
                                 modifier = Modifier.padding(horizontal = Dimens.SpacingS),
                             )
-                        }
-                    }
-                }
-            } else {
-                items(displayedAssets, key = { it.id }) { asset ->
-                    SmartAssetRow(
-                        asset = asset,
-                        currencyCode = state.currencyCode,
-                        onClick = { onAssetClick(asset.id) },
+                        },
                     )
                 }
             }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentPadding = PaddingValues(
+                    start = Dimens.SpacingM,
+                    end = Dimens.SpacingM,
+                    top = Dimens.SpacingXxs,
+                    bottom = Dimens.SpacingXxs,
+                ),
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
+            ) {
+                item {
+                    HeroCard(totalSaved = MoneyFormat.format(state.totalSavedMinor, state.currencyCode))
+                }
+                item {
+                    GoalsEntryCard(onOpenGoalsClick = onOpenGoalsClick)
+                }
+                item {
+                    AssetsSectionHeader(
+                        showCompletedOnly = state.showCompletedOnly,
+                        onToggleCompletedFilter = viewModel::toggleCompletedFilter,
+                    )
+                }
+                if (displayedAssets.isEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.smart_profit_empty),
+                            style = typography.bodyMedium,
+                            color = colors.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Dimens.SpacingL, vertical = Dimens.SpacingXl),
+                        )
+                    }
+                } else {
+                    items(displayedAssets, key = { it.id }) { asset ->
+                        SmartAssetRow(
+                            asset = asset,
+                            currencyCode = state.currencyCode,
+                            onClick = { onAssetClick(asset.id) },
+                        )
+                    }
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun GoalsEntryCard(onOpenGoalsClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    AppCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpenGoalsClick),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Dimens.SpacingM, vertical = Dimens.SpacingS),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.goals_title),
+                style = typography.bodyLarge,
+                color = colors.onSurface,
+            )
+            IosTextButton(
+                text = stringResource(R.string.goals_add_button),
+                onClick = onOpenGoalsClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AssetsSectionHeader(
+    showCompletedOnly: Boolean,
+    onToggleCompletedFilter: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = Dimens.SpacingXxs),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SectionLabel(text = stringResource(R.string.smart_my_assets))
+        IosFilterChip(
+            text = stringResource(R.string.smart_filter_completed),
+            selected = showCompletedOnly,
+            onClick = onToggleCompletedFilter,
+        )
     }
 }
 

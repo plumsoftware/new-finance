@@ -24,8 +24,6 @@ interface SmartAssetRepository {
         savedAmountMinor: Long? = null,
         note: String? = null,
         usedAtMillis: Long = System.currentTimeMillis(),
-        recordIncome: Boolean = false,
-        incomeCategoryId: Long? = null,
     ): Long
     suspend fun applyAutoSavingsForWeekdays(dayMillis: Long = System.currentTimeMillis())
     suspend fun countActive(): Int

@@ -61,6 +61,8 @@ import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.components.SectionLabel
+import ru.plumsoftware.finance.navigation.popBackStackOrHome
+import ru.plumsoftware.finance.navigation.previousRouteBackLabelRes
 import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
 
@@ -114,6 +116,9 @@ fun LimitsScreen(
     val okCount = categories.count { it.status == LimitStatus.OK }
     val withLimits = sorted.filter { it.limit != null }
     val noLimits = sorted.filter { it.limit == null }
+    val backLabelRes = remember(navController.currentBackStackEntry) {
+        navController.previousRouteBackLabelRes()
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -121,8 +126,8 @@ fun LimitsScreen(
         topBar = {
             IosEditorTopBar(
                 title = stringResource(R.string.limits),
-                backLabel = stringResource(R.string.categories_back_settings),
-                onBack = navController::popBackStack,
+                backLabel = stringResource(backLabelRes),
+                onBack = navController::popBackStackOrHome,
             )
         },
     ) { padding ->

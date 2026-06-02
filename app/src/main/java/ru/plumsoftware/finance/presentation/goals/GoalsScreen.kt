@@ -41,10 +41,12 @@ import ru.plumsoftware.finance.domain.model.progress
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.ui.components.IosCard
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
+import ru.plumsoftware.finance.ui.components.MascotEmptyState
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.IosBlue
 import ru.plumsoftware.finance.ui.theme.IosGreen
+import ru.plumsoftware.finance.ui.theme.MascotAssets
 
 @Composable
 fun GoalsScreen(
@@ -285,34 +287,16 @@ private fun GoalCard(
 
 @Composable
 private fun EmptyGoalsState(onCreateClick: () -> Unit) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = Dimens.spacingSection * 3),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text("🎯", style = typography.displayMedium)
-        Spacer(Modifier.height(Dimens.spacingList + Dimens.paddingMicro))
-        Text(
-            text = androidx.compose.ui.res.stringResource(R.string.goals_empty_title),
-            style = typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Spacer(Modifier.height(Dimens.spacingRow - Dimens.paddingMicro))
-        Text(
-            text = androidx.compose.ui.res.stringResource(R.string.goals_empty_subtitle),
-            style = typography.bodyMedium,
-            color = colors.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = Dimens.spacingSection * 2),
-        )
-        Spacer(Modifier.height(Dimens.SpacingXl))
-        IosPrimaryButton(
-            text = androidx.compose.ui.res.stringResource(R.string.goals_add_button),
-            onClick = onCreateClick,
-            modifier = Modifier.padding(horizontal = Dimens.spacingSection * 2),
-        )
-    }
+    MascotEmptyState(
+        mascotRes = MascotAssets.happy,
+        title = androidx.compose.ui.res.stringResource(R.string.empty_goals_title),
+        subtitle = androidx.compose.ui.res.stringResource(R.string.empty_goals_subtitle),
+        mascotPhrase = androidx.compose.ui.res.stringResource(R.string.mascot_phrase_no_goals),
+        action = {
+            IosPrimaryButton(
+                text = androidx.compose.ui.res.stringResource(R.string.goals_add_button),
+                onClick = onCreateClick,
+            )
+        },
+    )
 }

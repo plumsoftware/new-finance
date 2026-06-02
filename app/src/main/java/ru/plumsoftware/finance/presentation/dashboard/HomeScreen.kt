@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,6 +35,7 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
+import androidx.compose.material.icons.rounded.DonutSmall
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Badge
 import androidx.compose.material3.ButtonDefaults
@@ -83,19 +86,24 @@ import ru.plumsoftware.finance.domain.model.AppSettings
 import ru.plumsoftware.finance.domain.model.Goal
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.SmartAssetStatus
+import ru.plumsoftware.finance.domain.model.StreakData
 import ru.plumsoftware.finance.domain.model.daysLeft
 import ru.plumsoftware.finance.domain.model.isOverdue
 import ru.plumsoftware.finance.domain.model.progress
+import ru.plumsoftware.finance.presentation.achievements.AchievementKeys
 import ru.plumsoftware.finance.presentation.notifications.NotificationsViewModel
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.presentation.common.hasPendingPermissions
 import ru.plumsoftware.finance.presentation.permissions.PermissionsBottomSheet
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.ui.components.AppCard
+import ru.plumsoftware.finance.ui.components.MascotImage
 import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.IosGreen
+import ru.plumsoftware.finance.ui.theme.MascotEmotion
+import ru.plumsoftware.finance.ui.theme.MascotSize
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -110,6 +118,7 @@ fun HomeScreen(
     onOpenHistoryClick: () -> Unit = {},
     onOpenAnalyticsClick: () -> Unit = {},
     onOpenLimitsClick: () -> Unit = {},
+    onOpenAchievementsClick: () -> Unit = {},
     onOpenNotificationsClick: () -> Unit = {},
     onCreateAssetClick: () -> Unit = {},
     onCreateGoalClick: () -> Unit = {},
@@ -211,8 +220,11 @@ fun HomeScreen(
                 HomeQuickActionsRow(
                     onLimitsClick = onOpenLimitsClick,
                     onOperationsClick = onOpenHistoryClick,
+                    onAchievementsClick = onOpenAchievementsClick,
                     hasBudgetWarnings = state.hasBudgetWarnings,
                     operationCount = state.recentTransactions.size,
+                    unlockedAchievementsCount = state.unlockedAchievementsCount,
+                    streak = state.streak,
                 )
             }
             item {
@@ -287,6 +299,7 @@ fun DashboardScreen(
     onOpenHistoryClick: () -> Unit = {},
     onOpenAnalyticsClick: () -> Unit = {},
     onOpenLimitsClick: () -> Unit = {},
+    onOpenAchievementsClick: () -> Unit = {},
     onOpenNotificationsClick: () -> Unit = {},
     onCreateAssetClick: () -> Unit = {},
     onCreateGoalClick: () -> Unit = {},
@@ -299,6 +312,7 @@ fun DashboardScreen(
         onOpenHistoryClick = onOpenHistoryClick,
         onOpenAnalyticsClick = onOpenAnalyticsClick,
         onOpenLimitsClick = onOpenLimitsClick,
+        onOpenAchievementsClick = onOpenAchievementsClick,
         onOpenNotificationsClick = onOpenNotificationsClick,
         onCreateAssetClick = onCreateAssetClick,
         onCreateGoalClick = onCreateGoalClick,
@@ -360,6 +374,49 @@ private fun GreetingHeader(
 }
 
 @Composable
+private fun HomeStreakInfo(
+    streak: StreakData,
+    modifier: Modifier = Modifier,
+) {
+    if (streak.currentStreak == 0) return
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
+    ) {
+        Text(
+            text = "🔥 ${streak.currentStreak} ${streak.currentStreak.pluralDays()}",
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = when {
+                streak.currentStreak >= 30 -> Color(0xFFFF9500)
+                streak.currentStreak >= 7 -> Color(0xFFFF3B30)
+                else -> MaterialTheme.colorScheme.onSurface
+            },
+        )
+        Text(
+            text = if (streak.todayHasActivity) {
+                stringResource(R.string.streak_today_done)
+            } else {
+                stringResource(R.string.streak_today_pending)
+            },
+            style = MaterialTheme.typography.labelSmall,
+            color = if (streak.todayHasActivity) {
+                Color(0xFF34C759)
+            } else {
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+            },
+        )
+    }
+}
+
+private fun Int.pluralDays(): String = when {
+    this % 100 in 11..19 -> "дней"
+    this % 10 == 1 -> "день"
+    this % 10 in 2..4 -> "дня"
+    else -> "дней"
+}
+
+@Composable
 private fun greetingWithTime(): String {
     val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
     return when {
@@ -395,7 +452,8 @@ private fun BalanceCard(
         .format(Date())
         .replaceFirstChar { it.uppercase() }
 
-    val balancePadding = Dimens.SpacingL * 0.9f
+    val balanceCardScale = 0.855f
+    val balancePadding = Dimens.SpacingL * balanceCardScale
     AppCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -403,7 +461,7 @@ private fun BalanceCard(
     ) {
         Column(
             modifier = Modifier.padding(balancePadding),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS * 0.9f),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS * balanceCardScale),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -431,7 +489,7 @@ private fun BalanceCard(
             HorizontalDivider(
                 color = colors.surfaceVariant,
                 thickness = 1.dp,
-                modifier = Modifier.padding(vertical = Dimens.SpacingS),
+                modifier = Modifier.padding(vertical = Dimens.SpacingS * balanceCardScale),
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -474,33 +532,151 @@ private fun BalanceCard(
 private fun HomeQuickActionsRow(
     onLimitsClick: () -> Unit,
     onOperationsClick: () -> Unit,
+    onAchievementsClick: () -> Unit,
     hasBudgetWarnings: Boolean,
     operationCount: Int,
+    unlockedAchievementsCount: Int,
+    streak: StreakData,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .height(IntrinsicSize.Max)
             .padding(horizontal = Dimens.SpacingL),
         horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
     ) {
-        HomeQuickActionCard(
-            title = stringResource(R.string.limits),
-            subtitle = if (hasBudgetWarnings) {
-                stringResource(R.string.budget_warning_title)
-            } else {
-                stringResource(R.string.current_month_limits)
-            },
-            icon = Icons.Outlined.WarningAmber,
-            onClick = onLimitsClick,
-            modifier = Modifier.weight(1f),
+        HomeAchievementsQuickCard(
+            streak = streak,
+            unlockedCount = unlockedAchievementsCount,
+            onClick = onAchievementsClick,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
         )
-        HomeQuickActionCard(
-            title = stringResource(R.string.home_all_operations),
-            subtitle = stringResource(R.string.home_operations_count, operationCount),
-            icon = Icons.Outlined.History,
-            onClick = onOperationsClick,
+        Column(
             modifier = Modifier.weight(1f),
-        )
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+        ) {
+            HomeQuickActionCard(
+                title = stringResource(R.string.home_all_operations),
+                subtitle = stringResource(R.string.home_operations_count, operationCount),
+                icon = Icons.Outlined.History,
+                onClick = onOperationsClick,
+            )
+            HomeLimitsQuickCard(
+                hasBudgetWarnings = hasBudgetWarnings,
+                onClick = onLimitsClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeLimitsQuickCard(
+    hasBudgetWarnings: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    AppCard(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick,
+    ) {
+        Column(
+            modifier = Modifier.padding(Dimens.SpacingM),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.DonutSmall,
+                contentDescription = null,
+                tint = if (hasBudgetWarnings) colors.error else colors.primary,
+                modifier = Modifier.size(Dimens.IconSizeM),
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs)) {
+                Text(
+                    text = stringResource(R.string.limits),
+                    style = typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = if (hasBudgetWarnings) {
+                        stringResource(R.string.budget_warning_title)
+                    } else {
+                        stringResource(R.string.current_month_limits)
+                    },
+                    style = typography.bodySmall,
+                    color = if (hasBudgetWarnings) colors.error else colors.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeAchievementsQuickCard(
+    streak: StreakData,
+    unlockedCount: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    val streakBackground = when {
+        streak.currentStreak >= 30 -> Color(0xFFFF9500).copy(alpha = 0.12f)
+        streak.currentStreak >= 7 -> Color(0xFFFF3B30).copy(alpha = 0.10f)
+        streak.currentStreak > 0 -> colors.surface
+        else -> Color.Transparent
+    }
+    AppCard(
+        modifier = modifier,
+        onClick = onClick,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(Dimens.RadiusL))
+                .background(streakBackground)
+                .padding(Dimens.SpacingM),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            MascotImage(
+                emotion = MascotEmotion.HAPPY,
+                modifier = Modifier.size(MascotSize.Medium),
+            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
+            ) {
+                Text(
+                    text = stringResource(R.string.achievements_title),
+                    style = typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (streak.currentStreak > 0) {
+                    HomeStreakInfo(streak = streak)
+                } else {
+                    Text(
+                        text = stringResource(
+                            R.string.home_achievements_count,
+                            unlockedCount,
+                            AchievementKeys.TOTAL_COUNT,
+                        ),
+                        style = typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -515,7 +691,7 @@ private fun HomeQuickActionCard(
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     AppCard(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         onClick = onClick,
     ) {
         Column(

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.BatteryChargingFull
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Notifications
@@ -177,4 +178,5 @@ fun AllGrantedBanner() {
 private fun PermissionIconKind.toImageVector(): ImageVector = when (this) {
     PermissionIconKind.NOTIFICATIONS -> Icons.Rounded.Notifications
     PermissionIconKind.STORAGE -> Icons.Rounded.FolderOpen
+    PermissionIconKind.BACKGROUND -> Icons.Rounded.BatteryChargingFull
 }

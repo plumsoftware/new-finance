@@ -29,6 +29,7 @@ object AppDeepLinks {
     fun goalsCreate(goalId: Long? = null): Uri =
         if (goalId != null) uri("goals/create", "goalId" to goalId.toString())
         else uri("goals/create")
+    fun achievements(): Uri = uri("achievements")
     fun limits(): Uri = uri("limits")
     fun notifications(): Uri = uri("notifications")
     fun addTransaction(quickCategory: String? = null): Uri =
@@ -54,6 +55,18 @@ object AppDeepLinks {
         if (intent == null) return false
         if (intent.action != Intent.ACTION_VIEW) return false
         return isAppDeepLink(intent.data)
+    }
+
+    /**
+     * Maps `finance://app/{path}?{query}` to a [NavHost] route string.
+     * Use for in-app navigation so the back stack is preserved (unlike [androidx.navigation.NavController.handleDeepLink]).
+     */
+    fun Uri.toAppNavigationRoute(): String? {
+        if (!isAppDeepLink(this)) return null
+        val pathSegment = path?.trimStart('/')?.trimEnd('/')?.takeIf { it.isNotEmpty() }
+            ?: return "home"
+        val querySuffix = encodedQuery?.let { "?$it" }.orEmpty()
+        return pathSegment + querySuffix
     }
 
     private fun uri(path: String, vararg query: Pair<String, String>): Uri {

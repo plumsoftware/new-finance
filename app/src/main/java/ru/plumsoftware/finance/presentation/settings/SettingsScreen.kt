@@ -43,6 +43,8 @@ import androidx.compose.material.icons.rounded.Category
 
 import androidx.compose.material.icons.rounded.DarkMode
 
+import androidx.compose.material.icons.rounded.EmojiEvents
+
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.FileUpload
 import androidx.compose.material.icons.rounded.Flag
@@ -161,6 +163,8 @@ fun SettingsScreen(
     onOpenLimits: () -> Unit = {},
 
     onOpenGoals: () -> Unit = {},
+
+    onOpenAchievements: () -> Unit = {},
 
     onOpenRecurring: () -> Unit = {},
 
@@ -445,6 +449,20 @@ fun SettingsScreen(
                         title = stringResource(R.string.goals_title),
 
                         onClick = onOpenGoals,
+
+                    )
+
+                    SettingsRowDivider()
+
+                    SettingsNavRow(
+
+                        icon = Icons.Rounded.EmojiEvents,
+
+                        iconBackground = Color(0xFFFFD700),
+
+                        title = stringResource(R.string.achievements_title),
+
+                        onClick = onOpenAchievements,
 
                     )
 

@@ -12,6 +12,10 @@
     <string name="onboarding_page2_subtitle">Добавляйте операции за секунды. Категории с эмодзи и понятные суммы каждый день.</string>
     <string name="onboarding_page3_title">Умные покупки</string>
     <string name="onboarding_page3_subtitle">Купили термокружку? Узнайте, когда она окупится и сколько сэкономит за год.</string>
+    <string name="onboarding_goals_title">Копите на мечту</string>
+    <string name="onboarding_goals_subtitle">Ставьте цели с суммой и сроком — прогресс виден на главной, а Коппи болеет за каждый шаг.</string>
+    <string name="onboarding_achievements_title">Достижения и стрик</string>
+    <string name="onboarding_achievements_subtitle">Записывайте операции, ведите умные покупки — получайте награды и не теряйте мотивацию.</string>
     <string name="onboarding_page4_title">Готовы начать?</string>
     <string name="onboarding_page4_subtitle">Отслеживайте траты без стресса и радуйтесь каждой сэкономленной сумме.</string>
 
@@ -37,6 +41,10 @@
     <string name="perm_notif_desc">Лимиты и регулярные платежи</string>
     <string name="perm_storage_title">Хранилище</string>
     <string name="perm_storage_desc">Экспорт данных в файл</string>
+    <string name="perm_background_title">Работа в фоне</string>
+    <string name="perm_background_desc">Пуши и напоминания при закрытом приложении</string>
+    <string name="perm_background_rationale">Без ограничения батареи пуши\nсохраняются и доставляются надёжнее</string>
+    <string name="notification_action_open">Перейти</string>
 
     <string name="dashboard_title">Главная</string>
     <string name="income">Доходы</string>
@@ -150,7 +158,7 @@
     <string name="export_data">Экспорт\nданных</string>
     <string name="export_section_format">Формат</string>
     <string name="export_section_period">Период операций</string>
-    <string name="export_period_hint">Период влияет только на операции. Категории, лимиты, цели и другие справочные данные экспортируются полностью.</string>
+    <string name="export_period_hint">Период влияет только на операции. Категории, лимиты, цели, достижения и другие справочные данные экспортируются полностью.</string>
     <string name="export_section_include">Включить</string>
     <string name="export_format_backup">Резервная копия (.owlbackup)</string>
     <string name="export_format_json">JSON (.json)</string>
@@ -178,6 +186,7 @@
     <string name="import_will_assets">Эко-покупки</string>
     <string name="import_will_limits">Лимиты</string>
     <string name="import_will_goals">Цели</string>
+    <string name="import_will_achievements">Достижения</string>
     <string name="import_preview_title">Предпросмотр</string>
     <string name="import_contents">Содержимое файла</string>
     <string name="import_meta_info">Экспорт от %1$s · версия %2$s</string>
@@ -245,6 +254,7 @@
     <string name="dashboard_saved_amount">%1$s сэкономлено</string>
     <string name="home_all_operations">Все операции</string>
     <string name="home_operations_count">%1$d записей</string>
+    <string name="home_achievements_count">%1$d из %2$d</string>
 
     <string name="transaction_default">Операция</string>
     <string name="transaction_account_time">Счёт · %1$s</string>
@@ -358,6 +368,12 @@
     <string name="onboarding_demo_income_amount">+45 200 ₽</string>
     <string name="onboarding_demo_expense_amount">–28 150 ₽</string>
     <string name="onboarding_demo_saved_amount">1 500 ₽</string>
+    <string name="onboarding_demo_goal_emoji">🏖️</string>
+    <string name="onboarding_demo_goal_name">Отпуск на море</string>
+    <string name="onboarding_demo_goal_progress">45 000 ₽ из 120 000 ₽</string>
+    <string name="onboarding_demo_streak">🔥 5 дней</string>
+    <string name="onboarding_demo_achievement_1">Недельный марафон</string>
+    <string name="onboarding_demo_achievement_2">Умный экономист</string>
 
     <string name="transaction_detail_date">📅 Дата и время</string>
     <string name="transaction_detail_category">📂 Категория</string>
@@ -566,4 +582,61 @@
     <string name="widget_monthly_expense_placeholder">−0 ₽</string>
     <string name="widget_monthly_operations">Операций</string>
     <string name="widget_monthly_ops_placeholder">0</string>
+
+    <!-- Mascot phrases -->
+    <string name="mascot_phrase_sleeping">Zzzz... А, это ты! Давно не виделись...</string>
+    <string name="mascot_phrase_no_goals">Угу! О чём мечтаешь? Давай накопим!</string>
+    <string name="mascot_phrase_no_smart">Я умею считать, когда термокружка окупится!</string>
+    <string name="mascot_phrase_no_notifications">Тут пока тихо. Угу-угу...</string>
+    <string name="mascot_phrase_start">Начни вести учёт — я буду болеть за тебя!</string>
+    <string name="mascot_phrase_no_transactions">Расскажи мне о своих тратах сегодня!</string>
+
+    <!-- Streak -->
+    <string name="streak_current">стрик</string>
+    <string name="streak_record">рекорд</string>
+    <string name="streak_today_done">Сегодня выполнено ✓</string>
+    <string name="streak_today_pending">Запиши операцию сегодня!</string>
+
+    <!-- Achievements -->
+    <string name="achievements_title">Достижения</string>
+    <string name="achievements_unlocked_section">ПОЛУЧЕНО</string>
+    <string name="achievements_locked_section">В ПРОЦЕССЕ</string>
+    <string name="achievement_new">Новое достижение!</string>
+    <string name="achievement_unlocked_at">Получено %1$s</string>
+
+    <!-- Empty states -->
+    <string name="empty_achievements_title">Пока нет достижений</string>
+    <string name="empty_achievements_subtitle">Записывай операции каждый день — и Коппи тебя наградит!</string>
+    <string name="empty_history_title">Пока нет операций</string>
+    <string name="empty_history_subtitle">Добавь первую операцию, и я помогу с аналитикой</string>
+    <string name="empty_goals_title">Пока нет целей</string>
+    <string name="empty_goals_subtitle">Создай первую цель и начни копить с Коппи</string>
+
+    <!-- Achievement titles and descriptions -->
+    <string name="ach_first_tx_title">Первые шаги</string>
+    <string name="ach_first_tx_desc">Записал первую операцию</string>
+    <string name="ach_streak_7_title">Недельный марафон</string>
+    <string name="ach_streak_7_desc">7 дней подряд — серьёзный настрой!</string>
+    <string name="ach_streak_30_title">Месяц дисциплины</string>
+    <string name="ach_streak_30_desc">30 дней подряд — ты настоящий профи</string>
+    <string name="ach_streak_100_title">Легенда</string>
+    <string name="ach_streak_100_desc">100 дней — Коппи в абсолютном восторге</string>
+    <string name="ach_tx_10_title">Вхожу во вкус</string>
+    <string name="ach_tx_10_desc">10 операций записано</string>
+    <string name="ach_tx_50_title">Финансовый дневник</string>
+    <string name="ach_tx_50_desc">50 операций — это уже привычка</string>
+    <string name="ach_tx_100_title">Сотня</string>
+    <string name="ach_tx_100_desc">100 операций записано</string>
+    <string name="ach_first_goal_title">Мечтатель</string>
+    <string name="ach_first_goal_desc">Создал первую цель накопления</string>
+    <string name="ach_goal_done_title">Мечта сбылась</string>
+    <string name="ach_goal_done_desc">Достиг первой цели накопления</string>
+    <string name="ach_first_saving_title">Умный экономист</string>
+    <string name="ach_first_saving_desc">Добавил первый умный актив</string>
+    <string name="ach_paid_off_title">Окупил!</string>
+    <string name="ach_paid_off_desc">Первый актив полностью окупился</string>
+    <string name="ach_positive_month_title">Зелёный месяц</string>
+    <string name="ach_positive_month_desc">Завершил месяц с положительным балансом</string>
+    <string name="ach_progress_days">%1$d из %2$d дней</string>
+    <string name="ach_progress_count">%1$d из %2$d</string>
 </resources>

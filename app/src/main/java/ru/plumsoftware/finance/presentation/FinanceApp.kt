@@ -57,6 +57,9 @@ import ru.plumsoftware.finance.domain.model.ThemeMode
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.presentation.addtransaction.AddTransactionScreen
 import ru.plumsoftware.finance.presentation.analytics.AnalyticsScreen
+import ru.plumsoftware.finance.presentation.achievements.AchievementsScreen
+import ru.plumsoftware.finance.presentation.achievements.AchievementsViewModel
+import ru.plumsoftware.finance.presentation.achievements.OwlAchievementToast
 import ru.plumsoftware.finance.presentation.limits.LimitsScreen
 import ru.plumsoftware.finance.presentation.categories.CategoriesScreen
 import ru.plumsoftware.finance.presentation.categories.CategoryEditorScreen
@@ -78,6 +81,8 @@ import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsDetailScree
 import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsScreen
 import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsSnackbar
 import ru.plumsoftware.finance.navigation.NavDeepLinks
+import ru.plumsoftware.finance.navigation.navigateAppDeepLink
+import ru.plumsoftware.finance.navigation.popBackStackOrHome
 import ru.plumsoftware.finance.ui.AppRoute
 import ru.plumsoftware.finance.ui.nav.BottomNavItems
 import ru.plumsoftware.finance.ui.theme.Dimens
@@ -116,6 +121,8 @@ fun FinanceApp(
         }
 
         val navController = rememberNavController()
+        val achievementsViewModel: AchievementsViewModel = koinViewModel()
+        val pendingAchievement by achievementsViewModel.pendingAchievement.collectAsStateWithLifecycle()
         val startRoute =
             if (isOnboardingCompleted == true) AppRoute.Home.route else AppRoute.Onboarding.route
 
@@ -132,7 +139,7 @@ fun FinanceApp(
         LaunchedEffect(pendingDeepLinkIntent, isOnboardingCompleted) {
             val intent = pendingDeepLinkIntent ?: return@LaunchedEffect
             if (isOnboardingCompleted == true) {
-                runCatching { navController.handleDeepLink(intent) }
+                navController.navigateAppDeepLink(intent)
                 onPendingDeepLinkConsumed()
             }
         }
@@ -299,6 +306,7 @@ fun FinanceApp(
                             onOpenHistoryClick = { navController.navigate(AppRoute.History.route) },
                             onOpenAnalyticsClick = { navController.navigate(AppRoute.Analytics.route) },
                             onOpenLimitsClick = { navController.navigate(AppRoute.Limits.route) },
+                            onOpenAchievementsClick = { navController.navigate(AppRoute.Achievements.route) },
                             onOpenNotificationsClick = { navController.navigate(AppRoute.Notifications.route) },
                             onCreateAssetClick = { navController.navigate(AppRoute.smartCreate(null)) },
                             onCreateGoalClick = { navController.navigate(AppRoute.goalCreate()) },
@@ -310,7 +318,7 @@ fun FinanceApp(
                         deepLinks = listOf(NavDeepLinks.history),
                     ) {
                         HistoryScreen(
-                            onBack = { navController.popBackStack() },
+                            onBack = { navController.popBackStackOrHome() },
                             onNavigateToAdd = { navController.navigate(AppRoute.AddTransaction.route) },
                         )
                     }
@@ -322,7 +330,7 @@ fun FinanceApp(
                             .getStateFlow<String?>(SmartSavingsSnackbar.KEY, null)
                             .collectAsStateWithLifecycle()
                         SmartSavingsScreen(
-                            onBack = { navController.popBackStack() },
+                            onBack = { navController.popBackStackOrHome() },
                             onCreateClick = {
                                 // ИЗМЕНЕНО: Используем новую функцию-помощник
                                 navController.navigate(AppRoute.smartCreate(null))
@@ -382,12 +390,12 @@ fun FinanceApp(
                                     assetId
                                 )
                             },
-                            onBack = { navController.popBackStack() },
+                            onBack = { navController.popBackStackOrHome() },
                             onCreated = {
                                 navController.previousBackStackEntry
                                     ?.savedStateHandle
                                     ?.set(SmartSavingsSnackbar.KEY, successMessage)
-                                navController.popBackStack()
+                                navController.popBackStackOrHome()
                             },
                         )
                     }
@@ -404,7 +412,7 @@ fun FinanceApp(
                         val deletedMsg = stringResource(R.string.smart_deleted_success)
                         SmartSavingsDetailScreen(
                             assetId = assetId,
-                            onBack = { navController.popBackStack() },
+                            onBack = { navController.popBackStackOrHome() },
                             onEdit = { id ->
                                 navController.navigate(AppRoute.smartCreate(id))
                             },
@@ -412,7 +420,7 @@ fun FinanceApp(
                                 navController.previousBackStackEntry
                                     ?.savedStateHandle
                                     ?.set(SmartSavingsSnackbar.KEY, deletedMsg)
-                                navController.popBackStack()
+                                navController.popBackStackOrHome()
                             },
                         )
                     }
@@ -423,6 +431,15 @@ fun FinanceApp(
                         GoalsScreen(
                             onCreateClick = { navController.navigate(AppRoute.goalCreate()) },
                             onGoalClick = { id -> navController.navigate(AppRoute.goalDetail(id)) },
+                        )
+                    }
+                    composable(
+                        route = AppRoute.Achievements.route,
+                        deepLinks = listOf(NavDeepLinks.achievements),
+                    ) {
+                        AchievementsScreen(
+                            onBack = { navController.popBackStackOrHome() },
+                            viewModel = achievementsViewModel,
                         )
                     }
                     composable(
@@ -437,7 +454,7 @@ fun FinanceApp(
                         ),
                     ) {
                         CreateGoalScreen(
-                            onBack = { navController.popBackStack() },
+                            onBack = { navController.popBackStackOrHome() },
                             backLabel = stringResource(R.string.goals_title),
                         )
                     }
@@ -448,9 +465,9 @@ fun FinanceApp(
                         val goalId = goalEntry.arguments?.getLong("goalId") ?: 0L
                         GoalDetailScreen(
                             goalId = goalId,
-                            onBack = { navController.popBackStack() },
+                            onBack = { navController.popBackStackOrHome() },
                             onEdit = { id -> navController.navigate(AppRoute.goalCreate(id)) },
-                            onDeleted = { navController.popBackStack() },
+                            onDeleted = { navController.popBackStackOrHome() },
                         )
                     }
                     composable(
@@ -480,6 +497,7 @@ fun FinanceApp(
                             onOpenCategories = { navController.navigate(AppRoute.Categories.route) },
                             onOpenLimits = { navController.navigate(AppRoute.Limits.route) },
                             onOpenGoals = { navController.navigate(AppRoute.Goals.route) },
+                            onOpenAchievements = { navController.navigate(AppRoute.Achievements.route) },
                             onOpenRecurring = { navController.navigate(AppRoute.Recurring.route) },
                             onOpenExport = { navController.navigate(AppRoute.Export.route) },
                             onOpenPermissions = { navController.navigate(AppRoute.Permissions.route) },
@@ -526,7 +544,7 @@ fun FinanceApp(
                         deepLinks = listOf(NavDeepLinks.categories),
                     ) {
                         CategoriesScreen(
-                            onBack = { navController.popBackStack() },
+                            onBack = { navController.popBackStackOrHome() },
                             onAdd = { type ->
                                 navController.navigate(AppRoute.categoryEdit(type = type.name))
                             },
@@ -552,7 +570,7 @@ fun FinanceApp(
                         ),
                     ) {
                         CategoryEditorScreen(
-                            onBack = { navController.popBackStack() },
+                            onBack = { navController.popBackStackOrHome() },
                         )
                     }
                     composable(
@@ -595,7 +613,20 @@ fun FinanceApp(
                         },
                     ) {
                         AddTransactionScreen(
-                            onBack = { navController.popBackStack() },
+                            onBack = { navController.popBackStackOrHome() },
+                        )
+                    }
+                }
+                pendingAchievement?.let { achievement ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = if (showBottomBar) 100.dp else Dimens.SpacingL),
+                        contentAlignment = Alignment.BottomCenter,
+                    ) {
+                        OwlAchievementToast(
+                            achievement = achievement,
+                            onDismiss = achievementsViewModel::clearPending,
                         )
                     }
                 }

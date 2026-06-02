@@ -26,6 +26,7 @@ object NavDeepLinks {
     val goalsCreateNew = navDeepLink {
         uriPattern = "${AppDeepLinks.BASE}/goals/create"
     }
+    val achievements = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/achievements" }
     val limits = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/limits" }
     val notifications = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/notifications" }
     val addTransaction = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/add_transaction" }

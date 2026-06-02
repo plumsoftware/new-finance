@@ -20,6 +20,7 @@ import androidx.compose.material.icons.rounded.Category
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DonutSmall
 import androidx.compose.material.icons.rounded.Eco
+import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.InsertDriveFile
@@ -49,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import ru.plumsoftware.finance.util.ImportFileHelper
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import ru.plumsoftware.finance.navigation.popBackStackOrHome
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.ImportState
@@ -114,7 +116,7 @@ private fun ImportPreviewContent(
             IosEditorTopBar(
                 title = stringResource(R.string.import_preview_title),
                 backLabel = stringResource(R.string.categories_back_settings),
-                onBack = navController::popBackStack,
+                onBack = navController::popBackStackOrHome,
             )
         },
     ) { innerPadding ->
@@ -249,6 +251,7 @@ private fun ImportPreviewContent(
                                 Triple(Icons.Rounded.Eco, R.string.import_will_assets, counts.assets),
                                 Triple(Icons.Rounded.DonutSmall, R.string.import_will_limits, counts.limits),
                                 Triple(Icons.Rounded.Flag, R.string.import_will_goals, counts.goals),
+                                Triple(Icons.Rounded.EmojiEvents, R.string.import_will_achievements, counts.achievements),
                             )
                             rows.forEachIndexed { index, (icon, labelRes, count) ->
                                 Row(

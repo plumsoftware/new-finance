@@ -8,6 +8,7 @@ sealed class AppRoute(val route: String) {
     object SmartSavingsCreate : AppRoute("smart_savings/create") // Базовый роут
     object Goals : AppRoute("goals")
     object GoalsCreate : AppRoute("goals/create")
+    object Achievements : AppRoute("achievements")
     object Analytics : AppRoute("analytics")
     object Settings : AppRoute("settings")
     object Categories : AppRoute("settings/categories")

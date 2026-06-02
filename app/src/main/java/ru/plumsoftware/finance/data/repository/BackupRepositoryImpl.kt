@@ -7,12 +7,14 @@ import androidx.room.withTransaction
 import ru.plumsoftware.finance.BuildConfig
 import ru.plumsoftware.finance.data.backup.BackupFileWriter
 import ru.plumsoftware.finance.data.backup.BackupSerializer
+import ru.plumsoftware.finance.data.local.dao.AchievementUnlockDao
 import ru.plumsoftware.finance.data.local.dao.CategoryDao
 import ru.plumsoftware.finance.data.local.dao.GoalDao
 import ru.plumsoftware.finance.data.local.dao.RecurringTransactionDao
 import ru.plumsoftware.finance.data.local.dao.SmartAssetDao
 import ru.plumsoftware.finance.data.local.dao.TransactionDao
 import ru.plumsoftware.finance.data.local.database.FinanceDatabase
+import ru.plumsoftware.finance.data.local.entity.AchievementUnlockEntity
 import ru.plumsoftware.finance.data.local.entity.CategoryEntity
 import ru.plumsoftware.finance.data.local.entity.GoalDepositEntity
 import ru.plumsoftware.finance.data.local.entity.GoalEntity
@@ -27,6 +29,7 @@ import ru.plumsoftware.finance.domain.model.BACKUP_FORMAT_VERSION
 import ru.plumsoftware.finance.domain.model.BackupAssetDto
 import ru.plumsoftware.finance.domain.model.BackupAssetUsageDto
 import ru.plumsoftware.finance.domain.model.BackupCategoryDto
+import ru.plumsoftware.finance.domain.model.BackupAchievementUnlockDto
 import ru.plumsoftware.finance.domain.model.BackupGoalDepositDto
 import ru.plumsoftware.finance.domain.model.BackupGoalDto
 import ru.plumsoftware.finance.domain.model.BackupLimitDto
@@ -60,6 +63,7 @@ class BackupRepositoryImpl(
     private val recurringDao: RecurringTransactionDao,
     private val smartAssetDao: SmartAssetDao,
     private val goalDao: GoalDao,
+    private val achievementUnlockDao: AchievementUnlockDao,
 ) : BackupRepository {
 
     override suspend fun buildBackup(
@@ -79,6 +83,7 @@ class BackupRepositoryImpl(
         val usages = smartAssetDao.getAllUsagesSync().map { it.toDomain() }
         val goals = goalDao.getAllGoalsSync()
         val goalDeposits = goalDao.getAllDepositsSync()
+        val achievementUnlocks = achievementUnlockDao.getAll()
         val limits = categories.mapNotNull { category ->
             category.monthlyLimitMinor?.let { limit ->
                 BackupLimitDto(
@@ -171,6 +176,12 @@ class BackupRepositoryImpl(
                 createdAtMillis = deposit.createdAtMillis,
             )
         }
+        val backupAchievements = achievementUnlocks.map { unlock ->
+            BackupAchievementUnlockDto(
+                key = unlock.key,
+                unlockedAtMillis = unlock.unlockedAtMillis,
+            )
+        }
 
         val meta = BackupMeta(
             version = BACKUP_FORMAT_VERSION,
@@ -185,6 +196,7 @@ class BackupRepositoryImpl(
                 limits = limits.size,
                 goals = backupGoals.size,
                 goalDeposits = backupGoalDeposits.size,
+                achievements = backupAchievements.size,
             ),
         )
 
@@ -198,6 +210,7 @@ class BackupRepositoryImpl(
             limits = limits,
             goals = backupGoals,
             goalDeposits = backupGoalDeposits,
+            achievements = backupAchievements,
         )
     }
 
@@ -235,11 +248,12 @@ class BackupRepositoryImpl(
                 goalDao.deleteAllDeposits()
                 goalDao.deleteAllGoals()
                 categoryDao.deleteAll()
+                achievementUnlockDao.deleteAll()
             }
 
             val existingCategories = categoryDao.getAllSync()
             val categoryIdMap = mutableMapOf<Long, Long>()
-            val totalSteps = 7f
+            val totalSteps = 8f
             var step = 0f
 
             backup.categories.forEach { dto ->
@@ -473,6 +487,43 @@ class BackupRepositoryImpl(
                     else -> {
                         transactionDao.insert(entity.copy(id = existing.id))
                         updated++
+                    }
+                }
+            }
+            step++
+            onProgress(step / totalSteps)
+
+            val existingAchievementKeys = if (strategy == ImportStrategy.OVERWRITE) {
+                emptySet()
+            } else {
+                achievementUnlockDao.getAll().map { it.key }.toSet()
+            }
+            if (strategy == ImportStrategy.OVERWRITE && backup.achievements.isNotEmpty()) {
+                achievementUnlockDao.insertAll(
+                    backup.achievements.map { dto ->
+                        AchievementUnlockEntity(
+                            key = dto.key,
+                            unlockedAtMillis = dto.unlockedAtMillis,
+                        )
+                    },
+                )
+                added += backup.achievements.size
+            } else {
+                backup.achievements.forEach { dto ->
+                    val entity = AchievementUnlockEntity(
+                        key = dto.key,
+                        unlockedAtMillis = dto.unlockedAtMillis,
+                    )
+                    when {
+                        dto.key in existingAchievementKeys && strategy == ImportStrategy.MERGE -> skipped++
+                        dto.key in existingAchievementKeys -> {
+                            achievementUnlockDao.insertAll(listOf(entity))
+                            updated++
+                        }
+                        else -> {
+                            achievementUnlockDao.insert(entity)
+                            added++
+                        }
                     }
                 }
             }

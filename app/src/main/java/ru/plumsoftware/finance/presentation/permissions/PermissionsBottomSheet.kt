@@ -26,6 +26,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.rounded.BatteryChargingFull
 import androidx.compose.material.icons.rounded.FolderOpen
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material3.Checkbox
@@ -39,11 +40,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -63,6 +68,8 @@ import ru.plumsoftware.finance.presentation.common.buildPermissionsToRequest
 import ru.plumsoftware.finance.presentation.common.isNotificationPermissionGranted
 import ru.plumsoftware.finance.presentation.common.isStoragePermissionGranted
 import ru.plumsoftware.finance.presentation.common.openAppSettings
+import ru.plumsoftware.finance.util.isBackgroundWorkAllowed
+import ru.plumsoftware.finance.util.requestBackgroundWorkExemption
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.PermissionStatusRow
 import ru.plumsoftware.finance.ui.components.PrimaryButton
@@ -81,6 +88,7 @@ fun PermissionsBottomSheet(
     val typography = MaterialTheme.typography
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val isLightTheme = !isSystemInDarkTheme()
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     var notifState by remember {
         mutableStateOf(PermissionRowState(isGranted = isNotificationPermissionGranted(context)))
@@ -88,12 +96,16 @@ fun PermissionsBottomSheet(
     var storageState by remember {
         mutableStateOf(PermissionRowState(isGranted = isStoragePermissionGranted(context)))
     }
+    var backgroundState by remember {
+        mutableStateOf(PermissionRowState(isGranted = isBackgroundWorkAllowed(context)))
+    }
     var showSettingsHint by remember { mutableStateOf(false) }
     var dontShowAgain by remember { mutableStateOf(false) }
 
     fun refreshPermissionStates() {
         notifState = notifState.copy(isGranted = isNotificationPermissionGranted(context))
         storageState = storageState.copy(isGranted = isStoragePermissionGranted(context))
+        backgroundState = backgroundState.copy(isGranted = isBackgroundWorkAllowed(context))
     }
 
     fun dismissSheet() {
@@ -102,6 +114,16 @@ fun PermissionsBottomSheet(
 
     LaunchedEffect(Unit) {
         refreshPermissionStates()
+    }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                refreshPermissionStates()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     val multiplePermissionsLauncher = rememberLauncherForActivityResult(
@@ -126,7 +148,9 @@ fun PermissionsBottomSheet(
     val permissionsToRequest = remember(notifState, storageState) {
         buildPermissionsToRequest(context)
     }
-    val allGranted = notifState.isGranted && storageState.isGranted
+    val allGranted = notifState.isGranted &&
+        storageState.isGranted &&
+        backgroundState.isGranted
 
     LaunchedEffect(allGranted) {
         if (allGranted) {
@@ -226,6 +250,19 @@ fun PermissionsBottomSheet(
                     description = stringResource(R.string.perm_storage_desc),
                     isGranted = storageState.isGranted,
                 )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 72.dp),
+                    color = colors.surfaceVariant,
+                )
+
+                PermissionStatusRow(
+                    icon = Icons.Rounded.BatteryChargingFull,
+                    iconBg = Color(0xFF34C759),
+                    title = stringResource(R.string.perm_background_title),
+                    description = stringResource(R.string.perm_background_desc),
+                    isGranted = backgroundState.isGranted,
+                )
             }
 
             AnimatedVisibility(
@@ -319,6 +356,10 @@ fun PermissionsBottomSheet(
                         }
                         permissionsToRequest.isNotEmpty() ->
                             multiplePermissionsLauncher.launch(permissionsToRequest.toTypedArray())
+                        !backgroundState.isGranted -> {
+                            activity.requestBackgroundWorkExemption()
+                            refreshPermissionStates()
+                        }
                         else -> dismissSheet()
                     }
                 },

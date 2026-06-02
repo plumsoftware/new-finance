@@ -1,18 +1,20 @@
 package ru.plumsoftware.finance.presentation.onboarding.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -22,8 +24,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.ui.components.AppCard
@@ -191,6 +195,144 @@ fun OnboardingSmartSavingsIllustration(modifier: Modifier = Modifier) {
                     color = colors.primary,
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun OnboardingGoalsIllustration(modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    AppCard(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(Dimens.illustrationHeight),
+    ) {
+        Column(
+            modifier = Modifier.padding(Dimens.SpacingXl),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(colors.primary.copy(alpha = 0.12f), CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(R.string.onboarding_demo_goal_emoji),
+                        style = typography.titleLarge,
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.onboarding_demo_goal_name),
+                        style = typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = stringResource(R.string.onboarding_demo_goal_progress),
+                        style = typography.bodySmall,
+                        color = colors.onSurfaceVariant,
+                    )
+                }
+            }
+            LinearProgressIndicator(
+                progress = { 0.375f },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(Dimens.SpacingXs)
+                    .clip(RoundedCornerShape(Dimens.RadiusPill)),
+                color = colors.primary,
+                trackColor = colors.onSurfaceVariant.copy(alpha = 0.2f),
+                strokeCap = StrokeCap.Round,
+            )
+            Text(
+                text = stringResource(R.string.percent_short, 38),
+                style = typography.labelMedium,
+                color = colors.primary,
+            )
+        }
+    }
+}
+
+@Composable
+fun OnboardingAchievementsIllustration(modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(Dimens.illustrationHeight),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(Dimens.RadiusPill),
+            color = Color(0xFFFF3B30).copy(alpha = 0.10f),
+        ) {
+            Text(
+                text = stringResource(R.string.onboarding_demo_streak),
+                modifier = Modifier.padding(horizontal = Dimens.SpacingM, vertical = Dimens.SpacingS),
+                style = typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = Color(0xFFFF3B30),
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+        ) {
+            OnboardingAchievementChip(
+                emoji = "🚀",
+                title = stringResource(R.string.onboarding_demo_achievement_1),
+                modifier = Modifier.weight(1f),
+            )
+            OnboardingAchievementChip(
+                emoji = "🦉",
+                title = stringResource(R.string.onboarding_demo_achievement_2),
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun OnboardingAchievementChip(
+    emoji: String,
+    title: String,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+    AppCard(
+        modifier = modifier.border(
+            width = 1.dp,
+            color = Color(0xFFFFD700).copy(alpha = 0.25f),
+            shape = RoundedCornerShape(Dimens.RadiusL),
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(Dimens.SpacingM),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(Color(0xFFFFD700).copy(alpha = 0.15f), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(text = emoji, style = typography.titleMedium)
+            }
+            Text(
+                text = title,
+                style = typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.onSurface,
+                maxLines = 2,
+            )
         }
     }
 }

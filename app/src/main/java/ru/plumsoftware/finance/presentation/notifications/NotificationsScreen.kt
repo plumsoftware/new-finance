@@ -63,13 +63,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import ru.plumsoftware.finance.navigation.deepLinkUri
+import ru.plumsoftware.finance.navigation.navigateNotificationDeepLink
+import ru.plumsoftware.finance.navigation.popBackStackOrHome
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.AppNotification
 import ru.plumsoftware.finance.domain.model.NotificationType
 import ru.plumsoftware.finance.ui.AppRoute
 import ru.plumsoftware.finance.ui.components.AppCard
+import ru.plumsoftware.finance.ui.components.MascotEmptyState
 import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
+import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.MascotAssets
 import java.text.SimpleDateFormat
@@ -119,7 +124,7 @@ fun NotificationsScreen(
             IosEditorTopBar(
                 title = stringResource(R.string.notifications),
                 backLabel = stringResource(R.string.nav_home),
-                onBack = navController::popBackStack
+                onBack = navController::popBackStackOrHome
             )
         },
     ) { padding ->
@@ -174,6 +179,10 @@ fun NotificationsScreen(
 
                                         else -> Unit
                                     }
+                                },
+                                onOpenDeepLink = { uri ->
+                                    viewModel.markRead(notification.id)
+                                    navController.navigateNotificationDeepLink(uri)
                                 },
                                 onDismiss = { viewModel.delete(notification.id) },
                             )
@@ -230,8 +239,10 @@ private fun NotificationFilterTabs(
 private fun NotificationCard(
     notification: AppNotification,
     onTap: () -> Unit,
+    onOpenDeepLink: (android.net.Uri) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val deepLinkUri = notification.deepLinkUri()
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     val typeColor = notification.type.color()
@@ -315,6 +326,13 @@ private fun NotificationCard(
                         style = typography.labelSmall,
                         color = colors.onSurfaceVariant,
                     )
+                    if (deepLinkUri != null) {
+                        Spacer(modifier = Modifier.height(Dimens.SpacingXs))
+                        IosTextButton(
+                            text = stringResource(R.string.notification_action_open),
+                            onClick = { onOpenDeepLink(deepLinkUri) },
+                        )
+                    }
                 }
                 if (!notification.isRead) {
                     Box(
@@ -331,33 +349,15 @@ private fun NotificationCard(
 
 @Composable
 private fun NotificationsEmptyState(modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
-    Column(
+    Box(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+        contentAlignment = Alignment.Center,
     ) {
-        Image(
-            painter = painterResource(MascotAssets.emptyNotifications),
-            contentDescription = null,
-            modifier = Modifier.size(Dimens.mascotEmptyState),
-        )
-        Spacer(modifier = Modifier.height(Dimens.SpacingM))
-        Text(
-            text = stringResource(R.string.no_notifications),
-            style = typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = colors.onSurface,
-        )
-        Spacer(modifier = Modifier.height(Dimens.SpacingXs))
-        Text(
-            text = stringResource(R.string.no_notifications_desc),
-            style = typography.bodyMedium,
-            color = colors.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = Dimens.SpacingXxl),
+        MascotEmptyState(
+            mascotRes = MascotAssets.emptyNotifications,
+            title = stringResource(R.string.no_notifications),
+            subtitle = stringResource(R.string.no_notifications_desc),
+            mascotPhrase = stringResource(R.string.mascot_phrase_no_notifications),
         )
     }
 }

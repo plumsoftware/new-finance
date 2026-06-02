@@ -117,6 +117,9 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions ORDER BY dateMillis DESC, id DESC")
     suspend fun getAllSync(): List<TransactionEntity>
 
+    @Query("SELECT dateMillis FROM transactions ORDER BY dateMillis DESC")
+    suspend fun getAllDates(): List<Long>
+
     @Query(
         """
         SELECT * FROM transactions

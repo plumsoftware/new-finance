@@ -83,6 +83,7 @@ import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.presentation.transactions.TransactionRow
 import ru.plumsoftware.finance.ui.components.AppCard
+import ru.plumsoftware.finance.ui.components.MascotEmptyState
 import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
@@ -614,9 +615,6 @@ private fun HistoryEmptyState(
     modifier: Modifier = Modifier,
     onNavigateToAdd: () -> Unit,
 ) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -629,31 +627,18 @@ private fun HistoryEmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Image(
-            painter = painterResource(MascotAssets.emptyTransactions),
-            contentDescription = null,
-            modifier = Modifier.size(100.dp),
-            contentScale = ContentScale.Fit,
-        )
-        Spacer(Modifier.height(Dimens.SpacingL))
-        Text(
-            text = stringResource(R.string.no_operations_yet),
-            style = typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = colors.onSurface,
-            textAlign = TextAlign.Center,
-        )
-        Text(
-            text = stringResource(R.string.no_operations_for_period),
-            style = typography.bodyMedium,
-            color = colors.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(Dimens.SpacingL))
-        PrimaryButton(
-            text = stringResource(R.string.add_first_transaction),
-            onClick = onNavigateToAdd,
-            modifier = Modifier.padding(horizontal = Dimens.SpacingXxl),
+        MascotEmptyState(
+            mascotRes = MascotAssets.sleeping,
+            title = stringResource(R.string.empty_history_title),
+            subtitle = stringResource(R.string.empty_history_subtitle),
+            mascotPhrase = stringResource(R.string.mascot_phrase_sleeping),
+            action = {
+                PrimaryButton(
+                    text = stringResource(R.string.add_first_transaction),
+                    onClick = onNavigateToAdd,
+                    modifier = Modifier.padding(horizontal = Dimens.SpacingXxl),
+                )
+            },
         )
     }
 }

@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.plumsoftware.finance.domain.model.Category
@@ -20,9 +20,13 @@ import ru.plumsoftware.finance.domain.model.Insight
 import ru.plumsoftware.finance.domain.model.MonthPeriod
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.SmartAssetStatus
+import ru.plumsoftware.finance.domain.model.StreakData
 import ru.plumsoftware.finance.domain.model.Transaction
 import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.domain.insights.InsightsEngine
+import ru.plumsoftware.finance.data.local.dao.AchievementUnlockDao
+import ru.plumsoftware.finance.data.local.entity.AchievementUnlockEntity
+import ru.plumsoftware.finance.data.repository.StreakRepository
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
 import ru.plumsoftware.finance.domain.repository.GoalRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
@@ -39,8 +43,10 @@ data class DashboardUiState(
     val categoryMap: Map<Long, Category> = emptyMap(),
     val smartAssets: List<SmartAsset> = emptyList(),
     val featuredGoal: Goal? = null,
+    val streak: StreakData = StreakData(),
     val insights: List<Insight> = emptyList(),
     val hasBudgetWarnings: Boolean = false,
+    val unlockedAchievementsCount: Int = 0,
     val isLoading: Boolean = true,
     val snackbarMessage: String? = null,
 )
@@ -52,6 +58,8 @@ class DashboardViewModel(
     private val categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository,
     private val insightsEngine: InsightsEngine,
+    private val streakRepository: StreakRepository,
+    private val achievementUnlockDao: AchievementUnlockDao,
     private val context: Context,
 ) : ViewModel() {
 
@@ -66,6 +74,8 @@ class DashboardViewModel(
         categoryRepository.observeByType(CategoryType.INCOME, includeHidden = true),
         categoryRepository.getCategoryWithSpending(MonthPeriod.current()),
         settingsRepository.settings,
+        streakRepository.observe(),
+        achievementUnlockDao.observeAll(),
         _snackbar,
         _warningDismissed,
     ) { values ->
@@ -76,8 +86,11 @@ class DashboardViewModel(
         val incomeCategories = values[4] as List<Category>
         val budgetSpending = values[5] as List<CategoryBudgetSpending>
         val settings = values[6] as ru.plumsoftware.finance.domain.model.AppSettings
-        val snackbar = values[7] as String?
-        val warningDismissed = values[8] as Boolean
+        val streak = values[7] as StreakData
+        @Suppress("UNCHECKED_CAST")
+        val achievementUnlocks = values[8] as List<AchievementUnlockEntity>
+        val snackbar = values[9] as String?
+        val warningDismissed = values[10] as Boolean
         val monthRange = currentMonthRange()
         val previousRange = previousMonthRange()
         val monthTx = transactions.filter { it.dateMillis in monthRange.first..monthRange.second }
@@ -103,26 +116,27 @@ class DashboardViewModel(
             categoryMap = (expenseCategories + incomeCategories).associateBy { it.id },
             smartAssets = assets,
             featuredGoal = featuredGoal,
+            streak = streak,
             insights = insights,
             hasBudgetWarnings = hasBudgetWarnings,
+            unlockedAchievementsCount = achievementUnlocks.size,
             isLoading = false,
             snackbarMessage = snackbar,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
+    init {
+        viewModelScope.launch {
+            transactionRepository.observeAll().collect {
+                streakRepository.calculateAndSave()
+            }
+        }
+    }
+
     fun recordSmartUsage(assetId: Long) {
         viewModelScope.launch {
             runCatching {
-                val incomeCategoryId = categoryRepository
-                    .observeByType(CategoryType.INCOME, includeHidden = false)
-                    .first()
-                    .firstOrNull()
-                    ?.id
-                smartAssetRepository.recordUsage(
-                    smartAssetId = assetId,
-                    recordIncome = true,
-                    incomeCategoryId = incomeCategoryId,
-                )
+                smartAssetRepository.recordUsage(smartAssetId = assetId)
             }
                 .onSuccess {
                     _snackbar.value = context.getString(R.string.smart_usage_saved)

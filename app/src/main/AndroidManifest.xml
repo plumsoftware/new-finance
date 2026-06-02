@@ -8,6 +8,7 @@
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application
         android:name=".FinanceApplication"
@@ -73,6 +74,10 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".data.firebase.PushNotificationPersistService"
+            android:exported="false" />
+
         <receiver
             android:name=".widget.QuickAddWidgetProvider"
             android:exported="true"
@@ -124,6 +129,12 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="finance_push" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/widget_primary" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -134,12 +145,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-<!--        <meta-data-->
-<!--            android:name="com.google.firebase.messaging.default_notification_color"-->
-<!--            android:resource="@color/colorAccent" />-->
-<!--        <meta-data-->
-<!--            android:name="com.google.firebase.messaging.default_notification_icon"-->
-<!--            android:resource="@drawable/ic_stat_ic_notification" />-->
     </application>
 
 </manifest>

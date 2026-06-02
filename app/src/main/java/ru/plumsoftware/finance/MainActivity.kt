@@ -28,7 +28,10 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
 import ru.plumsoftware.finance.domain.model.AppSettings
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
+import ru.plumsoftware.finance.data.firebase.NotificationDisplayHelper
+import ru.plumsoftware.finance.data.firebase.PushNotificationPersistService
 import ru.plumsoftware.finance.navigation.AppDeepLinks
+import ru.plumsoftware.finance.navigation.parseNotificationDeepLink
 import ru.plumsoftware.finance.presentation.FinanceApp
 import ru.plumsoftware.finance.presentation.common.BiometricHelper
 import ru.plumsoftware.finance.presentation.importdata.OpenDocumentWithInitialUri
@@ -79,8 +82,19 @@ class MainActivity : FragmentActivity() {
     private fun handleIntent(intent: Intent?) {
         if (intent == null) return
 
+        PushNotificationPersistService.enqueueFromTapIfNeeded(this, intent)
+
         if (AppDeepLinks.isAppDeepLink(intent)) {
             pendingDeepLinkIntent.value = intent
+            return
+        }
+
+        val fcmData = intent.extras?.keySet()
+            ?.filterNot { it.startsWith("google.") || it.startsWith("gcm.") }
+            ?.associate { key -> key to intent.extras?.getString(key).orEmpty() }
+            .orEmpty()
+        parseNotificationDeepLink(fcmData)?.let { uri ->
+            pendingDeepLinkIntent.value = Intent(Intent.ACTION_VIEW, uri)
             return
         }
 

@@ -82,8 +82,6 @@ class SmartAssetRepositoryImpl(
         savedAmountMinor: Long?,
         note: String?,
         usedAtMillis: Long,
-        recordIncome: Boolean,
-        incomeCategoryId: Long?,
     ): Long = database.withTransaction {
         val current = smartAssetDao.getById(smartAssetId)?.toDomain()
             ?: error("Smart asset $smartAssetId not found")
@@ -102,20 +100,6 @@ class SmartAssetRepositoryImpl(
             status = SmartAssetLogic.resolveStatus(current, saved),
         )
         smartAssetDao.update(updated.toEntity())
-        if (recordIncome) {
-            val now = System.currentTimeMillis()
-            transactionDao.insert(
-                TransactionEntity(
-                    type = TransactionType.INCOME,
-                    amountMinor = saved,
-                    categoryId = incomeCategoryId,
-                    smartAssetId = smartAssetId,
-                    note = current.name,
-                    dateMillis = usedAtMillis,
-                    createdAtMillis = now,
-                ),
-            )
-        }
         usageId
     }
 

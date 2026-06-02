@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 enum class PermissionIconKind {
     NOTIFICATIONS,
     STORAGE,
+    BACKGROUND,
 }
 
 data class PermissionItem(

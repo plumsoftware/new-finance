@@ -72,6 +72,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import ru.plumsoftware.finance.navigation.popBackStackOrHome
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.data.util.startOfDayMillis
@@ -341,7 +342,7 @@ fun ExportScreen(
             IosEditorTopBar(
                 title = stringResource(R.string.export_data),
                 backLabel = stringResource(R.string.categories_back_settings),
-                onBack = navController::popBackStack,
+                onBack = navController::popBackStackOrHome,
             )
         },
     ) { padding ->

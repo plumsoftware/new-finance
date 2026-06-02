@@ -3,7 +3,7 @@ package ru.plumsoftware.finance.domain.model
 import androidx.annotation.StringRes
 import ru.plumsoftware.finance.R
 
-const val BACKUP_FORMAT_VERSION = 3
+const val BACKUP_FORMAT_VERSION = 4
 
 enum class ExportFormat(
     @StringRes val labelRes: Int,
@@ -36,6 +36,7 @@ data class BackupRecordCounts(
     val limits: Int = 0,
     val goals: Int = 0,
     val goalDeposits: Int = 0,
+    val achievements: Int = 0,
 )
 
 data class BackupMeta(
@@ -128,6 +129,11 @@ data class BackupGoalDepositDto(
     val createdAtMillis: Long,
 )
 
+data class BackupAchievementUnlockDto(
+    val key: String,
+    val unlockedAtMillis: Long,
+)
+
 data class BackupModel(
     val meta: BackupMeta = BackupMeta(),
     val categories: List<BackupCategoryDto> = emptyList(),
@@ -138,6 +144,7 @@ data class BackupModel(
     val limits: List<BackupLimitDto> = emptyList(),
     val goals: List<BackupGoalDto> = emptyList(),
     val goalDeposits: List<BackupGoalDepositDto> = emptyList(),
+    val achievements: List<BackupAchievementUnlockDto> = emptyList(),
 )
 
 data class ImportResult(

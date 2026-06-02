@@ -34,7 +34,9 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingAchievementsIllustration
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingControlChartIllustration
+import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingGoalsIllustration
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingIllustrationWithMascot
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingIncomeExpenseIllustration
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingMascot
@@ -63,6 +65,18 @@ private val onboardingPages = listOf(
         subtitleRes = R.string.onboarding_page3_subtitle,
         mascotRes = R.drawable.onboarding_mascot_smart,
         illustrationType = OnboardingIllustrationType.SMART_SAVINGS,
+    ),
+    OnboardingPage(
+        titleRes = R.string.onboarding_goals_title,
+        subtitleRes = R.string.onboarding_goals_subtitle,
+        mascotRes = R.drawable.mascot_happy,
+        illustrationType = OnboardingIllustrationType.GOALS,
+    ),
+    OnboardingPage(
+        titleRes = R.string.onboarding_achievements_title,
+        subtitleRes = R.string.onboarding_achievements_subtitle,
+        mascotRes = R.drawable.mascot_trophy,
+        illustrationType = OnboardingIllustrationType.ACHIEVEMENTS,
     ),
     OnboardingPage(
         titleRes = R.string.onboarding_page4_title,
@@ -234,6 +248,22 @@ private fun OnboardingPageContent(
             OnboardingIllustrationType.SMART_SAVINGS -> {
                 OnboardingIllustrationWithMascot(
                     illustration = { OnboardingSmartSavingsIllustration() },
+                    mascotRes = page.mascotRes,
+                    mascotAlignment = Alignment.BottomEnd,
+                )
+            }
+
+            OnboardingIllustrationType.GOALS -> {
+                OnboardingIllustrationWithMascot(
+                    illustration = { OnboardingGoalsIllustration() },
+                    mascotRes = page.mascotRes,
+                    mascotAlignment = Alignment.BottomStart,
+                )
+            }
+
+            OnboardingIllustrationType.ACHIEVEMENTS -> {
+                OnboardingIllustrationWithMascot(
+                    illustration = { OnboardingAchievementsIllustration() },
                     mascotRes = page.mascotRes,
                     mascotAlignment = Alignment.BottomEnd,
                 )
