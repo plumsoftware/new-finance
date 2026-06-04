@@ -18,12 +18,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -55,7 +54,7 @@ import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.ui.components.FinanceNumPad
 import ru.plumsoftware.finance.ui.components.IosCard
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
-import ru.plumsoftware.finance.ui.components.ios.IosTopBar
+import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.IosRed
 import java.text.SimpleDateFormat
@@ -100,6 +99,18 @@ fun GoalDetailScreen(
         )
     }
 
+    val selectedDeposit = state.selectedDeposit
+    if (state.showDepositDetail && selectedDeposit != null && goal != null) {
+        GoalDepositDetailSheet(
+            deposit = selectedDeposit,
+            goal = goal,
+            currencyCode = state.currencyCode,
+            accountName = selectedDeposit.accountId?.let { state.accountNames[it] },
+            onDismiss = viewModel::closeDepositDetail,
+            onDelete = { viewModel.deleteDeposit(selectedDeposit) },
+        )
+    }
+
     if (state.showDepositSheet && goal != null) {
         val goalColor = colorFromHexOrDefault(goal.colorHex, colors.primary)
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -112,15 +123,10 @@ fun GoalDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Dimens.spacingSection)
+                    .padding(top = Dimens.paddingSmall)
                     .padding(bottom = Dimens.bottomSheetBottomPadding),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = Dimens.bottomSheetHandleWidth, height = Dimens.bottomSheetHandleHeight)
-                        .background(colors.outlineVariant, RoundedCornerShape(Dimens.cornerRadiusHandle)),
-                )
-                Spacer(Modifier.height(Dimens.spacingList + Dimens.paddingMicro))
                 Text(
                     text = androidx.compose.ui.res.stringResource(R.string.goal_deposit_title),
                     style = typography.titleLarge,
@@ -203,23 +209,16 @@ fun GoalDetailScreen(
     }
 
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
         topBar = {
-            IosTopBar(
-                title = goal?.name ?: androidx.compose.ui.res.stringResource(R.string.goals_title),
+            IosEditorTopBar(
+                title = androidx.compose.ui.res.stringResource(R.string.goal_detail_title),
+                backLabel = androidx.compose.ui.res.stringResource(R.string.goals_back_list),
                 onBack = onBack,
-                actions = {
-                    if (goal != null) {
-                        IconButton(onClick = { onEdit(goal.id) }) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = androidx.compose.ui.res.stringResource(R.string.goal_detail_edit),
-                                tint = colors.primary,
-                                modifier = Modifier.size(Dimens.iconSizeStandard),
-                            )
-                        }
-                    }
-                },
+                actionLabel = androidx.compose.ui.res.stringResource(R.string.goal_detail_edit),
+                onAction = { goal?.let { onEdit(it.id) } },
+                actionEnabled = goal != null,
             )
         },
     ) { padding ->
@@ -359,9 +358,11 @@ fun GoalDetailScreen(
                             )
                         } else {
                             state.deposits.forEachIndexed { index, deposit ->
+                                val depositCurrency = deposit.currencyCode.ifBlank { state.currencyCode }
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .clickable { viewModel.openDepositDetail(deposit) }
                                         .padding(vertical = Dimens.spacingList),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically,
@@ -380,12 +381,23 @@ fun GoalDetailScreen(
                                             )
                                         }
                                     }
-                                    Text(
-                                        text = "+${MoneyFormat.format(deposit.amountMinor, state.currencyCode)}",
-                                        style = typography.bodyLarge,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = goalColor,
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(Dimens.paddingMicro),
+                                    ) {
+                                        Text(
+                                            text = "+${MoneyFormat.format(deposit.amountMinor, depositCurrency)}",
+                                            style = typography.bodyLarge,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = goalColor,
+                                        )
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                            contentDescription = null,
+                                            tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
+                                            modifier = Modifier.size(Dimens.iconSizeSmall),
+                                        )
+                                    }
                                 }
                                 if (index < state.deposits.lastIndex) {
                                     HorizontalDivider(color = colors.outline.copy(alpha = 0.5f))

@@ -2,12 +2,16 @@ package ru.plumsoftware.finance.data.mapper
 
 import ru.plumsoftware.finance.data.local.dao.CategorySpendingRow
 import ru.plumsoftware.finance.data.local.dao.DailySummaryRow
+import ru.plumsoftware.finance.data.local.dao.AccountWithBalanceRow
+import ru.plumsoftware.finance.data.local.entity.AccountEntity
 import ru.plumsoftware.finance.data.local.entity.CategoryEntity
 import ru.plumsoftware.finance.data.local.entity.GoalDepositEntity
 import ru.plumsoftware.finance.data.local.entity.GoalEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetUsageEntity
 import ru.plumsoftware.finance.data.local.entity.TransactionEntity
+import ru.plumsoftware.finance.domain.model.Account
+import ru.plumsoftware.finance.domain.model.AccountWithBalance
 import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.CategorySpending
 import ru.plumsoftware.finance.domain.model.DailySummary
@@ -16,6 +20,39 @@ import ru.plumsoftware.finance.domain.model.GoalDeposit
 import ru.plumsoftware.finance.domain.model.SmartAsset
 import ru.plumsoftware.finance.domain.model.SmartAssetUsage
 import ru.plumsoftware.finance.domain.model.Transaction
+
+fun AccountEntity.toDomain(): Account = Account(
+    id = id,
+    name = name,
+    type = type,
+    currencyCode = currencyCode,
+    colorHex = colorHex,
+    emoji = emoji,
+    initialBalanceMinor = initialBalanceMinor,
+    sortOrder = sortOrder,
+    isDefault = isDefault,
+    isArchived = isArchived,
+    createdAtMillis = createdAtMillis,
+)
+
+fun Account.toEntity(): AccountEntity = AccountEntity(
+    id = id,
+    name = name,
+    type = type,
+    currencyCode = currencyCode,
+    colorHex = colorHex,
+    emoji = emoji,
+    initialBalanceMinor = initialBalanceMinor,
+    sortOrder = sortOrder,
+    isDefault = isDefault,
+    isArchived = isArchived,
+    createdAtMillis = createdAtMillis,
+)
+
+fun AccountWithBalanceRow.toDomain(): AccountWithBalance = AccountWithBalance(
+    account = account.toDomain(),
+    calculatedBalanceMinor = calculatedBalance,
+)
 
 fun TransactionEntity.toDomain(): Transaction = Transaction(
     id = id,
@@ -26,6 +63,11 @@ fun TransactionEntity.toDomain(): Transaction = Transaction(
     note = note,
     dateMillis = dateMillis,
     createdAtMillis = createdAtMillis,
+    accountId = accountId,
+    currencyCode = currencyCode,
+    originalAmountMinor = if (originalAmountMinor > 0L) originalAmountMinor else amountMinor,
+    originalCurrencyCode = originalCurrencyCode,
+    exchangeRate = exchangeRate,
 )
 
 fun Transaction.toEntity(): TransactionEntity = TransactionEntity(
@@ -37,6 +79,11 @@ fun Transaction.toEntity(): TransactionEntity = TransactionEntity(
     note = note,
     dateMillis = dateMillis,
     createdAtMillis = createdAtMillis,
+    accountId = accountId,
+    currencyCode = currencyCode,
+    originalAmountMinor = if (originalAmountMinor > 0L) originalAmountMinor else amountMinor,
+    originalCurrencyCode = originalCurrencyCode,
+    exchangeRate = exchangeRate,
 )
 
 fun CategoryEntity.toDomain(): Category = Category(
@@ -123,6 +170,8 @@ fun GoalEntity.toDomain(): Goal = Goal(
     showOnHome = showOnHome,
     isCompleted = isCompleted,
     createdAtMillis = createdAtMillis,
+    currencyCode = currencyCode,
+    accountId = accountId,
 )
 
 fun Goal.toEntity(): GoalEntity = GoalEntity(
@@ -137,6 +186,8 @@ fun Goal.toEntity(): GoalEntity = GoalEntity(
     showOnHome = showOnHome,
     isCompleted = isCompleted,
     createdAtMillis = createdAtMillis,
+    currencyCode = currencyCode,
+    accountId = accountId,
 )
 
 fun GoalDepositEntity.toDomain(): GoalDeposit = GoalDeposit(
@@ -145,6 +196,8 @@ fun GoalDepositEntity.toDomain(): GoalDeposit = GoalDeposit(
     amountMinor = amountMinor,
     note = note,
     createdAtMillis = createdAtMillis,
+    currencyCode = currencyCode,
+    accountId = accountId,
 )
 
 fun GoalDeposit.toEntity(): GoalDepositEntity = GoalDepositEntity(
@@ -153,6 +206,8 @@ fun GoalDeposit.toEntity(): GoalDepositEntity = GoalDepositEntity(
     amountMinor = amountMinor,
     note = note,
     createdAtMillis = createdAtMillis,
+    currencyCode = currencyCode,
+    accountId = accountId,
 )
 
 fun DailySummaryRow.toDomain(): DailySummary = DailySummary(

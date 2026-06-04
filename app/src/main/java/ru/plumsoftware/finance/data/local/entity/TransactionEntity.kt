@@ -21,12 +21,20 @@ import ru.plumsoftware.finance.domain.model.TransactionType
             childColumns = ["smartAssetId"],
             onDelete = ForeignKey.SET_NULL,
         ),
+        ForeignKey(
+            entity = AccountEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["accountId"],
+            onDelete = ForeignKey.RESTRICT,
+        ),
     ],
     indices = [
         Index("categoryId"),
         Index("smartAssetId"),
         Index("dateMillis"),
         Index("type"),
+        Index("accountId"),
+        Index("currencyCode"),
     ],
 )
 data class TransactionEntity(
@@ -39,4 +47,9 @@ data class TransactionEntity(
     val note: String?,
     val dateMillis: Long,
     val createdAtMillis: Long,
+    val accountId: Long = 1L,
+    val currencyCode: String = "RUB",
+    val originalAmountMinor: Long = 0L,
+    val originalCurrencyCode: String? = null,
+    val exchangeRate: Double = 1.0,
 )

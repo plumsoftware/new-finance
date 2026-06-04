@@ -5,6 +5,7 @@ import org.json.JSONObject
 import ru.plumsoftware.finance.domain.model.BACKUP_FORMAT_VERSION
 import ru.plumsoftware.finance.domain.model.BackupAssetDto
 import ru.plumsoftware.finance.domain.model.BackupAssetUsageDto
+import ru.plumsoftware.finance.domain.model.BackupAccountDto
 import ru.plumsoftware.finance.domain.model.BackupCategoryDto
 import ru.plumsoftware.finance.domain.model.BackupLimitDto
 import ru.plumsoftware.finance.domain.model.BackupMeta
@@ -21,6 +22,7 @@ object BackupSerializer {
     fun toJson(backup: BackupModel): String {
         val root = JSONObject()
         root.put("meta", metaToJson(backup.meta))
+        root.put("accounts", accountsToJson(backup.accounts))
         root.put("categories", categoriesToJson(backup.categories))
         root.put("transactions", transactionsToJson(backup.transactions))
         root.put("recurringTransactions", recurringToJson(backup.recurringTransactions))
@@ -43,6 +45,7 @@ object BackupSerializer {
             exportedAt = metaJson.optString("exportedAt", ""),
             deviceModel = metaJson.optString("deviceModel", ""),
             recordCounts = BackupRecordCounts(
+                accounts = countsJson?.optInt("accounts") ?: 0,
                 categories = countsJson?.optInt("categories") ?: 0,
                 transactions = countsJson?.optInt("transactions") ?: 0,
                 recurring = countsJson?.optInt("recurring") ?: 0,
@@ -59,6 +62,7 @@ object BackupSerializer {
         }
         return BackupModel(
             meta = meta,
+            accounts = parseAccounts(root.optJSONArray("accounts")),
             categories = parseCategories(root.optJSONArray("categories")),
             transactions = parseTransactions(root.optJSONArray("transactions")),
             recurringTransactions = parseRecurring(root.optJSONArray("recurringTransactions")),
@@ -79,6 +83,7 @@ object BackupSerializer {
         .put(
             "recordCounts",
             JSONObject()
+                .put("accounts", meta.recordCounts.accounts)
                 .put("categories", meta.recordCounts.categories)
                 .put("transactions", meta.recordCounts.transactions)
                 .put("recurring", meta.recordCounts.recurring)
@@ -88,6 +93,27 @@ object BackupSerializer {
                 .put("goalDeposits", meta.recordCounts.goalDeposits)
                 .put("achievements", meta.recordCounts.achievements),
         )
+
+    private fun accountsToJson(items: List<BackupAccountDto>): JSONArray {
+        val array = JSONArray()
+        items.forEach { item ->
+            array.put(
+                JSONObject()
+                    .put("id", item.id)
+                    .put("name", item.name)
+                    .put("type", item.type)
+                    .put("currencyCode", item.currencyCode)
+                    .put("colorHex", item.colorHex)
+                    .put("emoji", item.emoji)
+                    .put("initialBalance", item.initialBalance)
+                    .put("sortOrder", item.sortOrder)
+                    .put("isDefault", item.isDefault)
+                    .put("isArchived", item.isArchived)
+                    .put("createdAtMillis", item.createdAtMillis),
+            )
+        }
+        return array
+    }
 
     private fun categoriesToJson(items: List<BackupCategoryDto>): JSONArray {
         val array = JSONArray()
@@ -116,7 +142,13 @@ object BackupSerializer {
                     .put("isIncome", item.isIncome)
                     .put("date", item.date)
                     .put("note", item.note)
-                    .put("smartAssetId", item.smartAssetId),
+                    .put("smartAssetId", item.smartAssetId)
+                    .put("accountId", item.accountId)
+                    .put("accountName", item.accountName)
+                    .put("currencyCode", item.currencyCode)
+                    .put("originalAmount", item.originalAmount)
+                    .put("originalCurrencyCode", item.originalCurrencyCode)
+                    .put("exchangeRate", item.exchangeRate),
             )
         }
         return array
@@ -205,7 +237,9 @@ object BackupSerializer {
                     .put("note", item.note)
                     .put("showOnHome", item.showOnHome)
                     .put("isCompleted", item.isCompleted)
-                    .put("createdAtMillis", item.createdAtMillis),
+                    .put("createdAtMillis", item.createdAtMillis)
+                    .put("currencyCode", item.currencyCode)
+                    .put("accountId", item.accountId),
             )
         }
         return array
@@ -232,10 +266,36 @@ object BackupSerializer {
                     .put("goalId", item.goalId)
                     .put("amount", item.amount)
                     .put("note", item.note)
-                    .put("createdAtMillis", item.createdAtMillis),
+                    .put("createdAtMillis", item.createdAtMillis)
+                    .put("currencyCode", item.currencyCode)
+                    .put("accountId", item.accountId),
             )
         }
         return array
+    }
+
+    private fun parseAccounts(array: JSONArray?): List<BackupAccountDto> {
+        if (array == null) return emptyList()
+        return buildList {
+            for (i in 0 until array.length()) {
+                val obj = array.getJSONObject(i)
+                add(
+                    BackupAccountDto(
+                        id = obj.getLong("id"),
+                        name = obj.getString("name"),
+                        type = obj.optString("type", "DEBIT"),
+                        currencyCode = obj.optString("currencyCode", "RUB"),
+                        colorHex = obj.optString("colorHex", "#007AFF"),
+                        emoji = obj.optString("emoji", "💳"),
+                        initialBalance = obj.optDouble("initialBalance", 0.0),
+                        sortOrder = obj.optInt("sortOrder", 0),
+                        isDefault = obj.optBoolean("isDefault", false),
+                        isArchived = obj.optBoolean("isArchived", false),
+                        createdAtMillis = obj.optLong("createdAtMillis", System.currentTimeMillis()),
+                    ),
+                )
+            }
+        }
     }
 
     private fun parseCategories(array: JSONArray?): List<BackupCategoryDto> {
@@ -271,6 +331,13 @@ object BackupSerializer {
                         date = obj.getString("date"),
                         note = obj.optString("note").takeIf { it.isNotBlank() },
                         smartAssetId = obj.optLong("smartAssetId").takeIf { obj.has("smartAssetId") && !obj.isNull("smartAssetId") },
+                        accountId = obj.optLong("accountId", 1L),
+                        accountName = obj.optString("accountName").takeIf { it.isNotBlank() },
+                        currencyCode = obj.optString("currencyCode", "RUB"),
+                        originalAmount = obj.optDouble("originalAmount", obj.getDouble("amount")),
+                        originalCurrencyCode = obj.optString("originalCurrencyCode")
+                            .takeIf { it.isNotBlank() },
+                        exchangeRate = obj.optDouble("exchangeRate", 1.0),
                     ),
                 )
             }
@@ -379,6 +446,9 @@ object BackupSerializer {
                             "createdAtMillis",
                             System.currentTimeMillis(),
                         ),
+                        currencyCode = obj.optString("currencyCode", "RUB"),
+                        accountId = obj.optLong("accountId")
+                            .takeIf { obj.has("accountId") && !obj.isNull("accountId") },
                     ),
                 )
             }
@@ -418,6 +488,9 @@ object BackupSerializer {
                             "createdAtMillis",
                             System.currentTimeMillis(),
                         ),
+                        currencyCode = obj.optString("currencyCode", "RUB"),
+                        accountId = obj.optLong("accountId")
+                            .takeIf { obj.has("accountId") && !obj.isNull("accountId") },
                     ),
                 )
             }

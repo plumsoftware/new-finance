@@ -1,6 +1,7 @@
 package ru.plumsoftware.finance.data.local.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -41,6 +42,24 @@ interface GoalDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDeposit(deposit: GoalDepositEntity): Long
+
+    @Query("SELECT * FROM goal_deposits WHERE id = :id")
+    suspend fun getDepositById(id: Long): GoalDepositEntity?
+
+    @Delete
+    suspend fun deleteDeposit(deposit: GoalDepositEntity)
+
+    @Query("DELETE FROM goal_deposits WHERE id = :depositId")
+    suspend fun deleteDepositById(depositId: Long)
+
+    @Query(
+        """
+        SELECT COALESCE(SUM(amountMinor), 0)
+        FROM goal_deposits
+        WHERE goalId = :goalId
+        """,
+    )
+    suspend fun getTotalDepositsByGoalId(goalId: Long): Long
 
     @Query("DELETE FROM goals WHERE id = :goalId")
     suspend fun deleteGoal(goalId: Long)

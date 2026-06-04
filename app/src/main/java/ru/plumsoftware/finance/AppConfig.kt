@@ -11,6 +11,19 @@ package ru.plumsoftware.finance
  */
 object AppConfig {
 
+    private const val APP_PACKAGE = "ru.plumsoftware.finance"
+
+    /**
+     * Ссылка на страницу приложения в магазине (для «Оценить приложение»).
+     * Зависит от [BuildConfig.PLATFORM]: 1 — RuStore, 2 — Google Play, 3 — Huawei AppGallery.
+     */
+    val storeListingUrl: String = when (BuildConfig.PLATFORM) {
+        1 -> "https://www.rustore.ru/catalog/app/ru.plumsoftware.finance"
+        2 -> ""
+        3 -> ""
+        else -> "https://www.rustore.ru/catalog/app/ru.plumsoftware.finance"
+    }
+
     /** Минимальный интервал между показами любых межстраничных объявлений. */
     const val INTERSTITIAL_COOLDOWN_MS: Long = 3 * 60 * 1000L
 

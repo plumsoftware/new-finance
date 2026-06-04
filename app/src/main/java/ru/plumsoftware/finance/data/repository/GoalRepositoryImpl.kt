@@ -39,7 +39,13 @@ class GoalRepositoryImpl(
         return goalDao.upsertGoal(corrected.toEntity())
     }
 
-    override suspend fun addDeposit(goalId: Long, amountMinor: Long, note: String?): Goal =
+    override suspend fun addDeposit(
+        goalId: Long,
+        amountMinor: Long,
+        note: String?,
+        currencyCode: String,
+        accountId: Long?,
+    ): Goal =
         database.withTransaction {
             val current = goalDao.getGoal(goalId)?.toDomain()
                 ?: error("Goal $goalId not found")
@@ -55,10 +61,33 @@ class GoalRepositoryImpl(
                     amountMinor = amountMinor,
                     note = note?.takeIf { it.isNotBlank() },
                     createdAtMillis = System.currentTimeMillis(),
+                    currencyCode = currencyCode,
+                    accountId = accountId,
                 ).toEntity(),
             )
             updated
         }
+
+    override suspend fun deleteDeposit(deposit: GoalDeposit) {
+        database.withTransaction {
+            val goal = goalDao.getGoal(deposit.goalId)?.toDomain() ?: return@withTransaction
+            if (deposit.id > 0L) {
+                goalDao.deleteDepositById(deposit.id)
+            } else {
+                goalDao.deleteDeposit(deposit.toEntity())
+            }
+            val totalFromDeposits = goalDao.getTotalDepositsByGoalId(deposit.goalId)
+            val afterSubtract = (goal.savedAmountMinor - deposit.amountMinor).coerceAtLeast(0L)
+            // Не обнуляем накопления, заданные при создании цели без записи в goal_deposits
+            val newSaved = maxOf(totalFromDeposits, afterSubtract)
+                .coerceAtMost(goal.targetAmountMinor)
+            val updated = goal.copy(
+                savedAmountMinor = newSaved,
+                isCompleted = newSaved >= goal.targetAmountMinor && goal.targetAmountMinor > 0L,
+            )
+            goalDao.updateGoal(updated.toEntity())
+        }
+    }
 
     override suspend fun deleteGoal(goalId: Long) {
         goalDao.deleteGoal(goalId)

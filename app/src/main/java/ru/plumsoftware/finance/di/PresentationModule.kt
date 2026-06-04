@@ -3,6 +3,8 @@ package ru.plumsoftware.finance.di
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
+import ru.plumsoftware.finance.presentation.accounts.AccountEditorViewModel
+import ru.plumsoftware.finance.presentation.accounts.AccountsViewModel
 import ru.plumsoftware.finance.presentation.addtransaction.AddTransactionViewModel
 import ru.plumsoftware.finance.presentation.analytics.AnalyticsViewModel
 import ru.plumsoftware.finance.presentation.achievements.AchievementsViewModel
@@ -28,16 +30,16 @@ import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsViewModel
 
 val presentationModule = module {
     viewModel { OnboardingViewModel(get()) }
-    viewModel { DashboardViewModel(get(), get(), get(), get(), get(), get(), get(), get(), androidContext()) }
+    viewModel { DashboardViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), androidContext()) }
     viewModel { HistoryViewModel(get(), get(), get()) }
     viewModel { CategoriesViewModel(get()) }
     viewModel { CategoryEditorViewModel(get(), get(), androidContext()) }
-    viewModel { AddTransactionViewModel(get(), get(), get(), get(), androidContext()) }
+    viewModel { AddTransactionViewModel(get(), get(), get(), get(), get(),androidContext()) }
     viewModel { SmartSavingsViewModel(get(), get()) }
     viewModel { GoalsViewModel(get(), get()) }
     viewModel { AchievementsViewModel(get(), get(), get(), get(), get(), androidContext()) }
     viewModel { CreateGoalViewModel(get(), get(), get()) }
-    viewModel { (goalId: Long) -> GoalDetailViewModel(goalId, get(), get(), get(), androidContext()) }
+    viewModel { (goalId: Long) -> GoalDetailViewModel(goalId, get(), get(), get(), get(), androidContext()) }
     viewModel { CreateSmartSavingsViewModel(get(), get(), get(), androidContext()) }
     viewModel { (assetId: Long) ->
         SmartSavingsDetailViewModel(assetId, get(), get(), androidContext())
@@ -45,6 +47,8 @@ val presentationModule = module {
     viewModel { AnalyticsViewModel(get(), get(), get(), get(), androidContext()) }
     viewModel { LimitsViewModel(get(), get(), get()) }
     viewModel { NotificationsViewModel(get()) }
+    viewModel { AccountsViewModel(get(), get()) }
+    viewModel { (accountId: Long?) -> AccountEditorViewModel(accountId, get(), get()) }
     viewModel { SettingsViewModel(get(), get(), androidContext()) }
     viewModel { PermissionsViewModel(get()) }
     viewModel { ExportViewModel(get()) }

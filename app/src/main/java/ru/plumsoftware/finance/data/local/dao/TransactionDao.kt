@@ -29,6 +29,15 @@ interface TransactionDao {
     @Query(
         """
         SELECT * FROM transactions
+        WHERE accountId = :accountId
+        ORDER BY dateMillis DESC, id DESC
+        """,
+    )
+    fun observeByAccount(accountId: Long): Flow<List<TransactionEntity>>
+
+    @Query(
+        """
+        SELECT * FROM transactions
         WHERE dateMillis >= :startMillis AND dateMillis < :endMillis
         ORDER BY dateMillis DESC, id DESC
         """,
@@ -52,6 +61,15 @@ interface TransactionDao {
 
     @Query("UPDATE transactions SET categoryId = :toId WHERE categoryId = :fromId")
     suspend fun reassignCategory(fromId: Long, toId: Long)
+
+    @Query(
+        """
+        UPDATE transactions
+        SET accountId = :toAccountId
+        WHERE accountId = :fromAccountId
+        """,
+    )
+    suspend fun moveToAccount(fromAccountId: Long, toAccountId: Long)
 
     @Query(
         """

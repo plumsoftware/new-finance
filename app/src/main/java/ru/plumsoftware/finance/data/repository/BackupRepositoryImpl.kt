@@ -7,6 +7,7 @@ import androidx.room.withTransaction
 import ru.plumsoftware.finance.BuildConfig
 import ru.plumsoftware.finance.data.backup.BackupFileWriter
 import ru.plumsoftware.finance.data.backup.BackupSerializer
+import ru.plumsoftware.finance.data.local.dao.AccountDao
 import ru.plumsoftware.finance.data.local.dao.AchievementUnlockDao
 import ru.plumsoftware.finance.data.local.dao.CategoryDao
 import ru.plumsoftware.finance.data.local.dao.GoalDao
@@ -14,6 +15,7 @@ import ru.plumsoftware.finance.data.local.dao.RecurringTransactionDao
 import ru.plumsoftware.finance.data.local.dao.SmartAssetDao
 import ru.plumsoftware.finance.data.local.dao.TransactionDao
 import ru.plumsoftware.finance.data.local.database.FinanceDatabase
+import ru.plumsoftware.finance.data.local.entity.AccountEntity
 import ru.plumsoftware.finance.data.local.entity.AchievementUnlockEntity
 import ru.plumsoftware.finance.data.local.entity.CategoryEntity
 import ru.plumsoftware.finance.data.local.entity.GoalDepositEntity
@@ -23,9 +25,12 @@ import ru.plumsoftware.finance.data.local.entity.SmartAssetEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetUsageEntity
 import ru.plumsoftware.finance.data.local.entity.TransactionEntity
 import ru.plumsoftware.finance.data.mapper.toDomain
+import ru.plumsoftware.finance.data.repository.AccountRepositoryImpl
 import ru.plumsoftware.finance.data.util.endOfDayMillis
 import ru.plumsoftware.finance.data.util.startOfDayMillis
 import ru.plumsoftware.finance.domain.model.BACKUP_FORMAT_VERSION
+import ru.plumsoftware.finance.domain.model.AccountType
+import ru.plumsoftware.finance.domain.model.BackupAccountDto
 import ru.plumsoftware.finance.domain.model.BackupAssetDto
 import ru.plumsoftware.finance.domain.model.BackupAssetUsageDto
 import ru.plumsoftware.finance.domain.model.BackupCategoryDto
@@ -58,6 +63,7 @@ import java.util.Locale
 class BackupRepositoryImpl(
     private val context: Context,
     private val database: FinanceDatabase,
+    private val accountDao: AccountDao,
     private val categoryDao: CategoryDao,
     private val transactionDao: TransactionDao,
     private val recurringDao: RecurringTransactionDao,
@@ -72,6 +78,8 @@ class BackupRepositoryImpl(
         customEndMillis: Long?,
     ): BackupModel {
         val (startMillis, endMillis) = resolvePeriodMillis(period, customStartMillis, customEndMillis)
+        val accounts = accountDao.getAllActiveSync().map { it.toDomain() }
+        val accountNameById = accounts.associate { it.id to it.name }
         val categories = categoryDao.getAllSync().map { it.toDomain() }
         val transactions = if (period == ExportPeriod.ALL_TIME) {
             transactionDao.getAllSync()
@@ -93,6 +101,21 @@ class BackupRepositoryImpl(
             }
         }
 
+        val backupAccounts = accounts.map { account ->
+            BackupAccountDto(
+                id = account.id,
+                name = account.name,
+                type = account.type.name,
+                currencyCode = account.currencyCode,
+                colorHex = account.colorHex,
+                emoji = account.emoji,
+                initialBalance = minorToMajor(account.initialBalanceMinor),
+                sortOrder = account.sortOrder,
+                isDefault = account.isDefault,
+                isArchived = account.isArchived,
+                createdAtMillis = account.createdAtMillis,
+            )
+        }
         val backupCategories = categories.map { category ->
             BackupCategoryDto(
                 id = category.id,
@@ -112,6 +135,14 @@ class BackupRepositoryImpl(
                 date = formatDate(tx.dateMillis),
                 note = tx.note,
                 smartAssetId = tx.smartAssetId,
+                accountId = tx.accountId,
+                accountName = accountNameById[tx.accountId],
+                currencyCode = tx.currencyCode,
+                originalAmount = minorToMajor(
+                    if (tx.originalAmountMinor > 0L) tx.originalAmountMinor else tx.amountMinor,
+                ),
+                originalCurrencyCode = tx.originalCurrencyCode ?: tx.currencyCode,
+                exchangeRate = tx.exchangeRate,
             )
         }
         val backupRecurring = recurring.map { item ->
@@ -165,6 +196,8 @@ class BackupRepositoryImpl(
                 showOnHome = goal.showOnHome,
                 isCompleted = goal.isCompleted,
                 createdAtMillis = goal.createdAtMillis,
+                currencyCode = goal.currencyCode,
+                accountId = goal.accountId,
             )
         }
         val backupGoalDeposits = goalDeposits.map { deposit ->
@@ -174,6 +207,8 @@ class BackupRepositoryImpl(
                 amount = minorToMajor(deposit.amountMinor),
                 note = deposit.note,
                 createdAtMillis = deposit.createdAtMillis,
+                currencyCode = deposit.currencyCode,
+                accountId = deposit.accountId,
             )
         }
         val backupAchievements = achievementUnlocks.map { unlock ->
@@ -189,6 +224,7 @@ class BackupRepositoryImpl(
             exportedAt = Instant.now().toString(),
             deviceModel = Build.MODEL.orEmpty(),
             recordCounts = BackupRecordCounts(
+                accounts = backupAccounts.size,
                 categories = backupCategories.size,
                 transactions = backupTransactions.size,
                 recurring = backupRecurring.size,
@@ -202,6 +238,7 @@ class BackupRepositoryImpl(
 
         return BackupModel(
             meta = meta,
+            accounts = backupAccounts,
             categories = backupCategories,
             transactions = backupTransactions,
             recurringTransactions = backupRecurring,
@@ -239,6 +276,10 @@ class BackupRepositoryImpl(
         var skipped = 0
 
         database.withTransaction {
+            AccountRepositoryImpl(accountDao, transactionDao).ensureDefaultAccount()
+            val defaultAccount = accountDao.getDefault()
+                ?: error("Default account missing")
+
             if (strategy == ImportStrategy.OVERWRITE) {
                 onProgress(0.05f)
                 transactionDao.deleteAll()
@@ -251,9 +292,39 @@ class BackupRepositoryImpl(
                 achievementUnlockDao.deleteAll()
             }
 
+            val accountIdMap = mutableMapOf<Long, Long>()
+            backup.accounts.forEach { dto ->
+                val existingByName = dto.name.takeIf { it.isNotBlank() }
+                    ?.let { accountDao.findByName(it) }
+                val entity = accountEntityFromDto(dto)
+                when {
+                    dto.isDefault -> {
+                        accountIdMap[dto.id] = defaultAccount.id
+                        accountDao.update(
+                            entity.copy(
+                                id = defaultAccount.id,
+                                isDefault = true,
+                                isArchived = false,
+                            ),
+                        )
+                    }
+                    existingByName == null -> {
+                        val newId = accountDao.insert(entity.copy(isDefault = false))
+                        accountIdMap[dto.id] = newId
+                    }
+                    else -> {
+                        accountIdMap[dto.id] = existingByName.id
+                        if (strategy != ImportStrategy.MERGE) {
+                            accountDao.update(entity.copy(id = existingByName.id, isDefault = false))
+                        }
+                    }
+                }
+            }
+            accountIdMap.putIfAbsent(1L, defaultAccount.id)
+
             val existingCategories = categoryDao.getAllSync()
             val categoryIdMap = mutableMapOf<Long, Long>()
-            val totalSteps = 8f
+            val totalSteps = 9f
             var step = 0f
 
             backup.categories.forEach { dto ->
@@ -473,7 +544,16 @@ class BackupRepositoryImpl(
                         (it.note.orEmpty() == dto.note.orEmpty()) &&
                         (it.type == TransactionType.INCOME) == dto.isIncome
                 }
-                val entity = transactionEntityFromDto(dto, categoryId, smartAssetId, dateMillis)
+                val localAccountId = accountIdMap[dto.accountId]
+                    ?: dto.accountName?.let { accountDao.findByName(it)?.id }
+                    ?: defaultAccount.id
+                val entity = transactionEntityFromDto(
+                    dto = dto,
+                    categoryId = categoryId,
+                    smartAssetId = smartAssetId,
+                    dateMillis = dateMillis,
+                    accountId = localAccountId,
+                )
                 when {
                     strategy == ImportStrategy.OVERWRITE -> {
                         transactionDao.insert(entity.copy(id = dto.id))
@@ -546,21 +626,47 @@ class BackupRepositoryImpl(
             monthlyLimitMinor = null,
         )
 
+    private fun accountEntityFromDto(dto: BackupAccountDto): AccountEntity = AccountEntity(
+        id = 0,
+        name = dto.name,
+        type = runCatching { AccountType.valueOf(dto.type) }.getOrDefault(AccountType.DEBIT),
+        currencyCode = dto.currencyCode,
+        colorHex = dto.colorHex,
+        emoji = dto.emoji,
+        initialBalanceMinor = majorToMinor(dto.initialBalance),
+        sortOrder = dto.sortOrder,
+        isDefault = dto.isDefault,
+        isArchived = dto.isArchived,
+        createdAtMillis = dto.createdAtMillis,
+    )
+
     private fun transactionEntityFromDto(
         dto: BackupTransactionDto,
         categoryId: Long?,
         smartAssetId: Long?,
         dateMillis: Long,
-    ): TransactionEntity = TransactionEntity(
-        id = 0,
-        type = if (dto.isIncome) TransactionType.INCOME else TransactionType.EXPENSE,
-        amountMinor = majorToMinor(dto.amount),
-        categoryId = categoryId,
-        smartAssetId = smartAssetId,
-        note = dto.note,
-        dateMillis = dateMillis,
-        createdAtMillis = dateMillis,
-    )
+        accountId: Long,
+    ): TransactionEntity {
+        val amountMinor = majorToMinor(dto.amount)
+        val originalMinor = majorToMinor(
+            if (dto.originalAmount > 0.0) dto.originalAmount else dto.amount,
+        )
+        return TransactionEntity(
+            id = 0,
+            type = if (dto.isIncome) TransactionType.INCOME else TransactionType.EXPENSE,
+            amountMinor = amountMinor,
+            categoryId = categoryId,
+            smartAssetId = smartAssetId,
+            note = dto.note,
+            dateMillis = dateMillis,
+            createdAtMillis = dateMillis,
+            accountId = accountId,
+            currencyCode = dto.currencyCode,
+            originalAmountMinor = originalMinor,
+            originalCurrencyCode = dto.originalCurrencyCode,
+            exchangeRate = dto.exchangeRate,
+        )
+    }
 
     private fun recurringEntityFromDto(
         dto: BackupRecurringDto,
@@ -617,6 +723,8 @@ class BackupRepositoryImpl(
         showOnHome = dto.showOnHome,
         isCompleted = dto.isCompleted,
         createdAtMillis = dto.createdAtMillis,
+        currencyCode = dto.currencyCode,
+        accountId = dto.accountId,
     )
 
     private fun goalDepositEntityFromDto(
@@ -628,6 +736,8 @@ class BackupRepositoryImpl(
         amountMinor = majorToMinor(dto.amount),
         note = dto.note,
         createdAtMillis = dto.createdAtMillis,
+        currencyCode = dto.currencyCode,
+        accountId = dto.accountId,
     )
 
     private fun resolvePeriodMillis(

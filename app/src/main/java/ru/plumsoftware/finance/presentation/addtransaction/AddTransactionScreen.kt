@@ -35,21 +35,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -82,7 +77,9 @@ import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.ads.InterstitialPlacement
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.ui.ads.InterstitialAdEffect
+import ru.plumsoftware.finance.ui.components.CurrencyPickerSheet
 import ru.plumsoftware.finance.ui.components.ios.IosAlertDialog
+import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.components.ios.IosTextField
 import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.theme.CategoryUiDefaults
@@ -128,6 +125,14 @@ fun AddTransactionScreen(
         IosAlertDialog(
             message = message,
             onDismiss = viewModel::clearError,
+        )
+    }
+
+    if (state.showCurrencyPicker) {
+        CurrencyPickerSheet(
+            selectedCode = state.currencyCode,
+            onSelect = viewModel::setCurrency,
+            onDismiss = viewModel::closeCurrencyPicker,
         )
     }
 
@@ -234,8 +239,9 @@ fun AddTransactionScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
         topBar = {
-            AddTransactionTopBar(
+            IosEditorTopBar(
                 title = stringResource(R.string.add_transaction),
+                backLabel = stringResource(R.string.nav_home),
                 onBack = onBack,
             )
         },
@@ -282,8 +288,34 @@ fun AddTransactionScreen(
             AddTransactionAmountDisplay(
                 digits = state.amountMajorDigits,
                 currencyCode = state.currencyCode,
+                onCurrencyClick = viewModel::openCurrencyPicker,
             )
             Spacer(modifier = Modifier.height(Dimens.SpacingS))
+            if (state.accounts.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.add_transaction_account),
+                    style = typography.labelSmall,
+                    color = colors.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Dimens.SpacingXs),
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
+                ) {
+                    state.accounts.forEach { account ->
+                        AddTransactionCategoryChip(
+                            text = "${account.emoji} ${account.name}",
+                            selected = state.selectedAccountId == account.id,
+                            onClick = { viewModel.selectAccount(account.id) },
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(Dimens.SpacingS))
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -317,47 +349,6 @@ fun AddTransactionScreen(
             )
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun AddTransactionTopBar(
-    title: String,
-    onBack: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    CenterAlignedTopAppBar(
-        title = {
-            Text(
-                text = title,
-                style = typography.titleMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 17.sp,
-                ),
-                color = colors.onSurface,
-            )
-        },
-        navigationIcon = {
-            IconButton(
-                onClick = onBack,
-                colors = IconButtonDefaults.iconButtonColors(
-                    containerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                ),
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowLeft,
-                    contentDescription = null,
-                    tint = colors.primary,
-                    modifier = Modifier.size(Dimens.iconSizeNav),
-                )
-            }
-        },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = colors.background,
-        ),
-    )
 }
 
 @Composable
@@ -443,6 +434,7 @@ private fun AddTransactionTypeToggle(
 private fun AddTransactionAmountDisplay(
     digits: String,
     currencyCode: String,
+    onCurrencyClick: (() -> Unit)? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val symbol = MoneyFormat.symbol(currencyCode)
@@ -468,7 +460,15 @@ private fun AddTransactionAmountDisplay(
             )
         },
         label = "add_tx_amount",
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (onCurrencyClick != null) {
+                    Modifier.clickable(onClick = onCurrencyClick)
+                } else {
+                    Modifier
+                },
+            ),
     ) { amount ->
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -494,7 +494,7 @@ private fun AddTransactionAmountDisplay(
                     fontSize = amountSize,
                     letterSpacing = (-1).sp,
                 ),
-                color = colors.onSurfaceVariant,
+                color = if (onCurrencyClick != null) colors.primary else colors.onSurfaceVariant,
             )
         }
     }

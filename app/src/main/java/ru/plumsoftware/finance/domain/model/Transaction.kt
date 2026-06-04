@@ -9,4 +9,9 @@ data class Transaction(
     val note: String?,
     val dateMillis: Long,
     val createdAtMillis: Long,
+    val accountId: Long = 1L,
+    val currencyCode: String = "RUB",
+    val originalAmountMinor: Long = 0L,
+    val originalCurrencyCode: String? = null,
+    val exchangeRate: Double = 1.0,
 )

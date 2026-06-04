@@ -24,4 +24,6 @@ data class GoalDepositEntity(
     val amountMinor: Long,
     val note: String?,
     val createdAtMillis: Long,
+    val currencyCode: String = "RUB",
+    val accountId: Long? = null,
 )

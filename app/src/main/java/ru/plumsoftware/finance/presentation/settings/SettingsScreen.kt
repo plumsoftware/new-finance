@@ -4,10 +4,6 @@ package ru.plumsoftware.finance.presentation.settings
 
 import android.annotation.SuppressLint
 
-import android.content.Intent
-
-import android.net.Uri
-
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 
@@ -39,6 +35,7 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 
 import androidx.compose.material.icons.rounded.AdminPanelSettings
 
+import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.Category
 
 import androidx.compose.material.icons.rounded.DarkMode
@@ -115,6 +112,7 @@ import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.BuildConfig
 
 import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.util.openStoreListing
 
 import androidx.navigation.NavController
 import ru.plumsoftware.finance.presentation.common.BiometricHelper
@@ -160,6 +158,8 @@ fun SettingsScreen(
 
     onOpenCategories: () -> Unit = {},
 
+    onOpenAccounts: () -> Unit = {},
+
     onOpenLimits: () -> Unit = {},
 
     onOpenGoals: () -> Unit = {},
@@ -173,8 +173,6 @@ fun SettingsScreen(
     onOpenPermissions: () -> Unit = {},
 
     onOpenAbout: () -> Unit = {},
-
-    onRateApp: () -> Unit = {},
 
     viewModel: SettingsViewModel = koinViewModel(),
 
@@ -256,27 +254,7 @@ fun SettingsScreen(
 
 
 
-    val openStore = {
-
-        onRateApp()
-
-        runCatching {
-
-            context.startActivity(
-
-                Intent(
-
-                    Intent.ACTION_VIEW,
-
-                    Uri.parse("market://details?id=${context.packageName}"),
-
-                ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-
-            )
-
-        }
-
-    }
+    val openStore = { openStoreListing(context) }
 
 
 
@@ -411,6 +389,20 @@ fun SettingsScreen(
                         .padding(horizontal = Dimens.SpacingL),
 
                 ) {
+
+                    SettingsNavRow(
+
+                        icon = Icons.Rounded.AccountBalance,
+
+                        iconBackground = AccentBlue,
+
+                        title = stringResource(R.string.accounts_title),
+
+                        onClick = onOpenAccounts,
+
+                    )
+
+                    SettingsRowDivider()
 
                     SettingsNavRow(
 

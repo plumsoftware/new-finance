@@ -75,6 +75,7 @@
     <string name="empty_analytics_subtitle">Добавьте операции — здесь появятся графики и топ категорий</string>
 
     <string name="add_transaction">Новая операция</string>
+    <string name="add_transaction_account">Счёт</string>
     <string name="save">Сохранить</string>
     <string name="cancel">Отмена</string>
     <string name="ok">ОК</string>
@@ -228,6 +229,7 @@
     <string name="export_action">Экспортировать</string>
     <string name="rate_app">Оценить приложение</string>
     <string name="about">О приложении</string>
+    <string name="about_version">Версия %1$s</string>
     <string name="settings_local_note">Все данные хранятся только на этом устройстве.</string>
     <string name="data_stored_locally">Все данные хранятся только на этом устройстве.</string>
     <string name="theme_system">Система</string>
@@ -510,6 +512,8 @@
     <string name="goal_field_deadline_toggle">Установить срок</string>
     <string name="goal_field_deadline_value">Дата дедлайна</string>
     <string name="goal_name_counter">%1$d/40</string>
+    <string name="goal_detail_title">О цели</string>
+    <string name="goals_back_list">Цели</string>
     <string name="goal_detail_deposited">Пополнения</string>
     <string name="goal_detail_history_empty">Пополнений ещё не было</string>
     <string name="goal_detail_delete">Удалить цель</string>
@@ -647,4 +651,56 @@
     <string name="ach_positive_month_desc">Завершил месяц с положительным балансом</string>
     <string name="ach_progress_days">%1$d из %2$d дней</string>
     <string name="ach_progress_count">%1$d из %2$d</string>
+
+    <!-- Accounts -->
+    <string name="accounts_title">Счета</string>
+    <string name="accounts_back_settings">Настройки</string>
+    <string name="accounts_add">Добавить</string>
+    <string name="accounts_total">Общий баланс</string>
+    <string name="account_default_badge">По умолчанию</string>
+    <string name="account_default_name">Основной счёт</string>
+    <string name="account_create_title">Новый счёт</string>
+    <string name="account_edit_title">Изменить счёт</string>
+    <string name="account_field_name">Название</string>
+    <string name="account_field_name_hint">Напр. Тинькофф</string>
+    <string name="account_field_type">Тип счёта</string>
+    <string name="account_field_currency">Валюта</string>
+    <string name="account_field_initial_balance">Начальный баланс</string>
+    <string name="account_type_debit">Дебетовый</string>
+    <string name="account_type_credit">Кредитный</string>
+    <string name="account_type_cash">Наличные</string>
+    <string name="account_type_savings">Накопительный</string>
+    <string name="account_type_other">Другой</string>
+    <string name="account_archive_title">Архивировать «%1$s»?</string>
+    <string name="account_archive_message">Операции сохранятся. Счёт можно восстановить в настройках.</string>
+    <string name="account_archive_confirm">Архивировать</string>
+    <string name="account_delete_title">Удалить «%1$s»?</string>
+    <string name="account_delete_message">Все операции перенесутся на основной счёт.</string>
+    <string name="account_delete_confirm">Удалить</string>
+    <string name="account_cannot_delete_default">Основной счёт нельзя удалить</string>
+
+    <!-- Currency -->
+    <string name="currency_picker_title">Выберите валюту</string>
+    <string name="currency_search_hint">Поиск валюты…</string>
+    <string name="currency_popular_section">ПОПУЛЯРНЫЕ</string>
+    <string name="currency_all_section">ВСЕ ВАЛЮТЫ</string>
+    <string name="currency_converted_hint">≈ %1$s</string>
+
+    <!-- Goal deposit detail -->
+    <string name="goal_deposit_detail_title">Пополнение</string>
+    <string name="goal_deposit_detail_date">Дата</string>
+    <string name="goal_deposit_detail_goal">Цель</string>
+    <string name="goal_deposit_detail_currency">Валюта</string>
+    <string name="goal_deposit_detail_note">Заметка</string>
+    <string name="goal_deposit_detail_account">Счёт</string>
+    <string name="goal_deposit_delete_button">Удалить пополнение</string>
+    <string name="goal_deposit_delete_title">Удалить пополнение?</string>
+    <string name="goal_deposit_delete_message">Сумма будет вычтена из накоплений по цели.</string>
+    <string name="goal_deposit_delete_confirm">Удалить</string>
+    <string name="goal_deposit_delete_cancel">Отмена</string>
+
+    <!-- Import/Export -->
+    <string name="export_success">Файл сохранён</string>
+    <string name="import_success">Импортировано %1$d операций</string>
+    <string name="import_account_not_found">Счёт не найден — операции добавлены в основной счёт</string>
 </resources>

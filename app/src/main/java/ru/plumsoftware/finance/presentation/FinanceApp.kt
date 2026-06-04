@@ -55,6 +55,8 @@ import org.koin.core.parameter.parametersOf
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.ThemeMode
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
+import ru.plumsoftware.finance.presentation.accounts.AccountEditorScreen
+import ru.plumsoftware.finance.presentation.accounts.AccountsScreen
 import ru.plumsoftware.finance.presentation.addtransaction.AddTransactionScreen
 import ru.plumsoftware.finance.presentation.analytics.AnalyticsScreen
 import ru.plumsoftware.finance.presentation.achievements.AchievementsScreen
@@ -75,6 +77,7 @@ import ru.plumsoftware.finance.presentation.notifications.NotificationsScreen
 import ru.plumsoftware.finance.presentation.onboarding.OnboardingScreen
 import ru.plumsoftware.finance.presentation.permissions.PermissionsScreen
 import ru.plumsoftware.finance.presentation.recurring.RecurringScreen
+import ru.plumsoftware.finance.presentation.settings.AboutScreen
 import ru.plumsoftware.finance.presentation.settings.SettingsScreen
 import ru.plumsoftware.finance.presentation.smartsavings.CreateSmartSavingsScreen
 import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsDetailScreen
@@ -494,6 +497,7 @@ fun FinanceApp(
                     ) {
                         SettingsScreen(
                             navController = navController,
+                            onOpenAccounts = { navController.navigate(AppRoute.Accounts.route) },
                             onOpenCategories = { navController.navigate(AppRoute.Categories.route) },
                             onOpenLimits = { navController.navigate(AppRoute.Limits.route) },
                             onOpenGoals = { navController.navigate(AppRoute.Goals.route) },
@@ -501,6 +505,12 @@ fun FinanceApp(
                             onOpenRecurring = { navController.navigate(AppRoute.Recurring.route) },
                             onOpenExport = { navController.navigate(AppRoute.Export.route) },
                             onOpenPermissions = { navController.navigate(AppRoute.Permissions.route) },
+                            onOpenAbout = { navController.navigate(AppRoute.About.route) },
+                        )
+                    }
+                    composable(route = AppRoute.About.route) {
+                        AboutScreen(
+                            onBack = { navController.popBackStackOrHome() },
                         )
                     }
                     composable(
@@ -538,6 +548,29 @@ fun FinanceApp(
                         deepLinks = listOf(NavDeepLinks.recurring),
                     ) {
                         RecurringScreen(navController = navController)
+                    }
+                    composable(route = AppRoute.Accounts.route) {
+                        AccountsScreen(
+                            onBack = { navController.popBackStackOrHome() },
+                            onAdd = { navController.navigate(AppRoute.accountEdit()) },
+                            onEdit = { id -> navController.navigate(AppRoute.accountEdit(id)) },
+                        )
+                    }
+                    composable(
+                        route = AppRoute.ACCOUNT_EDIT,
+                        arguments = listOf(
+                            navArgument("accountId") {
+                                type = NavType.LongType
+                                defaultValue = 0L
+                            },
+                        ),
+                    ) { backStackEntry ->
+                        val accountId = backStackEntry.arguments?.getLong("accountId")?.takeIf { it > 0L }
+                        AccountEditorScreen(
+                            accountId = accountId,
+                            onBack = { navController.popBackStackOrHome() },
+                            onSaved = { navController.popBackStackOrHome() },
+                        )
                     }
                     composable(
                         route = AppRoute.Categories.route,

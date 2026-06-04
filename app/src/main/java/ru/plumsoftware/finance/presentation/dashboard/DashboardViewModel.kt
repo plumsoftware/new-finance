@@ -27,6 +27,8 @@ import ru.plumsoftware.finance.domain.insights.InsightsEngine
 import ru.plumsoftware.finance.data.local.dao.AchievementUnlockDao
 import ru.plumsoftware.finance.data.local.entity.AchievementUnlockEntity
 import ru.plumsoftware.finance.data.repository.StreakRepository
+import ru.plumsoftware.finance.domain.model.AccountWithBalance
+import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
 import ru.plumsoftware.finance.domain.repository.GoalRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
@@ -53,6 +55,7 @@ data class DashboardUiState(
 
 class DashboardViewModel(
     private val transactionRepository: TransactionRepository,
+    private val accountRepository: AccountRepository,
     private val smartAssetRepository: SmartAssetRepository,
     private val goalRepository: GoalRepository,
     private val categoryRepository: CategoryRepository,
@@ -68,6 +71,7 @@ class DashboardViewModel(
 
     val uiState: StateFlow<DashboardUiState> = combine(
         transactionRepository.observeAll(),
+        accountRepository.observeAllWithBalances(),
         smartAssetRepository.observeByStatus(SmartAssetStatus.PAYING_OFF),
         goalRepository.observeFeaturedOnHome(),
         categoryRepository.observeByType(CategoryType.EXPENSE, includeHidden = true),
@@ -80,39 +84,37 @@ class DashboardViewModel(
         _warningDismissed,
     ) { values ->
         val transactions = values[0] as List<Transaction>
-        val assets = values[1] as List<SmartAsset>
-        val featuredGoal = values[2] as Goal?
-        val expenseCategories = values[3] as List<Category>
-        val incomeCategories = values[4] as List<Category>
-        val budgetSpending = values[5] as List<CategoryBudgetSpending>
-        val settings = values[6] as ru.plumsoftware.finance.domain.model.AppSettings
-        val streak = values[7] as StreakData
+        val accountBalances = values[1] as List<AccountWithBalance>
+        val assets = values[2] as List<SmartAsset>
+        val featuredGoal = values[3] as Goal?
+        val expenseCategories = values[4] as List<Category>
+        val incomeCategories = values[5] as List<Category>
+        val budgetSpending = values[6] as List<CategoryBudgetSpending>
+        val settings = values[7] as ru.plumsoftware.finance.domain.model.AppSettings
+        val streak = values[8] as StreakData
         @Suppress("UNCHECKED_CAST")
-        val achievementUnlocks = values[8] as List<AchievementUnlockEntity>
-        val snackbar = values[9] as String?
-        val warningDismissed = values[10] as Boolean
+        val achievementUnlocks = values[9] as List<AchievementUnlockEntity>
+        val snackbar = values[10] as String?
+        val warningDismissed = values[11] as Boolean
+        val selectedAccount = accountBalances.find { it.account.id == settings.selectedAccountId }
+            ?: accountBalances.firstOrNull()
+        val accountTransactions = transactions.filter { it.accountId == settings.selectedAccountId }
         val monthRange = currentMonthRange()
         val previousRange = previousMonthRange()
-        val monthTx = transactions.filter { it.dateMillis in monthRange.first..monthRange.second }
-        val previousMonthTx = transactions.filter { it.dateMillis in previousRange.first..previousRange.second }
+        val monthTx = accountTransactions.filter { it.dateMillis in monthRange.first..monthRange.second }
+        val previousMonthTx = accountTransactions.filter { it.dateMillis in previousRange.first..previousRange.second }
         val insights = insightsEngine.generateInsights(monthTx, previousMonthTx)
-        val totalBalance = transactions.sumOf { tx ->
-            when (tx.type) {
-                TransactionType.INCOME -> tx.amountMinor
-                TransactionType.EXPENSE -> -tx.amountMinor
-                TransactionType.SAVINGS -> 0L
-            }
-        }
+        val totalBalance = selectedAccount?.calculatedBalanceMinor ?: 0L
         val hasBudgetWarnings = !warningDismissed && budgetSpending.any { item ->
             val limit = item.limitMinor
             limit != null && limit > 0L && item.percentage >= 0.8f
         }
         DashboardUiState(
             totalBalanceMinor = totalBalance,
-            currencyCode = settings.defaultCurrencyCode,
+            currencyCode = selectedAccount?.account?.currencyCode ?: settings.defaultCurrencyCode,
             monthIncomeMinor = monthTx.filter { it.type == TransactionType.INCOME }.sumOf { it.amountMinor },
             monthExpenseMinor = monthTx.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amountMinor },
-            recentTransactions = transactions.take(5),
+            recentTransactions = accountTransactions.take(5),
             categoryMap = (expenseCategories + incomeCategories).associateBy { it.id },
             smartAssets = assets,
             featuredGoal = featuredGoal,

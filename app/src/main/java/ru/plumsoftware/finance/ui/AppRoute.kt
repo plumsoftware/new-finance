@@ -11,6 +11,7 @@ sealed class AppRoute(val route: String) {
     object Achievements : AppRoute("achievements")
     object Analytics : AppRoute("analytics")
     object Settings : AppRoute("settings")
+    object Accounts : AppRoute("settings/accounts")
     object Categories : AppRoute("settings/categories")
     object Limits : AppRoute("limits")
     object Notifications : AppRoute("notifications")
@@ -19,6 +20,7 @@ sealed class AppRoute(val route: String) {
     object Recurring : AppRoute("settings/recurring")
     object Permissions : AppRoute("settings/permissions")
     object ImportPicker : AppRoute("settings/import")
+    object About : AppRoute("settings/about")
 
     object ImportPreview : AppRoute("import_preview/{encodedPath}") {
         fun route(encodedPath: String) =
@@ -44,6 +46,11 @@ sealed class AppRoute(val route: String) {
         fun addTransaction(quickCategory: String? = null): String =
             if (quickCategory.isNullOrBlank()) "add_transaction"
             else "add_transaction?quickCategory=${android.net.Uri.encode(quickCategory)}"
+
+        const val ACCOUNT_EDIT = "settings/accounts/edit?accountId={accountId}"
+        fun accountEdit(accountId: Long? = null): String =
+            if (accountId != null) "settings/accounts/edit?accountId=$accountId"
+            else "settings/accounts/edit?accountId="
 
         const val CATEGORY_EDIT = "settings/categories/edit?categoryId={categoryId}&type={type}"
         fun categoryEdit(categoryId: Long? = null, type: String? = null): String {

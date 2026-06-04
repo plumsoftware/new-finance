@@ -1,33 +1,43 @@
 package ru.plumsoftware.finance.domain.model
 
+import kotlin.math.ceil
+import kotlin.math.max
+
 data class Goal(
     val id: Long = 0,
     val name: String,
     val emoji: String,
     val targetAmountMinor: Long,
-    val savedAmountMinor: Long = 0,
+    val savedAmountMinor: Long,
     val colorHex: String,
-    val deadline: Long? = null,
-    val note: String? = null,
-    val showOnHome: Boolean = false,
-    val isCompleted: Boolean = false,
-    val createdAtMillis: Long = System.currentTimeMillis(),
+    val deadline: Long?,
+    val note: String?,
+    val showOnHome: Boolean,
+    val isCompleted: Boolean,
+    val createdAtMillis: Long,
+    val currencyCode: String = "RUB",
+    val accountId: Long? = null,
 )
 
 val Goal.progress: Float
     get() = if (targetAmountMinor <= 0L) 0f else {
-        (savedAmountMinor.toFloat() / targetAmountMinor.toFloat()).coerceIn(0f, 1f)
+        (savedAmountMinor.toFloat() / targetAmountMinor).coerceIn(0f, 1f)
     }
 
 val Goal.remainingMinor: Long
-    get() = (targetAmountMinor - savedAmountMinor).coerceAtLeast(0)
+    get() = max(0L, targetAmountMinor - savedAmountMinor)
 
 val Goal.daysLeft: Int?
-    get() = deadline?.let {
-        ((it - System.currentTimeMillis()) / 86_400_000L).toInt()
+    get() {
+        val deadlineMillis = deadline ?: return null
+        val now = System.currentTimeMillis()
+        if (deadlineMillis <= now) return 0
+        val diffDays = ceil((deadlineMillis - now).toDouble() / 86_400_000.0).toInt()
+        return diffDays.coerceAtLeast(0)
     }
 
 val Goal.isOverdue: Boolean
-    get() = deadline != null &&
-        System.currentTimeMillis() > deadline &&
-        !isCompleted
+    get() {
+        val deadlineMillis = deadline ?: return false
+        return !isCompleted && deadlineMillis < System.currentTimeMillis()
+    }

@@ -16,6 +16,7 @@ import ru.plumsoftware.finance.domain.model.GoalDeposit
 import ru.plumsoftware.finance.domain.model.Transaction
 import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.domain.model.remainingMinor
+import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.GoalRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.domain.repository.TransactionRepository
@@ -26,17 +27,22 @@ data class GoalDetailUiState(
     val goal: Goal? = null,
     val deposits: List<GoalDeposit> = emptyList(),
     val currencyCode: String = "RUB",
+    val selectedAccountId: Long = 1L,
     val showDepositSheet: Boolean = false,
     val amountDigits: String = "",
     val depositNote: String = "",
     val isSaving: Boolean = false,
     val showCelebration: Boolean = false,
+    val selectedDeposit: GoalDeposit? = null,
+    val showDepositDetail: Boolean = false,
+    val accountNames: Map<Long, String> = emptyMap(),
 )
 
 class GoalDetailViewModel(
     private val goalId: Long,
     private val goalRepository: GoalRepository,
     private val transactionRepository: TransactionRepository,
+    private val accountRepository: AccountRepository,
     settingsRepository: SettingsRepository,
     private val context: Context,
 ) : ViewModel() {
@@ -47,12 +53,15 @@ class GoalDetailViewModel(
         goalRepository.observeGoal(goalId),
         goalRepository.observeDeposits(goalId),
         settingsRepository.settings,
+        accountRepository.observeAllActive(),
         mutableState,
-    ) { goal, deposits, settings, transient ->
+    ) { goal, deposits, settings, accounts, transient ->
         transient.copy(
             goal = goal,
             deposits = deposits,
-            currencyCode = settings.defaultCurrencyCode,
+            currencyCode = goal?.currencyCode ?: settings.defaultCurrencyCode,
+            selectedAccountId = settings.selectedAccountId,
+            accountNames = accounts.associate { it.id to it.name },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GoalDetailUiState())
 
@@ -106,6 +115,8 @@ class GoalDetailViewModel(
                     goalId = goalId,
                     amountMinor = amountMinor,
                     note = state.depositNote,
+                    currencyCode = state.currencyCode,
+                    accountId = state.selectedAccountId,
                 )
                 val now = System.currentTimeMillis()
                 transactionRepository.upsert(
@@ -114,6 +125,11 @@ class GoalDetailViewModel(
                         amountMinor = amountMinor,
                         categoryId = null,
                         smartAssetId = null,
+                        accountId = state.selectedAccountId,
+                        currencyCode = state.currencyCode,
+                        originalAmountMinor = amountMinor,
+                        originalCurrencyCode = state.currencyCode,
+                        exchangeRate = 1.0,
                         note = buildString {
                             append(
                                 context.getString(
@@ -149,6 +165,37 @@ class GoalDetailViewModel(
 
     fun dismissCelebration() {
         mutableState.update { it.copy(showCelebration = false) }
+    }
+
+    fun openDepositDetail(deposit: GoalDeposit) {
+        mutableState.update {
+            it.copy(selectedDeposit = deposit, showDepositDetail = true)
+        }
+    }
+
+    fun closeDepositDetail() {
+        mutableState.update {
+            it.copy(selectedDeposit = null, showDepositDetail = false)
+        }
+    }
+
+    fun deleteDeposit(deposit: GoalDeposit) {
+        viewModelScope.launch {
+            mutableState.update { it.copy(isSaving = true) }
+            runCatching { goalRepository.deleteDeposit(deposit) }
+                .onSuccess {
+                    mutableState.update {
+                        it.copy(
+                            isSaving = false,
+                            showDepositDetail = false,
+                            selectedDeposit = null,
+                        )
+                    }
+                }
+                .onFailure {
+                    mutableState.update { it.copy(isSaving = false) }
+                }
+        }
     }
 
     fun deleteGoal(onDeleted: () -> Unit) {

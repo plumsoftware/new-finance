@@ -3,7 +3,7 @@ package ru.plumsoftware.finance.domain.model
 import androidx.annotation.StringRes
 import ru.plumsoftware.finance.R
 
-const val BACKUP_FORMAT_VERSION = 4
+const val BACKUP_FORMAT_VERSION = 5
 
 enum class ExportFormat(
     @StringRes val labelRes: Int,
@@ -29,6 +29,7 @@ enum class ImportStrategy(@StringRes val titleRes: Int, @StringRes val descRes: 
 }
 
 data class BackupRecordCounts(
+    val accounts: Int = 0,
     val categories: Int = 0,
     val transactions: Int = 0,
     val recurring: Int = 0,
@@ -57,6 +58,20 @@ data class BackupCategoryDto(
     val sortOrder: Int,
 )
 
+data class BackupAccountDto(
+    val id: Long,
+    val name: String,
+    val type: String,
+    val currencyCode: String,
+    val colorHex: String,
+    val emoji: String,
+    val initialBalance: Double,
+    val sortOrder: Int,
+    val isDefault: Boolean,
+    val isArchived: Boolean,
+    val createdAtMillis: Long,
+)
+
 data class BackupTransactionDto(
     val id: Long,
     val amount: Double,
@@ -65,6 +80,12 @@ data class BackupTransactionDto(
     val date: String,
     val note: String?,
     val smartAssetId: Long? = null,
+    val accountId: Long = 1L,
+    val accountName: String? = null,
+    val currencyCode: String = "RUB",
+    val originalAmount: Double = 0.0,
+    val originalCurrencyCode: String? = null,
+    val exchangeRate: Double = 1.0,
 )
 
 data class BackupRecurringDto(
@@ -119,6 +140,8 @@ data class BackupGoalDto(
     val showOnHome: Boolean,
     val isCompleted: Boolean,
     val createdAtMillis: Long,
+    val currencyCode: String = "RUB",
+    val accountId: Long? = null,
 )
 
 data class BackupGoalDepositDto(
@@ -127,6 +150,8 @@ data class BackupGoalDepositDto(
     val amount: Double,
     val note: String?,
     val createdAtMillis: Long,
+    val currencyCode: String = "RUB",
+    val accountId: Long? = null,
 )
 
 data class BackupAchievementUnlockDto(
@@ -136,6 +161,7 @@ data class BackupAchievementUnlockDto(
 
 data class BackupModel(
     val meta: BackupMeta = BackupMeta(),
+    val accounts: List<BackupAccountDto> = emptyList(),
     val categories: List<BackupCategoryDto> = emptyList(),
     val transactions: List<BackupTransactionDto> = emptyList(),
     val recurringTransactions: List<BackupRecurringDto> = emptyList(),

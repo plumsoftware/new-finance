@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +25,7 @@ class SettingsDataStore(
     val settings: Flow<AppSettings> = dataStore.data.map { prefs ->
         AppSettings(
             defaultCurrencyCode = prefs[Keys.DEFAULT_CURRENCY] ?: "RUB",
+            selectedAccountId = prefs[Keys.SELECTED_ACCOUNT_ID] ?: 1L,
             onboardingCompleted = prefs[Keys.ONBOARDING_COMPLETED] ?: false,
             biometricEnabled = prefs[Keys.BIOMETRIC_ENABLED] ?: false,
             themeMode = ThemeMode.entries.getOrElse(
@@ -37,6 +39,7 @@ class SettingsDataStore(
         dataStore.edit { prefs ->
             val current = AppSettings(
                 defaultCurrencyCode = prefs[Keys.DEFAULT_CURRENCY] ?: "RUB",
+                selectedAccountId = prefs[Keys.SELECTED_ACCOUNT_ID] ?: 1L,
                 onboardingCompleted = prefs[Keys.ONBOARDING_COMPLETED] ?: false,
                 biometricEnabled = prefs[Keys.BIOMETRIC_ENABLED] ?: false,
                 themeMode = ThemeMode.entries.getOrElse(
@@ -46,6 +49,7 @@ class SettingsDataStore(
             )
             val updated = transform(current)
             prefs[Keys.DEFAULT_CURRENCY] = updated.defaultCurrencyCode
+            prefs[Keys.SELECTED_ACCOUNT_ID] = updated.selectedAccountId
             prefs[Keys.ONBOARDING_COMPLETED] = updated.onboardingCompleted
             prefs[Keys.BIOMETRIC_ENABLED] = updated.biometricEnabled
             prefs[Keys.THEME_MODE] = updated.themeMode.ordinal.toString()
@@ -55,6 +59,7 @@ class SettingsDataStore(
 
     private object Keys {
         val DEFAULT_CURRENCY = stringPreferencesKey("default_currency")
+        val SELECTED_ACCOUNT_ID = longPreferencesKey("selected_account_id")
         val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         val BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
         val THEME_MODE = stringPreferencesKey("theme_mode")

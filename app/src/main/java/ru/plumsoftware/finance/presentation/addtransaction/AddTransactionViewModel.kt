@@ -15,6 +15,8 @@ import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.domain.model.Transaction
 import ru.plumsoftware.finance.domain.model.TransactionType
+import ru.plumsoftware.finance.domain.model.Account
+import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.domain.repository.TransactionRepository
@@ -27,7 +29,10 @@ data class AddTransactionUiState(
     val note: String = "",
     val categories: List<Category> = emptyList(),
     val selectedCategoryId: Long? = null,
+    val accounts: List<Account> = emptyList(),
+    val selectedAccountId: Long = 1L,
     val currencyCode: String = "RUB",
+    val showCurrencyPicker: Boolean = false,
     val isSaving: Boolean = false,
     val saved: Boolean = false,
     val errorMessage: String? = null,
@@ -38,6 +43,7 @@ class AddTransactionViewModel(
     savedStateHandle: SavedStateHandle,
     private val transactionRepository: TransactionRepository,
     private val categoryRepository: CategoryRepository,
+    private val accountRepository: AccountRepository,
     private val settingsRepository: SettingsRepository,
     private val context: Context,
 ) : ViewModel() {
@@ -52,16 +58,46 @@ class AddTransactionViewModel(
     init {
         viewModelScope.launch {
             val settings = settingsRepository.settings.first()
-            val currency = settings.defaultCurrencyCode
+            val accounts = accountRepository.observeAllActive().first()
+            val selectedAccount = accounts.find { it.id == settings.selectedAccountId }
+                ?: accounts.firstOrNull()
+            val currency = selectedAccount?.currencyCode ?: settings.defaultCurrencyCode
             val categories = categoryRepository.observeByType(CategoryType.EXPENSE, false).first()
             _uiState.update {
                 it.copy(
+                    accounts = accounts,
+                    selectedAccountId = selectedAccount?.id ?: 1L,
                     currencyCode = currency,
                     categories = categories,
                     selectedCategoryId = resolveInitialCategoryId(categories),
                 )
             }
         }
+    }
+
+    fun selectAccount(accountId: Long) {
+        val account = _uiState.value.accounts.find { it.id == accountId } ?: return
+        _uiState.update {
+            it.copy(
+                selectedAccountId = accountId,
+                currencyCode = account.currencyCode,
+            )
+        }
+        viewModelScope.launch {
+            settingsRepository.update { settings -> settings.copy(selectedAccountId = accountId) }
+        }
+    }
+
+    fun setCurrency(code: String) {
+        _uiState.update { it.copy(currencyCode = code, showCurrencyPicker = false) }
+    }
+
+    fun openCurrencyPicker() {
+        _uiState.update { it.copy(showCurrencyPicker = true) }
+    }
+
+    fun closeCurrencyPicker() {
+        _uiState.update { it.copy(showCurrencyPicker = false) }
     }
 
     fun setType(type: TransactionType) {
@@ -158,6 +194,11 @@ class AddTransactionViewModel(
                             note = state.note.ifBlank { null },
                             dateMillis = System.currentTimeMillis(),
                             createdAtMillis = System.currentTimeMillis(),
+                            accountId = state.selectedAccountId,
+                            currencyCode = state.currencyCode,
+                            originalAmountMinor = amount,
+                            originalCurrencyCode = state.currencyCode,
+                            exchangeRate = 1.0,
                         ),
                     )
                 }.onSuccess {

@@ -11,6 +11,14 @@ interface GoalRepository {
     fun observeDeposits(goalId: Long): Flow<List<GoalDeposit>>
     suspend fun getGoal(goalId: Long): Goal?
     suspend fun upsertGoal(goal: Goal): Long
-    suspend fun addDeposit(goalId: Long, amountMinor: Long, note: String?): Goal
+    suspend fun addDeposit(
+        goalId: Long,
+        amountMinor: Long,
+        note: String?,
+        currencyCode: String = "RUB",
+        accountId: Long? = null,
+    ): Goal
+
+    suspend fun deleteDeposit(deposit: GoalDeposit)
     suspend fun deleteGoal(goalId: Long)
 }

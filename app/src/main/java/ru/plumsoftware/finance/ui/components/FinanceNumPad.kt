@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.background
@@ -69,7 +70,7 @@ fun FinanceNumPad(
                 row.forEach { key ->
                     val cellModifier = Modifier
                         .weight(1f)
-                        .height(Dimens.numPadKeyHeightCompact)
+                        .height(Dimens.numPadKeyHeight)
                     when (key) {
                         "" -> Spacer(modifier = cellModifier)
                         "." -> {
@@ -140,21 +141,18 @@ private fun NumPadKey(
     )
     val keyShape = RoundedCornerShape(Dimens.cornerRadiusChip)
     Box(
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+            .clip(keyShape)
+            .background(lerp(colors.surface, colors.outline, pressProgress))
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(keyShape)
-                .background(lerp(colors.surface, colors.outline, pressProgress))
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onClick = onClick,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            content()
-        }
+        content()
     }
 }

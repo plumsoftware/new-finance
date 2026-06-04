@@ -821,7 +821,7 @@ fun TransactionDetailSheet(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
             Text(
-                text = "$amountPrefix${MoneyFormat.format(transaction.amountMinor, currencyCode)}",
+                text = "$amountPrefix${MoneyFormat.format(transaction.amountMinor, transaction.currencyCode)}",
                 style = typography.displayLarge,
                 color = amountColor,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -836,6 +836,11 @@ fun TransactionDetailSheet(
                     DetailRow(
                         stringResource(R.string.transaction_detail_category),
                         category?.name ?: stringResource(R.string.dash_placeholder),
+                    )
+                    HorizontalDivider(color = colors.outline)
+                    DetailRow(
+                        stringResource(R.string.goal_deposit_detail_currency),
+                        transaction.currencyCode,
                     )
                     HorizontalDivider(color = colors.outline)
                     DetailRow(

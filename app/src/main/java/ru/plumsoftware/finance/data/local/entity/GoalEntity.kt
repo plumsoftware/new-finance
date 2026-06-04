@@ -17,4 +17,6 @@ data class GoalEntity(
     val showOnHome: Boolean,
     val isCompleted: Boolean,
     val createdAtMillis: Long,
+    val currencyCode: String = "RUB",
+    val accountId: Long? = null,
 )
