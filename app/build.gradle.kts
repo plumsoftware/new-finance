@@ -30,7 +30,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("boolean", "FIREBASE_ENABLED", isFirebaseEnabled.toString())
-        buildConfigField("int", "PLATFORM", "1")
+        buildConfigField("int", "PLATFORM", "3")
     }
 
     signingConfigs {

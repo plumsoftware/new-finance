@@ -81,7 +81,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import ru.plumsoftware.finance.AppConfig
 import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.ui.ads.NativeAdContainer
+import ru.plumsoftware.finance.ui.ads.NativeAdSession
 import ru.plumsoftware.finance.domain.model.AppSettings
 import ru.plumsoftware.finance.domain.model.Goal
 import ru.plumsoftware.finance.domain.model.SmartAsset
@@ -216,6 +219,11 @@ fun HomeScreen(
                     onMonthClick = onOpenAnalyticsClick,
                 )
             }
+            if (!NativeAdSession.dismissed) {
+                item {
+                    NativeAdContainer(adUnitId = AppConfig.nativeHome)
+                }
+            }
             item {
                 HomeQuickActionsRow(
                     onLimitsClick = onOpenLimitsClick,
@@ -228,20 +236,20 @@ fun HomeScreen(
                 )
             }
             item {
-                SectionWithAction(
-                    sectionLabel = { SectionLabel(text = stringResource(R.string.goals_home_section)) },
-                    actionLabel = stringResource(R.string.dashboard_see_all),
-                    onActionClick = onOpenGoalsClick,
-                )
-            }
-            item {
-                state.featuredGoal?.let { featured ->
-                    HomeFeaturedGoalCard(
-                        goal = featured,
-                        currencyCode = state.currencyCode,
-                        onClick = { onGoalClick(featured.id) },
+                Column {
+                    SectionWithAction(
+                        sectionLabel = { SectionLabel(text = stringResource(R.string.goals_home_section)) },
+                        actionLabel = stringResource(R.string.dashboard_see_all),
+                        onActionClick = onOpenGoalsClick,
                     )
-                } ?: HomeCreateGoalCard(onClick = onCreateGoalClick)
+                    state.featuredGoal?.let { featured ->
+                        HomeFeaturedGoalCard(
+                            goal = featured,
+                            currencyCode = state.currencyCode,
+                            onClick = { onGoalClick(featured.id) },
+                        )
+                    } ?: HomeCreateGoalCard(onClick = onCreateGoalClick)
+                }
             }
             item {
                 AnimatedVisibility(visible = state.hasBudgetWarnings) {
@@ -261,29 +269,29 @@ fun HomeScreen(
                 }
             }
             item {
-                SectionWithAction(
-                    sectionLabel = { SectionLabel(text = stringResource(R.string.smart_savings)) },
-                    actionLabel = stringResource(R.string.dashboard_see_all),
-                    onActionClick = onOpenSmartSavingsClick,
-                )
-            }
-            item {
-                if (state.smartAssets.isEmpty()) {
-                    EmptyAssetCard(onClick = onCreateAssetClick)
-                } else {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                            .padding(horizontal = Dimens.SpacingL),
-                        horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
-                    ) {
-                        state.smartAssets.forEach { asset ->
-                            AssetMiniCard(
-                                asset = asset,
-                                currencyCode = state.currencyCode,
-                                onRecordUsage = { viewModel.recordSmartUsage(asset.id) },
-                            )
+                Column {
+                    SectionWithAction(
+                        sectionLabel = { SectionLabel(text = stringResource(R.string.smart_savings)) },
+                        actionLabel = stringResource(R.string.dashboard_see_all),
+                        onActionClick = onOpenSmartSavingsClick,
+                    )
+                    if (state.smartAssets.isEmpty()) {
+                        EmptyAssetCard(onClick = onCreateAssetClick)
+                    } else {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState())
+                                .padding(horizontal = Dimens.SpacingL),
+                            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+                        ) {
+                            state.smartAssets.forEach { asset ->
+                                AssetMiniCard(
+                                    asset = asset,
+                                    currencyCode = state.currencyCode,
+                                    onRecordUsage = { viewModel.recordSmartUsage(asset.id) },
+                                )
+                            }
                         }
                     }
                 }

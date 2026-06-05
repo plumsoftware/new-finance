@@ -662,19 +662,21 @@ fun SettingsScreen(
 
                 ) {
 
-                    SettingsNavRow(
+                    if (BuildConfig.PLATFORM != 3) {
+                        SettingsNavRow(
 
-                        icon = Icons.Rounded.Star,
+                            icon = Icons.Rounded.Star,
 
-                        iconBackground = IosOrange,
+                            iconBackground = IosOrange,
 
-                        title = stringResource(R.string.rate_app),
+                            title = stringResource(R.string.rate_app),
 
-                        onClick = { openStore() },
+                            onClick = { openStore() },
 
-                    )
+                        )
 
-                    SettingsRowDivider()
+                        SettingsRowDivider()
+                    }
 
                     SettingsNavRow(
 

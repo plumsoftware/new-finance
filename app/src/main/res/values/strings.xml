@@ -228,6 +228,10 @@
     <string name="biometric_unavailable_body">Настройте отпечаток пальца или Face ID в настройках устройства</string>
     <string name="export_action">Экспортировать</string>
     <string name="rate_app">Оценить приложение</string>
+    <string name="ad_label">Реклама</string>
+    <string name="ad_by_yandex">Яндекс</string>
+    <string name="ad_feedback">Меню рекламы</string>
+    <string name="ad_close">Закрыть рекламу</string>
     <string name="about">О приложении</string>
     <string name="about_version">Версия %1$s</string>
     <string name="settings_local_note">Все данные хранятся только на этом устройстве.</string>
