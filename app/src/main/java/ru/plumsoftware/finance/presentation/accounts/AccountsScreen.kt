@@ -10,20 +10,27 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
@@ -31,7 +38,9 @@ import ru.plumsoftware.finance.domain.model.AccountWithBalance
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.ui.components.IosCard
 import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
+import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
+import ru.plumsoftware.finance.ui.theme.IosRed
 
 @Composable
 fun AccountsScreen(
@@ -84,6 +93,7 @@ fun AccountsScreen(
                     isSelected = row.account.id == state.selectedAccountId,
                     onSelect = { viewModel.selectAccount(row.account.id) },
                     onEdit = { onEdit(row.account.id) },
+                    onDelete = { viewModel.deleteAccount(row.account.id) },
                 )
             }
         }
@@ -96,10 +106,59 @@ private fun AccountRow(
     isSelected: Boolean,
     onSelect: () -> Unit,
     onEdit: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     val account = row.account
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    if (showDeleteConfirm) {
+        Dialog(onDismissRequest = { showDeleteConfirm = false }) {
+            Surface(
+                shape = RoundedCornerShape(Dimens.cornerRadiusCard),
+                color = colors.surface,
+            ) {
+                Column(modifier = Modifier.padding(Dimens.paddingMedium + Dimens.paddingMicro)) {
+                    Text(
+                        text = stringResource(R.string.account_delete_title, account.name),
+                        style = typography.titleMedium,
+                    )
+                    Text(
+                        text = stringResource(R.string.account_delete_message),
+                        style = typography.bodyMedium,
+                        color = colors.onSurfaceVariant,
+                        modifier = Modifier.padding(top = Dimens.paddingSmall),
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = Dimens.paddingMedium),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        TextButton(onClick = { showDeleteConfirm = false }) {
+                            Text(
+                                text = stringResource(R.string.cancel),
+                                color = colors.primary,
+                            )
+                        }
+                        TextButton(
+                            onClick = {
+                                showDeleteConfirm = false
+                                onDelete()
+                            },
+                        ) {
+                            Text(
+                                text = stringResource(R.string.account_delete_confirm),
+                                color = IosRed,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     IosCard {
         Row(
             modifier = Modifier
@@ -150,14 +209,17 @@ private fun AccountRow(
                 )
             }
         }
-        if (!account.isDefault) {
+        if (isSelected && !account.isDefault) {
             HorizontalDivider(color = colors.outline.copy(alpha = 0.4f))
-            TextButton(
-                onClick = onEdit,
+            IosTextButton(
+                text = stringResource(R.string.delete),
+                onClick = { showDeleteConfirm = true },
+                color = colors.error,
+                style = typography.labelLarge,
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.account_edit_title))
-            }
+                textAlign = TextAlign.Center,
+                contentPadding = PaddingValues(vertical = Dimens.spacingRow),
+            )
         }
     }
 }

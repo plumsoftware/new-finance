@@ -5,6 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ru.plumsoftware.finance.ui.theme.Dimens
 
@@ -12,6 +13,7 @@ import ru.plumsoftware.finance.ui.theme.Dimens
 fun SectionLabel(
     text: String,
     modifier: Modifier = Modifier,
+    withBottomSpacing: Boolean = true,
 ) {
     Text(
         text = text.uppercase(),
@@ -20,7 +22,7 @@ fun SectionLabel(
         letterSpacing = 0.5.sp,
         modifier = modifier.padding(
             start = Dimens.SpacingL,
-            bottom = Dimens.SpacingXs,
+            bottom = if (withBottomSpacing) Dimens.SpacingXs else 0.dp,
         ),
     )
 }

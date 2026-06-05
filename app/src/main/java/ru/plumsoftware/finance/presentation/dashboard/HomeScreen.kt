@@ -238,7 +238,7 @@ fun HomeScreen(
             item {
                 Column {
                     SectionWithAction(
-                        sectionLabel = { SectionLabel(text = stringResource(R.string.goals_home_section)) },
+                        title = stringResource(R.string.goals_home_section),
                         actionLabel = stringResource(R.string.dashboard_see_all),
                         onActionClick = onOpenGoalsClick,
                     )
@@ -271,7 +271,7 @@ fun HomeScreen(
             item {
                 Column {
                     SectionWithAction(
-                        sectionLabel = { SectionLabel(text = stringResource(R.string.smart_savings)) },
+                        title = stringResource(R.string.smart_savings),
                         actionLabel = stringResource(R.string.dashboard_see_all),
                         onActionClick = onOpenSmartSavingsClick,
                     )
@@ -849,18 +849,18 @@ private fun BudgetWarningBanner(
 
 @Composable
 private fun SectionWithAction(
-    sectionLabel: @Composable () -> Unit,
+    title: String,
     actionLabel: String,
     onActionClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(end = Dimens.SpacingS),
+            .padding(end = Dimens.SpacingS, bottom = Dimens.SpacingXs),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        sectionLabel()
+        SectionLabel(text = title, withBottomSpacing = false)
         IosTextButton(
             text = actionLabel,
             onClick = onActionClick,
