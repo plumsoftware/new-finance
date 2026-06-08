@@ -473,6 +473,7 @@ private fun GoalAmountBar(
     digits: String,
     currencyCode: String,
 ) {
+    val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     Row(
@@ -490,7 +491,7 @@ private fun GoalAmountBar(
             color = colors.onSurfaceVariant,
         )
         AnimatedContent(
-            targetState = MoneyFormat.formatEntryDisplay(digits, currencyCode),
+            targetState = MoneyFormat.formatEntryDisplay(context, digits, currencyCode),
             transitionSpec = {
                 (slideInVertically(animationSpec = tween(120)) { it / 2 } + fadeIn(tween(120)))
                     .togetherWith(slideOutVertically(animationSpec = tween(100)) { -it / 2 } + fadeOut(tween(80)))
@@ -584,6 +585,7 @@ private fun GoalAmountRow(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
+    val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     Row(
@@ -597,7 +599,7 @@ private fun GoalAmountRow(
     ) {
         Text(text = label, style = typography.bodyLarge)
         Text(
-            text = MoneyFormat.formatEntryDisplay(digits, currencyCode),
+            text = MoneyFormat.formatEntryDisplay(context, digits, currencyCode),
             style = typography.bodyLarge,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             color = if (selected) colors.primary else colors.onSurfaceVariant,

@@ -30,6 +30,7 @@ import ru.plumsoftware.finance.data.local.entity.SmartAssetEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetUsageEntity
 import ru.plumsoftware.finance.data.local.entity.StreakDataEntity
 import ru.plumsoftware.finance.data.local.entity.TransactionEntity
+import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.data.repository.AccountRepositoryImpl
 
 @Database(
@@ -72,7 +73,7 @@ abstract class FinanceDatabase : RoomDatabase() {
                     object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
-                            insertDefaultAccount(db)
+                            insertDefaultAccount(db, context)
                             CoroutineScope(Dispatchers.IO).launch {
                                 seed(database, context)
                             }
@@ -80,10 +81,10 @@ abstract class FinanceDatabase : RoomDatabase() {
 
                         override fun onOpen(db: SupportSQLiteDatabase) {
                             super.onOpen(db)
-                            insertDefaultAccount(db)
+                            insertDefaultAccount(db, context)
                             CoroutineScope(Dispatchers.IO).launch {
                                 seed(database, context)
-                                ensureDefaultAccountRow(database)
+                                ensureDefaultAccountRow(database, context)
                             }
                         }
                     },
@@ -92,7 +93,8 @@ abstract class FinanceDatabase : RoomDatabase() {
             return database
         }
 
-        private fun insertDefaultAccount(db: SupportSQLiteDatabase) {
+        private fun insertDefaultAccount(db: SupportSQLiteDatabase, context: Context) {
+            val accountName = context.getString(R.string.account_default_name).replace("'", "''")
             db.execSQL(
                 """
                 INSERT OR IGNORE INTO accounts
@@ -100,16 +102,17 @@ abstract class FinanceDatabase : RoomDatabase() {
                  initialBalanceMinor, sortOrder, isDefault,
                  isArchived, createdAtMillis)
                 VALUES
-                (1, 'Основной счёт', 'DEBIT', 'RUB', '#007AFF',
+                (1, '$accountName', 'DEBIT', 'RUB', '#007AFF',
                  '💳', 0, 0, 1, 0, ${System.currentTimeMillis()})
                 """.trimIndent(),
             )
         }
 
-        private suspend fun ensureDefaultAccountRow(database: FinanceDatabase) {
+        private suspend fun ensureDefaultAccountRow(database: FinanceDatabase, context: Context) {
             AccountRepositoryImpl(
                 database.accountDao(),
                 database.transactionDao(),
+                context,
             ).ensureDefaultAccount()
         }
 

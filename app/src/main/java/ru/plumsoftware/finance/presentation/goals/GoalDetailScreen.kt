@@ -37,6 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -70,6 +72,7 @@ fun GoalDetailScreen(
     onDeleted: () -> Unit,
     viewModel: GoalDetailViewModel = koinViewModel { parametersOf(goalId) },
 ) {
+    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
@@ -140,7 +143,7 @@ fun GoalDetailScreen(
                 )
                 Spacer(Modifier.height(Dimens.paddingMedium))
                 Text(
-                    text = MoneyFormat.formatEntryDisplay(state.amountDigits, state.currencyCode),
+                    text = MoneyFormat.formatEntryDisplay(context, state.amountDigits, state.currencyCode),
                     style = typography.displaySmall,
                     color = goalColor,
                 )
@@ -255,7 +258,10 @@ fun GoalDetailScreen(
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(goal.emoji, style = typography.displaySmall)
                                 Text(
-                                    text = "${(goal.progress * 100).toInt()}%",
+                                    text = stringResource(
+                                        R.string.percent_short,
+                                        (goal.progress * 100).toInt(),
+                                    ),
                                     style = typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                 )
@@ -320,7 +326,10 @@ fun GoalDetailScreen(
                         val dailyNeeded = (goal.remainingMinor / days).coerceAtLeast(0L)
                         IosCard {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("💡", style = typography.titleMedium)
+                                Text(
+                                    stringResource(R.string.goal_tip_emoji),
+                                    style = typography.titleMedium,
+                                )
                                 Spacer(Modifier.width(Dimens.spacingRow))
                                 Text(
                                     text = androidx.compose.ui.res.stringResource(
@@ -386,7 +395,12 @@ fun GoalDetailScreen(
                                         horizontalArrangement = Arrangement.spacedBy(Dimens.paddingMicro),
                                     ) {
                                         Text(
-                                            text = "+${MoneyFormat.format(deposit.amountMinor, depositCurrency)}",
+                                            text = MoneyFormat.formatWithSignPrefix(
+                                                context,
+                                                deposit.amountMinor,
+                                                depositCurrency,
+                                                isPositive = true,
+                                            ),
                                             style = typography.bodyLarge,
                                             fontWeight = FontWeight.SemiBold,
                                             color = goalColor,
@@ -442,7 +456,10 @@ private fun GoalCelebrationDialog(
                     .padding(Dimens.paddingMedium + Dimens.paddingMicro),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text("🎉", style = typography.displaySmall)
+                Text(
+                    stringResource(R.string.goal_celebration_emoji),
+                    style = typography.displaySmall,
+                )
                 Spacer(Modifier.height(Dimens.paddingSmall))
                 Text(
                     text = title,

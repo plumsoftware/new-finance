@@ -152,7 +152,7 @@ class GoalsWidgetProvider : AppWidgetProvider() {
                     emoji = goal.emoji,
                     name = goal.name,
                     percent = percent,
-                    percentLabel = "$percent%",
+                    percentLabel = context.getString(R.string.percent_short, percent),
                 )
             }
             val totalSavedMinor = goals.sumOf { it.savedAmountMinor }

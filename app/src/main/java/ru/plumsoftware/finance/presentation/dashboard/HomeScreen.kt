@@ -70,6 +70,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -230,7 +231,7 @@ fun HomeScreen(
                     onOperationsClick = onOpenHistoryClick,
                     onAchievementsClick = onOpenAchievementsClick,
                     hasBudgetWarnings = state.hasBudgetWarnings,
-                    operationCount = state.recentTransactions.size,
+                    operationCount = state.todayOperationsCount,
                     unlockedAchievementsCount = state.unlockedAchievementsCount,
                     streak = state.streak,
                 )
@@ -362,7 +363,11 @@ private fun GreetingHeader(
                 if (unreadCount > 0) {
                     Badge {
                         Text(
-                            text = if (unreadCount > 99) "99+" else unreadCount.toString(),
+                            text = if (unreadCount > 99) {
+                                stringResource(R.string.badge_count_overflow)
+                            } else {
+                                unreadCount.toString()
+                            },
                             style = typography.labelSmall,
                         )
                     }
@@ -392,7 +397,11 @@ private fun HomeStreakInfo(
         verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
     ) {
         Text(
-            text = "🔥 ${streak.currentStreak} ${streak.currentStreak.pluralDays()}",
+            text = stringResource(
+                R.string.streak_fire_format,
+                streak.currentStreak,
+                pluralStringResource(R.plurals.days_count, streak.currentStreak),
+            ),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
             color = when {
@@ -415,13 +424,6 @@ private fun HomeStreakInfo(
             },
         )
     }
-}
-
-private fun Int.pluralDays(): String = when {
-    this % 100 in 11..19 -> "дней"
-    this % 10 == 1 -> "день"
-    this % 10 in 2..4 -> "дня"
-    else -> "дней"
 }
 
 @Composable
@@ -507,7 +509,11 @@ private fun BalanceCard(
                     icon = Icons.Rounded.ArrowUpward,
                     tint = colors.secondary,
                     label = stringResource(R.string.income),
-                    value = MoneyFormat.format(monthIncomeMinor, currencyCode, showSign = true),
+                    value = MoneyFormat.format(
+                        monthIncomeMinor,
+                        currencyCode,
+                        showSign = true,
+                    ),
                 )
                 FinanceStat(
                     icon = Icons.Rounded.ArrowDownward,

@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +20,12 @@ import androidx.compose.ui.unit.dp
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.ui.theme.IosBlue
 
+private val NativeAdCloseCircleImage = Color(0xE6FFFFFF)
+private val NativeAdCloseCircleCompact = Color(0xFFF2F2F7)
+private val NativeAdCloseIcon = Color(0xFF1C1C1E)
+private val NativeAdCloseIconDisabled = Color(0x591C1C1E)
+private val NativeAdCloseProgressTrack = Color(0x1F000000)
+
 @Composable
 fun NativeAdCloseControl(
     isImageLayout: Boolean,
@@ -29,11 +34,10 @@ fun NativeAdCloseControl(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = MaterialTheme.colorScheme
     val circleColor = if (isImageLayout) {
-        Color(0xE6FFFFFF)
+        NativeAdCloseCircleImage
     } else {
-        Color(0xFFF2F2F7)
+        NativeAdCloseCircleCompact
     }
 
     Box(
@@ -45,7 +49,7 @@ fun NativeAdCloseControl(
                 progress = { progress },
                 modifier = Modifier.matchParentSize(),
                 color = IosBlue,
-                trackColor = colors.onSurface.copy(alpha = 0.12f),
+                trackColor = NativeAdCloseProgressTrack,
                 strokeWidth = 2.dp,
             )
         }
@@ -66,7 +70,7 @@ fun NativeAdCloseControl(
                 imageVector = Icons.Outlined.Close,
                 contentDescription = stringResource(R.string.ad_close),
                 modifier = Modifier.size(12.dp),
-                tint = colors.onSurface.copy(alpha = if (closeEnabled) 0.7f else 0.35f),
+                tint = if (closeEnabled) NativeAdCloseIcon.copy(alpha = 0.7f) else NativeAdCloseIconDisabled,
             )
         }
     }

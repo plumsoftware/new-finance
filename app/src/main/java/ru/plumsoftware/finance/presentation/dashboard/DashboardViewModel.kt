@@ -34,6 +34,8 @@ import ru.plumsoftware.finance.domain.repository.GoalRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.domain.repository.SmartAssetRepository
 import ru.plumsoftware.finance.domain.repository.TransactionRepository
+import ru.plumsoftware.finance.data.util.endOfDayMillis
+import ru.plumsoftware.finance.data.util.startOfDayMillis
 import ru.plumsoftware.finance.R
 
 data class DashboardUiState(
@@ -41,7 +43,7 @@ data class DashboardUiState(
     val currencyCode: String = "RUB",
     val monthIncomeMinor: Long = 0L,
     val monthExpenseMinor: Long = 0L,
-    val recentTransactions: List<Transaction> = emptyList(),
+    val todayOperationsCount: Int = 0,
     val categoryMap: Map<Long, Category> = emptyMap(),
     val smartAssets: List<SmartAsset> = emptyList(),
     val featuredGoal: Goal? = null,
@@ -103,6 +105,11 @@ class DashboardViewModel(
         val previousRange = previousMonthRange()
         val monthTx = accountTransactions.filter { it.dateMillis in monthRange.first..monthRange.second }
         val previousMonthTx = accountTransactions.filter { it.dateMillis in previousRange.first..previousRange.second }
+        val todayStart = startOfDayMillis(System.currentTimeMillis())
+        val todayEnd = endOfDayMillis(System.currentTimeMillis())
+        val todayOperationsCount = accountTransactions.count { tx ->
+            tx.dateMillis >= todayStart && tx.dateMillis < todayEnd
+        }
         val insights = insightsEngine.generateInsights(monthTx, previousMonthTx)
         val totalBalance = selectedAccount?.calculatedBalanceMinor ?: 0L
         val hasBudgetWarnings = !warningDismissed && budgetSpending.any { item ->
@@ -114,7 +121,7 @@ class DashboardViewModel(
             currencyCode = selectedAccount?.account?.currencyCode ?: settings.defaultCurrencyCode,
             monthIncomeMinor = monthTx.filter { it.type == TransactionType.INCOME }.sumOf { it.amountMinor },
             monthExpenseMinor = monthTx.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amountMinor },
-            recentTransactions = accountTransactions.take(5),
+            todayOperationsCount = todayOperationsCount,
             categoryMap = (expenseCategories + incomeCategories).associateBy { it.id },
             smartAssets = assets,
             featuredGoal = featuredGoal,

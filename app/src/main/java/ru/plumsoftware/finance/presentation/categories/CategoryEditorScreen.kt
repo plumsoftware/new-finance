@@ -139,7 +139,7 @@ fun CategoryEditorScreen(
                     )
                 }
                 Text(
-                    text = "${state.name.length}/30",
+                    text = stringResource(R.string.category_name_counter, state.name.length),
                     style = typography.labelSmall,
                     color = colors.onSurfaceVariant,
                     modifier = Modifier

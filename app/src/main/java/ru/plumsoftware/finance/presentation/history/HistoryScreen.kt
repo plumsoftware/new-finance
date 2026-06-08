@@ -790,12 +790,13 @@ fun TransactionDetailSheet(
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     val dateLabel =
         SimpleDateFormat("d MMMM yyyy, HH:mm", Locale("ru")).format(Date(transaction.dateMillis))
     val amountColor = if (transaction.type == TransactionType.INCOME) colors.secondary else colors.error
-    val amountPrefix = if (transaction.type == TransactionType.INCOME) "+" else "–"
+    val isIncome = transaction.type == TransactionType.INCOME
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = colors.surface,
@@ -813,7 +814,10 @@ fun TransactionDetailSheet(
                     .align(Alignment.CenterHorizontally),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(text = category?.icon ?: "•", style = typography.headlineMedium)
+                Text(
+                    text = category?.icon ?: stringResource(R.string.default_bullet),
+                    style = typography.headlineMedium,
+                )
             }
             Text(
                 text = category?.name ?: stringResource(R.string.transaction_default),
@@ -821,7 +825,12 @@ fun TransactionDetailSheet(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
             Text(
-                text = "$amountPrefix${MoneyFormat.format(transaction.amountMinor, transaction.currencyCode)}",
+                text = MoneyFormat.formatWithSignPrefix(
+                    context,
+                    transaction.amountMinor,
+                    transaction.currencyCode,
+                    isPositive = isIncome,
+                ),
                 style = typography.displayLarge,
                 color = amountColor,
                 modifier = Modifier.align(Alignment.CenterHorizontally),

@@ -21,6 +21,13 @@ data class CategorySpendingRow(
     val amountMinor: Long,
 )
 
+data class AccountStats(
+    val accountId: Long,
+    val totalIncome: Long,
+    val totalExpense: Long,
+    val txCount: Int,
+)
+
 @Dao
 interface TransactionDao {
     @Query("SELECT * FROM transactions ORDER BY dateMillis DESC, id DESC")
@@ -152,4 +159,27 @@ interface TransactionDao {
 
     @Query("DELETE FROM transactions")
     suspend fun deleteAll()
+
+    @Query(
+        """
+        SELECT
+            t.accountId AS accountId,
+            COALESCE(SUM(
+                CASE WHEN t.type = 'INCOME'
+                THEN t.amountMinor ELSE 0 END
+            ), 0) AS totalIncome,
+            COALESCE(SUM(
+                CASE WHEN t.type = 'EXPENSE'
+                THEN t.amountMinor ELSE 0 END
+            ), 0) AS totalExpense,
+            COUNT(t.id) AS txCount
+        FROM transactions t
+        WHERE t.dateMillis >= :from AND t.dateMillis < :to
+        GROUP BY t.accountId
+        """,
+    )
+    suspend fun getStatsByAccount(
+        from: Long,
+        to: Long,
+    ): List<AccountStats>
 }

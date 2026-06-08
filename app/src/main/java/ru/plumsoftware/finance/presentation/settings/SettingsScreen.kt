@@ -726,7 +726,7 @@ fun SettingsScreen(
 
                     Text(
 
-                        text = "v${BuildConfig.VERSION_NAME}",
+                        text = stringResource(R.string.settings_version_label, BuildConfig.VERSION_NAME),
 
                         style = typography.labelSmall,
 

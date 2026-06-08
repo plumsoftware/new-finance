@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -76,6 +77,7 @@ fun SmartSavingsDetailScreen(
     onDeleteSuccess: () -> Unit,
     viewModel: SmartSavingsDetailViewModel = koinViewModel { parametersOf(assetId) },
 ) {
+    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val asset = state.asset
     var showDeleteSheet by remember { mutableStateOf(false) }
@@ -114,7 +116,7 @@ fun SmartSavingsDetailScreen(
                 Spacer(Modifier.height(Dimens.spacingList))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = MoneyFormat.formatEntryDisplay(state.amountDigits, state.currencyCode),
+                        text = MoneyFormat.formatEntryDisplay(context, state.amountDigits, state.currencyCode),
                         style = typography.displayMedium,
                         color = colors.secondary,
                         modifier = Modifier.clickable { isNumPadVisible = true },
@@ -288,7 +290,12 @@ fun SmartSavingsDetailScreen(
                         color = colors.onSurface,
                     )
                     Text(
-                        text = "+${MoneyFormat.format(asset.totalSavedMinor, state.currencyCode)}",
+                        text = MoneyFormat.formatWithSignPrefix(
+                            context,
+                            asset.totalSavedMinor,
+                            state.currencyCode,
+                            isPositive = true,
+                        ),
                         style = typography.headlineSmall,
                         color = colors.secondary,
                         modifier = Modifier.padding(top = Dimens.SpacingXxs),
@@ -442,6 +449,7 @@ private fun StatCell(
 
 @Composable
 private fun UsageRow(usage: SmartAssetUsage, currencyCode: String) {
+    val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     val date = SimpleDateFormat("d MMMM, HH:mm", Locale("ru")).format(Date(usage.usedAtMillis))
@@ -454,7 +462,12 @@ private fun UsageRow(usage: SmartAssetUsage, currencyCode: String) {
     ) {
         Text(text = date, style = typography.bodyMedium, color = colors.onSurfaceVariant)
         Text(
-            text = "+${MoneyFormat.format(usage.savedAmountMinor, currencyCode)}",
+            text = MoneyFormat.formatWithSignPrefix(
+                context,
+                usage.savedAmountMinor,
+                currencyCode,
+                isPositive = true,
+            ),
             color = colors.secondary,
             style = typography.bodyMedium,
         )

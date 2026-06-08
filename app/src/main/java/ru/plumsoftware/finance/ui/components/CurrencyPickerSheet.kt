@@ -53,7 +53,11 @@ fun CurrencyPickerSheet(
                 items(SupportedCurrencies.all, key = { it.code }) { currency ->
                     val selected = currency.code == selectedCode
                     Text(
-                        text = "${currency.code} · ${currency.name}",
+                        text = stringResource(
+                            R.string.currency_picker_item,
+                            currency.code,
+                            stringResource(currency.nameRes),
+                        ),
                         style = typography.bodyLarge,
                         color = if (selected) colors.primary else colors.onSurface,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,

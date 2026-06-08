@@ -527,11 +527,18 @@ private fun LimitEditSheet(
             )
             Spacer(Modifier.height(Dimens.SpacingXs))
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs)) {
-                listOf("3 000", "5 000", "10 000", "20 000").forEach { preset ->
+                val numberFormat = java.text.NumberFormat.getNumberInstance(java.util.Locale("ru"))
+                listOf(3_000, 5_000, 10_000, 20_000).forEach { presetAmount ->
+                    val presetDisplay = numberFormat.format(presetAmount)
+                    val presetValue = presetAmount.toString()
                     LimitPresetChip(
-                        label = "$preset $currencySymbol",
-                        selected = limitInput == preset.replace(" ", ""),
-                        onClick = { onInputChange(preset.replace(" ", "")) },
+                        label = stringResource(
+                            R.string.limit_preset_label,
+                            presetDisplay,
+                            currencySymbol,
+                        ),
+                        selected = limitInput == presetValue,
+                        onClick = { onInputChange(presetValue) },
                     )
                 }
             }

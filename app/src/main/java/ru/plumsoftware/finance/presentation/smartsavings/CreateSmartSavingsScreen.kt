@@ -60,6 +60,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -561,6 +562,7 @@ private fun IosAmountSelectorRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     val hasValue = MoneyFormat.majorDigitsToMinor(digits, currencyCode) > 0L
@@ -584,7 +586,7 @@ private fun IosAmountSelectorRow(
         )
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                text = MoneyFormat.formatEntryDisplay(digits, currencyCode),
+                text = MoneyFormat.formatEntryDisplay(context, digits, currencyCode),
                 style = typography.bodyLarge,
                 color = valueColor,
             )
@@ -607,6 +609,7 @@ private fun CreateAssetAmountBar(
     digits: String,
     currencyCode: String,
 ) {
+    val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     Row(
@@ -624,7 +627,7 @@ private fun CreateAssetAmountBar(
             color = colors.onSurfaceVariant,
         )
         AnimatedContent(
-            targetState = MoneyFormat.formatEntryDisplay(digits, currencyCode),
+            targetState = MoneyFormat.formatEntryDisplay(context, digits, currencyCode),
             transitionSpec = {
                 (slideInVertically(animationSpec = tween(120)) { it / 2 } + fadeIn(tween(120)))
                     .togetherWith(slideOutVertically(animationSpec = tween(100)) { -it / 2 } + fadeOut(tween(80)))

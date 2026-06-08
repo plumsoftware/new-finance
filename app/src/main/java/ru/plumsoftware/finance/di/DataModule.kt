@@ -62,14 +62,14 @@ val dataModule = module {
     single { NotificationDisplayHelper(androidContext()) }
     single { InAppMessagingHandler(get(), androidContext()) }
 
-    single<AccountRepository> { AccountRepositoryImpl(get(), get()) }
+    single<AccountRepository> { AccountRepositoryImpl(get(), get(), androidContext()) }
     single<TransactionRepository> { TransactionRepositoryImpl(get()) }
     single<CategoryRepository> { CategoryRepositoryImpl(get(), get()) }
     single<SmartAssetRepository> {
         SmartAssetRepositoryImpl(get(), get(), get())
     }
     single<GoalRepository> { GoalRepositoryImpl(get(), get()) }
-    single<AnalyticsRepository> { AnalyticsRepositoryImpl(get(), get()) }
+    single<AnalyticsRepository> { AnalyticsRepositoryImpl(get(), get(), get(), get()) }
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
     single { StreakRepository(get(), get()) }
     single<NotificationRepository> { NotificationRepositoryImpl(get()) }

@@ -53,6 +53,7 @@ internal fun bindNativeAd(
     nativeAdView: NativeAdView,
     nativeAd: NativeAd,
     isImageLayout: Boolean,
+    isDarkTheme: Boolean = false,
 ): Boolean {
     val media = nativeAdView.findViewById<MediaView>(R.id.native_ad_media)
     val icon = nativeAdView.findViewById<ImageView>(R.id.native_ad_icon)
@@ -92,6 +93,7 @@ internal fun bindNativeAd(
         nativeAdView = nativeAdView,
         context = nativeAdView.context,
         isImageLayout = isImageLayout,
+        isDarkTheme = isDarkTheme,
     )
     return true
 }
@@ -100,7 +102,9 @@ internal fun applyNativeAdStyle(
     nativeAdView: NativeAdView,
     context: Context,
     isImageLayout: Boolean,
+    isDarkTheme: Boolean,
 ) {
+    val textColors = nativeAdTextColors(isDarkTheme)
     val icon = nativeAdView.findViewById<ImageView>(R.id.native_ad_icon)
     val media = nativeAdView.findViewById<MediaView>(R.id.native_ad_media)
     val title = nativeAdView.findViewById<TextView>(R.id.native_ad_title)
@@ -136,21 +140,37 @@ internal fun applyNativeAdStyle(
         }
     }
 
-    sponsored?.text = context.getString(R.string.ad_label)
-
-    val advertiser = domain?.text?.toString()?.trim().orEmpty()
-    domain?.text = when {
-        advertiser.isBlank() -> "· ${context.getString(R.string.ad_by_yandex)}"
-        else -> "· $advertiser"
+    sponsored?.apply {
+        text = context.getString(R.string.ad_label)
+        setTextColor(textColors.secondary)
     }
 
-    title?.text = title.text?.toString()
-        ?.removePrefix("[Demo Ad]")
-        ?.removePrefix("[Demo Ad] ")
-        ?.trim()
+    val advertiser = domain?.text?.toString()?.trim().orEmpty()
+    domain?.setTextColor(textColors.secondary)
+    domain?.text = when {
+        advertiser.isBlank() -> context.getString(
+            R.string.ad_domain_separator,
+            context.getString(R.string.ad_by_yandex),
+        )
+        else -> context.getString(R.string.ad_domain_separator, advertiser)
+    }
 
-    body?.visibility = if (body.text.isNullOrBlank() || !isImageLayout) View.GONE else View.VISIBLE
-    warning?.visibility = if (warning.text.isNullOrBlank()) View.GONE else View.VISIBLE
+    title?.apply {
+        text = text?.toString()
+            ?.removePrefix("[Demo Ad]")
+            ?.removePrefix("[Demo Ad] ")
+            ?.trim()
+        setTextColor(textColors.primary)
+    }
+
+    body?.apply {
+        visibility = if (text.isNullOrBlank() || !isImageLayout) View.GONE else View.VISIBLE
+        setTextColor(textColors.secondary)
+    }
+    warning?.apply {
+        visibility = if (text.isNullOrBlank()) View.GONE else View.VISIBLE
+        setTextColor(textColors.secondary)
+    }
     callToAction?.visibility = if (callToAction.text.isNullOrBlank()) View.GONE else View.VISIBLE
 
     feedback?.apply {
@@ -178,6 +198,23 @@ internal fun applyNativeAdStyle(
     if (!isImageLayout) {
         callToAction?.setTextColor(0xFF007AFF.toInt())
     } else {
-        callToAction?.setTextColor(context.getColor(android.R.color.white))
+        callToAction?.setTextColor(0xFFFFFFFF.toInt())
     }
+}
+
+private data class NativeAdTextColors(
+    val primary: Int,
+    val secondary: Int,
+)
+
+private fun nativeAdTextColors(isDarkTheme: Boolean): NativeAdTextColors = if (isDarkTheme) {
+    NativeAdTextColors(
+        primary = 0xFFFFFFFF.toInt(),
+        secondary = 0xFF8E8E93.toInt(),
+    )
+} else {
+    NativeAdTextColors(
+        primary = 0xFF1C1C1E.toInt(),
+        secondary = 0xFF8E8E93.toInt(),
+    )
 }

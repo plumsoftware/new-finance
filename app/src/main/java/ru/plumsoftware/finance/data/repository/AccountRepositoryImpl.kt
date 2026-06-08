@@ -1,5 +1,6 @@
 package ru.plumsoftware.finance.data.repository
 
+import android.content.Context
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import ru.plumsoftware.finance.data.local.dao.AccountDao
@@ -9,11 +10,13 @@ import ru.plumsoftware.finance.data.mapper.toEntity
 import ru.plumsoftware.finance.domain.model.Account
 import ru.plumsoftware.finance.domain.model.AccountType
 import ru.plumsoftware.finance.domain.model.AccountWithBalance
+import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.repository.AccountRepository
 
 class AccountRepositoryImpl(
     private val accountDao: AccountDao,
     private val transactionDao: TransactionDao,
+    private val context: Context,
 ) : AccountRepository {
 
     override fun observeAllActive(): Flow<List<Account>> =
@@ -36,7 +39,7 @@ class AccountRepositoryImpl(
             accountDao.insert(
                 Account(
                     id = 1L,
-                    name = "Основной счёт",
+                    name = context.getString(R.string.account_default_name),
                     type = AccountType.DEBIT,
                     currencyCode = "RUB",
                     colorHex = "#007AFF",

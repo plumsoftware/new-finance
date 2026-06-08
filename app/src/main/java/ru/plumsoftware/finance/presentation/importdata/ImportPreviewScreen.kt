@@ -369,7 +369,10 @@ private fun ImportPreviewContent(
                         )
                         Spacer(Modifier.height(Dimens.SpacingM))
                         Text(
-                            text = "${(current.progress * 100).toInt()}%",
+                            text = stringResource(
+                                R.string.percent_short,
+                                (current.progress * 100).toInt(),
+                            ),
                             style = typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                         )

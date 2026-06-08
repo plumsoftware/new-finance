@@ -25,7 +25,6 @@ import ru.plumsoftware.finance.data.local.entity.SmartAssetEntity
 import ru.plumsoftware.finance.data.local.entity.SmartAssetUsageEntity
 import ru.plumsoftware.finance.data.local.entity.TransactionEntity
 import ru.plumsoftware.finance.data.mapper.toDomain
-import ru.plumsoftware.finance.data.repository.AccountRepositoryImpl
 import ru.plumsoftware.finance.data.util.endOfDayMillis
 import ru.plumsoftware.finance.data.util.startOfDayMillis
 import ru.plumsoftware.finance.domain.model.BACKUP_FORMAT_VERSION
@@ -53,12 +52,11 @@ import ru.plumsoftware.finance.domain.model.SmartAssetStatus
 import ru.plumsoftware.finance.domain.model.SmartAssetTrackingMode
 import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.domain.repository.BackupRepository
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 class BackupRepositoryImpl(
     private val context: Context,
@@ -221,8 +219,8 @@ class BackupRepositoryImpl(
         val meta = BackupMeta(
             version = BACKUP_FORMAT_VERSION,
             appVersion = BuildConfig.VERSION_NAME,
-            exportedAt = Instant.now().toString(),
-            deviceModel = Build.MODEL.orEmpty(),
+            exportedAt = formatExportedAt(System.currentTimeMillis()),
+            deviceModel = Build.MODEL ?: "",
             recordCounts = BackupRecordCounts(
                 accounts = backupAccounts.size,
                 categories = backupCategories.size,
@@ -276,7 +274,7 @@ class BackupRepositoryImpl(
         var skipped = 0
 
         database.withTransaction {
-            AccountRepositoryImpl(accountDao, transactionDao).ensureDefaultAccount()
+            AccountRepositoryImpl(accountDao, transactionDao, context).ensureDefaultAccount()
             val defaultAccount = accountDao.getDefault()
                 ?: error("Default account missing")
 
@@ -776,14 +774,35 @@ class BackupRepositoryImpl(
 
     private fun majorToMinor(major: Double): Long = (major * 100.0).toLong()
 
-    private fun formatDate(millis: Long): String =
-        LocalDate.ofInstant(Instant.ofEpochMilli(millis), ZoneId.systemDefault())
-            .format(DateTimeFormatter.ISO_LOCAL_DATE)
+    private fun formatDate(millis: Long): String {
+        val cal = Calendar.getInstance().apply { timeInMillis = millis }
+        return String.format(
+            Locale.US,
+            "%04d-%02d-%02d",
+            cal.get(Calendar.YEAR),
+            cal.get(Calendar.MONTH) + 1,
+            cal.get(Calendar.DAY_OF_MONTH),
+        )
+    }
 
     private fun parseDateMillis(date: String): Long {
-        val localDate = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
-        return localDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val parts = date.split("-")
+        require(parts.size == 3) { "Invalid date: $date" }
+        return Calendar.getInstance().apply {
+            set(Calendar.YEAR, parts[0].toInt())
+            set(Calendar.MONTH, parts[1].toInt() - 1)
+            set(Calendar.DAY_OF_MONTH, parts[2].toInt())
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
     }
+
+    private fun formatExportedAt(millis: Long): String =
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }.format(Date(millis))
 
     private fun colorArgbToHex(argb: Long): String {
         val value = argb.toInt()

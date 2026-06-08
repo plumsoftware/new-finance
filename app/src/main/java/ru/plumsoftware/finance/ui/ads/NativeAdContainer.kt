@@ -1,6 +1,7 @@
 package ru.plumsoftware.finance.ui.ads
 
 import android.app.Activity
+import android.view.ViewGroup
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.yandex.mobile.ads.common.AdRequest
 import com.yandex.mobile.ads.common.AdRequestError
@@ -50,40 +51,63 @@ fun NativeAdContainer(
     val context = LocalContext.current
     val activity = context as? Activity ?: return
     val colors = MaterialTheme.colorScheme
-    var nativeAd by remember(adUnitId) { mutableStateOf<NativeAd?>(null) }
-    var boundView by remember(adUnitId) { mutableStateOf<NativeAdView?>(null) }
+    val isDarkTheme = colors.background.luminance() < 0.5f
+    val cacheRevision = NativeAdSession.cacheRevision
+
+    var nativeAd by remember(adUnitId) {
+        mutableStateOf(NativeAdSession.getCached(adUnitId)?.first)
+    }
+    var boundView by remember(adUnitId) {
+        mutableStateOf(NativeAdSession.getCached(adUnitId)?.second)
+    }
     var visible by remember { mutableStateOf(true) }
-    var closeEnabled by remember { mutableStateOf(false) }
-    var closeProgress by remember { mutableFloatStateOf(0f) }
+    var closeEnabled by remember { mutableStateOf(NativeAdSession.closeDelayCompleted) }
+    var closeProgress by remember {
+        mutableFloatStateOf(if (NativeAdSession.closeDelayCompleted) 1f else 0f)
+    }
+
+    LaunchedEffect(cacheRevision, adUnitId) {
+        NativeAdSession.getCached(adUnitId)?.let { (ad, view) ->
+            nativeAd = ad
+            boundView = view
+        }
+    }
 
     DisposableEffect(adUnitId) {
-        boundView = null
+        if (!NativeAdSession.beginLoad(adUnitId)) {
+            onDispose { }
+            return@DisposableEffect onDispose { }
+        }
+
         val loader = NativeAdLoader(activity)
         loader.loadAd(
             AdRequest.Builder(adUnitId).build(),
             object : NativeAdLoadListener {
                 override fun onAdLoaded(ad: NativeAd) {
-                    if (NativeAdSession.dismissed) return
+                    if (NativeAdSession.dismissed) {
+                        NativeAdSession.onLoadFailed(adUnitId)
+                        return
+                    }
                     val view = inflateAndBindNativeAd(activity, ad)
                     if (view != null) {
+                        NativeAdSession.cache(adUnitId, ad, view)
                         nativeAd = ad
                         boundView = view
                     } else {
+                        NativeAdSession.onLoadFailed(adUnitId)
                         nativeAd = null
                         boundView = null
                     }
                 }
 
                 override fun onAdFailedToLoad(error: AdRequestError) {
+                    NativeAdSession.onLoadFailed(adUnitId)
                     nativeAd = null
                     boundView = null
                 }
             },
         )
-        onDispose {
-            nativeAd = null
-            boundView = null
-        }
+        onDispose { }
     }
 
     val ad = nativeAd
@@ -91,6 +115,11 @@ fun NativeAdContainer(
 
     LaunchedEffect(ad, view) {
         if (ad == null || view == null || !visible) return@LaunchedEffect
+        if (NativeAdSession.closeDelayCompleted) {
+            closeEnabled = true
+            closeProgress = 1f
+            return@LaunchedEffect
+        }
         closeEnabled = false
         closeProgress = 0f
         val steps = 30
@@ -99,13 +128,14 @@ fun NativeAdContainer(
             delay(stepDelay)
             closeProgress = (step + 1) / steps.toFloat()
         }
+        NativeAdSession.closeDelayCompleted = true
         closeEnabled = true
     }
 
     LaunchedEffect(visible) {
         if (!visible) {
             delay(EXIT_ANIMATION_MS)
-            NativeAdSession.dismissed = true
+            NativeAdSession.dismiss()
         }
     }
 
@@ -129,9 +159,12 @@ fun NativeAdContainer(
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(Dimens.RadiusL))
                     .background(colors.surface),
-                factory = { view },
+                factory = {
+                    (view.parent as? ViewGroup)?.removeView(view)
+                    view
+                },
                 update = { nativeAdView ->
-                    bindNativeAd(nativeAdView, ad, isImageLayout)
+                    bindNativeAd(nativeAdView, ad, isImageLayout, isDarkTheme)
                 },
             )
 
@@ -139,11 +172,7 @@ fun NativeAdContainer(
                 isImageLayout = isImageLayout,
                 closeEnabled = closeEnabled,
                 progress = closeProgress,
-                onClose = {
-                    visible = false
-                    nativeAd = null
-                    boundView = null
-                },
+                onClose = { visible = false },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(

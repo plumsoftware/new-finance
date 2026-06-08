@@ -13,8 +13,8 @@ import ru.plumsoftware.finance.data.firebase.InAppMessagingHandler
 import ru.plumsoftware.finance.data.firebase.NotificationDisplayHelper
 import ru.plumsoftware.finance.data.work.RecurringTransactionWorker
 import com.yandex.mobile.ads.common.YandexAds
-import ru.plumsoftware.finance.ads.InterstitialAdManager
-import ru.plumsoftware.finance.ads.InterstitialPlacement
+// import ru.plumsoftware.finance.ads.InterstitialAdManager
+// import ru.plumsoftware.finance.ads.InterstitialPlacement
 import ru.plumsoftware.finance.di.adsModule
 import ru.plumsoftware.finance.di.dataModule
 import ru.plumsoftware.finance.di.presentationModule
@@ -32,8 +32,8 @@ class FinanceApplication : Application() {
         }
 
         YandexAds.initialize(this) {
-            getKoin().get<InterstitialAdManager>()
-                .preload(InterstitialPlacement.TRANSACTION.adUnitId())
+            // getKoin().get<InterstitialAdManager>()
+            //     .preload(InterstitialPlacement.TRANSACTION.adUnitId())
         }
 
         getKoin().get<NotificationDisplayHelper>().createNotificationChannel()

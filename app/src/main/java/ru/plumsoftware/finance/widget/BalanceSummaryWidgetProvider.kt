@@ -101,18 +101,21 @@ class BalanceSummaryWidgetProvider : AppWidgetProvider() {
                     .format(Date())
                     .replaceFirstChar { it.uppercase(Locale("ru")) },
                 totalBalanceFormatted = formatAmount(
+                    context = context,
                     amountMinor = totalBalanceMinor,
                     currencyCode = currencyCode,
                     signed = false,
                     fractionDigits = 2,
                 ),
                 monthIncomeFormatted = formatAmount(
+                    context = context,
                     amountMinor = monthIncomeMinor,
                     currencyCode = currencyCode,
                     signed = true,
                     fractionDigits = 0,
                 ),
                 monthExpenseFormatted = formatAmount(
+                    context = context,
                     amountMinor = -monthExpenseMinor,
                     currencyCode = currencyCode,
                     signed = true,
@@ -136,6 +139,7 @@ class BalanceSummaryWidgetProvider : AppWidgetProvider() {
         }
 
         private fun formatAmount(
+            context: Context,
             amountMinor: Long,
             currencyCode: String,
             signed: Boolean,
@@ -151,7 +155,10 @@ class BalanceSummaryWidgetProvider : AppWidgetProvider() {
             }
             val value = "${formatter.format(abs(major))} ${currency.getSymbol(locale)}"
             if (!signed || amountMinor == 0L) return value
-            return if (amountMinor > 0) "+$value" else "−$value"
+            return context.getString(
+                if (amountMinor > 0) R.string.amount_signed_positive else R.string.amount_signed_negative,
+                value,
+            )
         }
 
         private fun buildHomeIntent(context: Context): PendingIntent {

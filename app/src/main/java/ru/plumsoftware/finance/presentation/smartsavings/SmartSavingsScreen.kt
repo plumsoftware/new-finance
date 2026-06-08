@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -65,8 +66,15 @@ fun SmartSavingsScreen(
     onSnackbarShown: () -> Unit = {},
     viewModel: SmartSavingsViewModel = koinViewModel(),
 ) {
+    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val displayedAssets = state.displayedAssets
+    val totalSavedLabel = MoneyFormat.formatWithSignPrefix(
+        context,
+        state.totalSavedMinor,
+        state.currencyCode,
+        isPositive = true,
+    )
     val snackbarHost = remember { SnackbarHostState() }
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
@@ -104,7 +112,7 @@ fun SmartSavingsScreen(
                     modifier = horizontalPadding,
                     verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
                 ) {
-                    HeroCard(totalSaved = MoneyFormat.format(state.totalSavedMinor, state.currencyCode))
+                    HeroCard(totalSaved = totalSavedLabel)
                     GoalsEntryCard(onOpenGoalsClick = onOpenGoalsClick)
                     AssetsSectionHeader(
                         showCompletedOnly = state.showCompletedOnly,
@@ -148,7 +156,7 @@ fun SmartSavingsScreen(
                 verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
             ) {
                 item {
-                    HeroCard(totalSaved = MoneyFormat.format(state.totalSavedMinor, state.currencyCode))
+                    HeroCard(totalSaved = totalSavedLabel)
                 }
                 item {
                     GoalsEntryCard(onOpenGoalsClick = onOpenGoalsClick)
@@ -249,7 +257,7 @@ private fun HeroCard(totalSaved: String) {
                 color = colors.onSurfaceVariant,
             )
             Text(
-                text = "+$totalSaved",
+                text = totalSaved,
                 style = typography.headlineSmall,
                 color = colors.secondary,
             )

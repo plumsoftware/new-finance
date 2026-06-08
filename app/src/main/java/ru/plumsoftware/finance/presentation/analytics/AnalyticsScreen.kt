@@ -64,6 +64,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -505,6 +506,16 @@ fun AnalyticsScreen(
                 }
 
                 item {
+                    Spacer(Modifier.height(16.dp))
+                    AccountsAnalyticsSection(
+                        accounts = state.accountAnalytics,
+                        currencyCode = state.currencyCode,
+                        isExpanded = state.isAccountsSectionExpanded,
+                        onToggleExpand = viewModel::toggleAccountsSection,
+                    )
+                }
+
+                item {
                     SectionLabel(
                         text = stringResource(R.string.expenses_by_day),
                         modifier = Modifier.padding(start = 0.dp),
@@ -671,6 +682,7 @@ private fun SummaryCard(
     savingsRate: Float,
     currencyCode: String,
 ) {
+    val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
 
@@ -684,7 +696,7 @@ private fun SummaryCard(
             verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
         ) {
             Text(
-                text = MoneyFormat.format(netTotal, currencyCode, showSign = true),
+                text = MoneyFormat.format(netTotal, currencyCode, showSign = true, context = context),
                 style = typography.displayMedium,
                 fontWeight = FontWeight.Bold,
                 color = when {
@@ -707,7 +719,7 @@ private fun SummaryCard(
                     icon = Icons.Rounded.ArrowUpward,
                     tint = colors.secondary,
                     label = stringResource(R.string.income),
-                    value = MoneyFormat.format(incomeTotal, currencyCode, showSign = true),
+                    value = MoneyFormat.format(incomeTotal, currencyCode, showSign = true, context = context),
                 )
                 AnalyticsFinanceStat(
                     icon = Icons.Rounded.ArrowDownward,

@@ -113,13 +113,13 @@ private fun OwlAchievementsHero(streak: StreakData) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    getOwlPhrase(streak.currentStreak),
+                    owlPhrase(streak.currentStreak),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    getOwlSubphrase(streak.currentStreak),
+                    owlSubphrase(streak.currentStreak),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
                 )
@@ -153,19 +153,21 @@ private fun HeroStat(value: String, label: String, color: Color) {
     }
 }
 
-fun getOwlPhrase(streak: Int): String = when {
-    streak == 0 -> "Угу... Коппи скучает по тебе"
-    streak < 7 -> "Ты на правильном пути, угу!"
-    streak < 30 -> "Семь дней! Коппи тобой гордится!"
-    streak < 100 -> "Тридцать дней! Угу-угу! Невероятно!"
-    else -> "Сто дней. Ты настоящая легенда, угу!"
+@Composable
+private fun owlPhrase(streak: Int): String = when {
+    streak == 0 -> stringResource(R.string.owl_phrase_streak_0)
+    streak < 7 -> stringResource(R.string.owl_phrase_streak_under_7)
+    streak < 30 -> stringResource(R.string.owl_phrase_streak_under_30)
+    streak < 100 -> stringResource(R.string.owl_phrase_streak_under_100)
+    else -> stringResource(R.string.owl_phrase_streak_100_plus)
 }
 
-fun getOwlSubphrase(streak: Int): String = when {
-    streak == 0 -> "Запиши первую операцию сегодня"
-    streak < 7 -> "До недельного стрика: ${7 - streak} дней"
-    streak < 30 -> "До месячного стрика: ${30 - streak} дней"
-    else -> "Продолжай в том же духе!"
+@Composable
+private fun owlSubphrase(streak: Int): String = when {
+    streak == 0 -> stringResource(R.string.owl_subphrase_streak_0)
+    streak < 7 -> stringResource(R.string.owl_subphrase_to_weekly_streak, 7 - streak)
+    streak < 30 -> stringResource(R.string.owl_subphrase_to_monthly_streak, 30 - streak)
+    else -> stringResource(R.string.owl_subphrase_keep_going)
 }
 
 @Composable

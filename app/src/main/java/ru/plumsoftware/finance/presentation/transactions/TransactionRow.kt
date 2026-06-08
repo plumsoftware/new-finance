@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,16 +40,12 @@ fun TransactionRow(
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     val isIncome = transaction.type == TransactionType.INCOME ||
         transaction.type == TransactionType.SAVINGS
     val amountColor = if (isIncome) colors.secondary else colors.error
-    val amountPrefix = when (transaction.type) {
-        TransactionType.INCOME -> "+"
-        TransactionType.EXPENSE -> "−"
-        TransactionType.SAVINGS -> "+"
-    }
     val categoryColor = category?.colorArgb?.let { Color(it.toInt()) }
         ?: amountColor
     val formattedDate = formatTransactionDate(transaction.dateMillis)
@@ -70,7 +67,7 @@ fun TransactionRow(
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = category?.icon ?: "•",
+                text = category?.icon ?: stringResource(R.string.default_bullet),
                 fontSize = 22.sp,
             )
         }
@@ -93,7 +90,12 @@ fun TransactionRow(
             )
         }
         Text(
-            text = "$amountPrefix${MoneyFormat.format(transaction.amountMinor, currencyCode)}",
+            text = MoneyFormat.formatWithSignPrefix(
+                context,
+                transaction.amountMinor,
+                currencyCode,
+                isPositive = isIncome,
+            ),
             style = typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
             color = amountColor,
         )

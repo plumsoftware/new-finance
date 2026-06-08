@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -56,6 +57,7 @@ fun GoalDepositDetailSheet(
     onDismiss: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -137,7 +139,12 @@ fun GoalDepositDetailSheet(
             )
             Spacer(Modifier.height(Dimens.paddingMicro))
             Text(
-                text = "+${MoneyFormat.format(deposit.amountMinor, displayCurrency)}",
+                text = MoneyFormat.formatWithSignPrefix(
+                    context,
+                    deposit.amountMinor,
+                    displayCurrency,
+                    isPositive = true,
+                ),
                 style = typography.displaySmall,
                 fontWeight = FontWeight.Bold,
                 color = goalColor,

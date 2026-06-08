@@ -225,7 +225,7 @@ private fun RecurringCard(
     val typography = MaterialTheme.typography
     val categoryColor = category?.colorArgb?.let { Color(it.toInt()) } ?: colors.onSurfaceVariant
     val amountColor = if (item.isIncome) colors.secondary else colors.error
-    val amountPrefix = if (item.isIncome) "+" else "−"
+    val context = androidx.compose.ui.platform.LocalContext.current
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) {
@@ -275,7 +275,7 @@ private fun RecurringCard(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = category?.icon ?: "•",
+                        text = category?.icon ?: stringResource(R.string.default_bullet),
                         fontSize = 22.sp,
                     )
                 }
@@ -291,12 +291,14 @@ private fun RecurringCard(
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        text = "${stringResource(item.frequency.labelRes)} · ${
+                        text = stringResource(
+                            R.string.recurring_subtitle_format,
+                            stringResource(item.frequency.labelRes),
                             stringResource(
                                 R.string.next_date,
                                 formatRecurringDate(item.nextDateMillis),
-                            )
-                        }",
+                            ),
+                        ),
                         style = typography.bodySmall,
                         color = colors.onSurfaceVariant,
                     )
@@ -304,7 +306,12 @@ private fun RecurringCard(
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "$amountPrefix${MoneyFormat.format(item.amountMinor, currencyCode)}",
+                        text = MoneyFormat.formatWithSignPrefix(
+                            context,
+                            item.amountMinor,
+                            currencyCode,
+                            isPositive = item.isIncome,
+                        ),
                         style = typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = amountColor,

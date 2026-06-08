@@ -60,6 +60,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -74,9 +75,9 @@ import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.TransactionType
-import ru.plumsoftware.finance.ads.InterstitialPlacement
+// import ru.plumsoftware.finance.ads.InterstitialPlacement
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
-import ru.plumsoftware.finance.ui.ads.InterstitialAdEffect
+// import ru.plumsoftware.finance.ui.ads.InterstitialAdEffect
 import ru.plumsoftware.finance.ui.components.CurrencyPickerSheet
 import ru.plumsoftware.finance.ui.components.ios.IosAlertDialog
 import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
@@ -112,14 +113,15 @@ fun AddTransactionScreen(
     LaunchedEffect(state.saved) {
         if (state.saved) {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            onBack()
         }
     }
 
-    InterstitialAdEffect(
-        placement = InterstitialPlacement.TRANSACTION,
-        trigger = state.saved,
-        onContinue = onBack,
-    )
+    // InterstitialAdEffect(
+    //     placement = InterstitialPlacement.TRANSACTION,
+    //     trigger = state.saved,
+    //     onContinue = onBack,
+    // )
 
     state.errorMessage?.let { message ->
         IosAlertDialog(
@@ -308,7 +310,11 @@ fun AddTransactionScreen(
                 ) {
                     state.accounts.forEach { account ->
                         AddTransactionCategoryChip(
-                            text = "${account.emoji} ${account.name}",
+                            text = stringResource(
+                                R.string.chip_emoji_name_format,
+                                account.emoji,
+                                account.name,
+                            ),
                             selected = state.selectedAccountId == account.id,
                             onClick = { viewModel.selectAccount(account.id) },
                         )
@@ -324,7 +330,11 @@ fun AddTransactionScreen(
             ) {
                 state.categories.forEach { cat ->
                     AddTransactionCategoryChip(
-                        text = "${cat.icon} ${cat.name}",
+                        text = stringResource(
+                            R.string.chip_emoji_name_format,
+                            cat.icon,
+                            cat.name,
+                        ),
                         selected = state.selectedCategoryId == cat.id,
                         onClick = { viewModel.selectCategory(cat.id) },
                     )
@@ -436,9 +446,10 @@ private fun AddTransactionAmountDisplay(
     currencyCode: String,
     onCurrencyClick: (() -> Unit)? = null,
 ) {
+    val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
     val symbol = MoneyFormat.symbol(currencyCode)
-    val display = MoneyFormat.formatEntryDisplay(digits, currencyCode)
+    val display = MoneyFormat.formatEntryDisplay(context, digits, currencyCode)
     val amountText = if (display.endsWith(symbol)) {
         display.dropLast(symbol.length).trimEnd()
     } else {
@@ -487,7 +498,7 @@ private fun AddTransactionAmountDisplay(
                 textAlign = TextAlign.Center,
             )
             Text(
-                text = " $symbol",
+                text = stringResource(R.string.amount_currency_space, symbol),
                 style = TextStyle(
                     fontFamily = Inter28Family,
                     fontWeight = FontWeight.Light,

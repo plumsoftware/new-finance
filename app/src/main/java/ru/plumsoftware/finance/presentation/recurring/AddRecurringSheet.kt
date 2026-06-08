@@ -186,7 +186,11 @@ fun AddRecurringSheet(
                         onClick = { selectedCategoryId = category.id },
                         label = {
                             Text(
-                                text = "${category.icon} ${category.name}",
+                                text = stringResource(
+                                    R.string.chip_emoji_name_format,
+                                    category.icon,
+                                    category.name,
+                                ),
                                 style = typography.bodySmall,
                             )
                         },

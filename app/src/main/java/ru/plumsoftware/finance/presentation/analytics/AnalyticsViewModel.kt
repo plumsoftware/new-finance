@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.plumsoftware.finance.domain.model.AccountAnalytics
 import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.domain.model.CategorySpending
@@ -51,6 +52,8 @@ data class AnalyticsUiState(
     val periodChipLabel: String = "",
     val periodOffset: Int = 0,
     val canNavigateForward: Boolean = false,
+    val accountAnalytics: List<AccountAnalytics> = emptyList(),
+    val isAccountsSectionExpanded: Boolean = false,
 )
 
 class AnalyticsViewModel(
@@ -121,6 +124,12 @@ class AnalyticsViewModel(
         load(_uiState.value.period)
     }
 
+    fun toggleAccountsSection() {
+        _uiState.update {
+            it.copy(isAccountsSectionExpanded = !it.isAccountsSectionExpanded)
+        }
+    }
+
     private fun load(period: StatsPeriod) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, period = period, showDateRangePicker = false) }
@@ -145,16 +154,20 @@ class AnalyticsViewModel(
                 StatsPeriod.WEEK -> {
                     val left = SimpleDateFormat("d MMM", Locale("ru")).format(Date(range.startMillis))
                     val right = SimpleDateFormat("d MMM", Locale("ru")).format(Date(range.endMillis))
-                    "$left – $right"
+                    context.getString(R.string.date_range_format, left, right)
                 }
                 StatsPeriod.MONTH -> SimpleDateFormat("LLLL yyyy", Locale("ru")).format(Date(range.startMillis))
                 StatsPeriod.YEAR -> SimpleDateFormat("yyyy", Locale("ru")).format(Date(range.startMillis))
-                StatsPeriod.CUSTOM -> "${rangeFormatter.format(Date(range.startMillis))} – ${rangeFormatter.format(Date(range.endMillis))}"
+                StatsPeriod.CUSTOM -> context.getString(
+                    R.string.date_range_format,
+                    rangeFormatter.format(Date(range.startMillis)),
+                    rangeFormatter.format(Date(range.endMillis)),
+                )
             }
             val periodChipLabel = if (period == StatsPeriod.CUSTOM) {
                 val startDay = SimpleDateFormat("d", Locale("ru")).format(Date(range.startMillis))
                 val endDayMonth = SimpleDateFormat("d MMM", Locale("ru")).format(Date(range.endMillis))
-                "$startDay–$endDayMonth"
+                context.getString(R.string.date_range_compact_format, startDay, endDayMonth)
             } else {
                 context.getString(R.string.analytics_period_chip_default)
             }
@@ -167,6 +180,10 @@ class AnalyticsViewModel(
                 transactions = transactions,
                 type = TransactionType.INCOME,
                 categories = incomeCats,
+            )
+            val accountStats = analyticsRepository.getAccountAnalytics(
+                range.startMillis,
+                range.endMillis,
             )
             _uiState.update {
                 it.copy(
@@ -189,6 +206,7 @@ class AnalyticsViewModel(
                     periodLabel = periodLabel,
                     periodChipLabel = periodChipLabel,
                     canNavigateForward = period != StatsPeriod.CUSTOM && state.periodOffset < 0,
+                    accountAnalytics = accountStats,
                 )
             }
         }

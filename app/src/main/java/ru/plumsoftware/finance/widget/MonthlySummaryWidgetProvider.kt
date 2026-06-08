@@ -99,18 +99,21 @@ class MonthlySummaryWidgetProvider : AppWidgetProvider() {
                     .replaceFirstChar { it.uppercase(Locale("ru")) },
                 savedPercent = savedPercent,
                 balanceFormatted = formatAmount(
+                    context = context,
                     amountMinor = monthBalanceMinor,
                     currencyCode = currencyCode,
                     signed = false,
                     fractionDigits = 0,
                 ),
                 incomeFormatted = formatAmount(
+                    context = context,
                     amountMinor = monthIncomeMinor,
                     currencyCode = currencyCode,
                     signed = true,
                     fractionDigits = 0,
                 ),
                 expenseFormatted = formatAmount(
+                    context = context,
                     amountMinor = -monthExpenseMinor,
                     currencyCode = currencyCode,
                     signed = true,
@@ -133,6 +136,7 @@ class MonthlySummaryWidgetProvider : AppWidgetProvider() {
         }
 
         private fun formatAmount(
+            context: Context,
             amountMinor: Long,
             currencyCode: String,
             signed: Boolean,
@@ -148,7 +152,10 @@ class MonthlySummaryWidgetProvider : AppWidgetProvider() {
             }
             val value = "${formatter.format(abs(major))} ${currency.getSymbol(locale)}"
             if (!signed || amountMinor == 0L) return value
-            return if (amountMinor > 0) "+$value" else "−$value"
+            return context.getString(
+                if (amountMinor > 0) R.string.amount_signed_positive else R.string.amount_signed_negative,
+                value,
+            )
         }
 
         private fun buildAnalyticsIntent(context: Context): PendingIntent {

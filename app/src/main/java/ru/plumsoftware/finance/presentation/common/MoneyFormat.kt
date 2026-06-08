@@ -1,5 +1,7 @@
 package ru.plumsoftware.finance.presentation.common
 
+import android.content.Context
+import ru.plumsoftware.finance.R
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
@@ -11,7 +13,12 @@ import kotlin.math.pow
 object MoneyFormat {
     private val ruLocale = Locale("ru", "RU")
 
-    fun format(amountMinor: Long, currencyCode: String, showSign: Boolean = false): String {
+    fun format(
+        amountMinor: Long,
+        currencyCode: String,
+        showSign: Boolean = false,
+        context: Context? = null,
+    ): String {
         val major = toMajorDouble(amountMinor, currencyCode)
         val formatter = NumberFormat.getCurrencyInstance(ruLocale).apply {
             currency = Currency.getInstance(currencyCode)
@@ -21,14 +28,20 @@ object MoneyFormat {
         val formatted = formatter.format(major)
         return when {
             !showSign || amountMinor == 0L -> formatted
-            amountMinor > 0 -> "+$formatted"
+            amountMinor > 0 -> context!!.getString(R.string.amount_signed_positive, formatted)
             else -> formatted
         }
     }
 
     /** Отображение суммы при вводе (крупные цифры, iOS Calculator). */
-    fun formatEntryDisplay(majorAmountDigits: String, currencyCode: String): String {
-        if (majorAmountDigits.isBlank()) return "0 ${symbol(currencyCode)}"
+    fun formatEntryDisplay(
+        context: Context,
+        majorAmountDigits: String,
+        currencyCode: String,
+    ): String {
+        if (majorAmountDigits.isBlank()) {
+            return context.getString(R.string.money_entry_zero, symbol(currencyCode))
+        }
         val major = majorAmountDigits.toDoubleOrNull() ?: 0.0
         val symbols = DecimalFormatSymbols(ruLocale).apply {
             groupingSeparator = ' '
@@ -37,6 +50,19 @@ object MoneyFormat {
         val pattern = if (fractionDigits(currencyCode) > 0) "#,##0.##" else "#,##0"
         val formatted = DecimalFormat(pattern, symbols).format(major)
         return "$formatted ${symbol(currencyCode)}"
+    }
+
+    fun formatWithSignPrefix(
+        context: Context,
+        amountMinor: Long,
+        currencyCode: String,
+        isPositive: Boolean,
+    ): String {
+        val formatted = format(amountMinor, currencyCode)
+        return context.getString(
+            if (isPositive) R.string.amount_signed_positive else R.string.amount_signed_negative,
+            formatted,
+        )
     }
 
     fun majorDigitsToMinor(majorDigits: String, currencyCode: String): Long {

@@ -194,7 +194,7 @@ private fun AccountRow(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (isSelected) {
                     Text(
-                        text = "✓",
+                        text = stringResource(R.string.checkmark),
                         color = colors.primary,
                         style = typography.titleMedium,
                     )
