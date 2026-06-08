@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Expense Control</string>
+    <string name="app_name">Finance</string>
     <string name="notification_channel_name">Notifications</string>
     <string name="notification_channel_description">Push notifications and app reminders</string>
 
