@@ -39,7 +39,7 @@ val presentationModule = module {
     viewModel { GoalsViewModel(get(), get()) }
     viewModel { AchievementsViewModel(get(), get(), get(), get(), get(), androidContext()) }
     viewModel { CreateGoalViewModel(get(), get(), get()) }
-    viewModel { (goalId: Long) -> GoalDetailViewModel(goalId, get(), get(), get(), get(), androidContext()) }
+    viewModel { (goalId: Long) -> GoalDetailViewModel(goalId, get(), get(), get()) }
     viewModel { CreateSmartSavingsViewModel(get(), get(), get(), androidContext()) }
     viewModel { (assetId: Long) ->
         SmartSavingsDetailViewModel(assetId, get(), get(), androidContext())

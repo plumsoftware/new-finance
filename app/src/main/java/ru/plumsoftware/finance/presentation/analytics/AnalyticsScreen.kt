@@ -696,7 +696,21 @@ private fun SummaryCard(
             verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
         ) {
             Text(
-                text = MoneyFormat.format(netTotal, currencyCode, showSign = true, context = context),
+                text = when {
+                    netTotal > 0L -> MoneyFormat.formatWithSignPrefix(
+                        context,
+                        netTotal,
+                        currencyCode,
+                        isPositive = true,
+                    )
+                    netTotal < 0L -> MoneyFormat.formatWithSignPrefix(
+                        context,
+                        -netTotal,
+                        currencyCode,
+                        isPositive = false,
+                    )
+                    else -> MoneyFormat.format(0L, currencyCode)
+                },
                 style = typography.displayMedium,
                 fontWeight = FontWeight.Bold,
                 color = when {
@@ -719,7 +733,12 @@ private fun SummaryCard(
                     icon = Icons.Rounded.ArrowUpward,
                     tint = colors.secondary,
                     label = stringResource(R.string.income),
-                    value = MoneyFormat.format(incomeTotal, currencyCode, showSign = true, context = context),
+                    value = MoneyFormat.formatWithSignPrefix(
+                        context,
+                        incomeTotal,
+                        currencyCode,
+                        isPositive = true,
+                    ),
                 )
                 AnalyticsFinanceStat(
                     icon = Icons.Rounded.ArrowDownward,

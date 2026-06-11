@@ -13,24 +13,14 @@ import kotlin.math.pow
 object MoneyFormat {
     private val ruLocale = Locale("ru", "RU")
 
-    fun format(
-        amountMinor: Long,
-        currencyCode: String,
-        showSign: Boolean = false,
-        context: Context? = null,
-    ): String {
+    fun format(amountMinor: Long, currencyCode: String): String {
         val major = toMajorDouble(amountMinor, currencyCode)
         val formatter = NumberFormat.getCurrencyInstance(ruLocale).apply {
             currency = Currency.getInstance(currencyCode)
             maximumFractionDigits = fractionDigits(currencyCode)
             minimumFractionDigits = fractionDigits(currencyCode)
         }
-        val formatted = formatter.format(major)
-        return when {
-            !showSign || amountMinor == 0L -> formatted
-            amountMinor > 0 -> context!!.getString(R.string.amount_signed_positive, formatted)
-            else -> formatted
-        }
+        return formatter.format(major)
     }
 
     /** Отображение суммы при вводе (крупные цифры, iOS Calculator). */

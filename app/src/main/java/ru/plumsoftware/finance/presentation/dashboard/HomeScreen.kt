@@ -444,6 +444,7 @@ private fun BalanceCard(
     currencyCode: String,
     onMonthClick: () -> Unit,
 ) {
+    val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
     val animatedBalance by animateFloatAsState(
@@ -509,10 +510,11 @@ private fun BalanceCard(
                     icon = Icons.Rounded.ArrowUpward,
                     tint = colors.secondary,
                     label = stringResource(R.string.income),
-                    value = MoneyFormat.format(
+                    value = MoneyFormat.formatWithSignPrefix(
+                        context,
                         monthIncomeMinor,
                         currencyCode,
-                        showSign = true,
+                        isPositive = true,
                     ),
                 )
                 FinanceStat(

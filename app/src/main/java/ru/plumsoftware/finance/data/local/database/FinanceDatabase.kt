@@ -9,6 +9,8 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import ru.plumsoftware.finance.data.local.converter.EnumConverters
 import ru.plumsoftware.finance.data.local.dao.AccountDao
 import ru.plumsoftware.finance.data.local.dao.AchievementUnlockDao
@@ -64,6 +66,7 @@ abstract class FinanceDatabase : RoomDatabase() {
 
     companion object {
         private const val DATABASE_NAME = "finance.db"
+        private val seedMutex = Mutex()
 
         fun create(context: Context): FinanceDatabase {
             lateinit var database: FinanceDatabase
@@ -74,9 +77,6 @@ abstract class FinanceDatabase : RoomDatabase() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
                             insertDefaultAccount(db, context)
-                            CoroutineScope(Dispatchers.IO).launch {
-                                seed(database, context)
-                            }
                         }
 
                         override fun onOpen(db: SupportSQLiteDatabase) {
@@ -117,18 +117,20 @@ abstract class FinanceDatabase : RoomDatabase() {
         }
 
         private suspend fun seed(database: FinanceDatabase, context: Context) {
-            val categoryDao = database.categoryDao()
-            val transactionDao = database.transactionDao()
+            seedMutex.withLock {
+                val categoryDao = database.categoryDao()
+                val transactionDao = database.transactionDao()
 
-            CategoryDeduplicator.deduplicate(categoryDao, transactionDao)
+                CategoryDeduplicator.deduplicate(categoryDao, transactionDao)
 
-            val existingKeys = categoryDao.getAllSync()
-                .map { CategoryDeduplicator.categoryKey(it) }
-                .toSet()
-            val missing = DefaultCategories.all(context)
-                .filter { CategoryDeduplicator.categoryKey(it) !in existingKeys }
-            if (missing.isNotEmpty()) {
-                categoryDao.insertAll(missing)
+                val existingKeys = categoryDao.getAllSync()
+                    .map { CategoryDeduplicator.categoryKey(it) }
+                    .toSet()
+                val missing = DefaultCategories.all(context)
+                    .filter { CategoryDeduplicator.categoryKey(it) !in existingKeys }
+                if (missing.isNotEmpty()) {
+                    categoryDao.insertAll(missing)
+                }
             }
         }
     }

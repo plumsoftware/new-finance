@@ -1,6 +1,5 @@
 package ru.plumsoftware.finance.presentation.goals
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,15 +12,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.plumsoftware.finance.domain.model.Goal
 import ru.plumsoftware.finance.domain.model.GoalDeposit
-import ru.plumsoftware.finance.domain.model.Transaction
-import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.domain.model.remainingMinor
 import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.GoalRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
-import ru.plumsoftware.finance.domain.repository.TransactionRepository
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
-import ru.plumsoftware.finance.R
 
 data class GoalDetailUiState(
     val goal: Goal? = null,
@@ -41,10 +36,8 @@ data class GoalDetailUiState(
 class GoalDetailViewModel(
     private val goalId: Long,
     private val goalRepository: GoalRepository,
-    private val transactionRepository: TransactionRepository,
     private val accountRepository: AccountRepository,
     settingsRepository: SettingsRepository,
-    private val context: Context,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(GoalDetailUiState())
     val transientState = mutableState.asStateFlow()
@@ -111,42 +104,13 @@ class GoalDetailViewModel(
             mutableState.update { it.copy(isSaving = true) }
             val wasCompleted = goal.isCompleted
             runCatching {
-                val updatedGoal = goalRepository.addDeposit(
+                goalRepository.addDeposit(
                     goalId = goalId,
                     amountMinor = amountMinor,
                     note = state.depositNote,
                     currencyCode = state.currencyCode,
                     accountId = state.selectedAccountId,
                 )
-                val now = System.currentTimeMillis()
-                transactionRepository.upsert(
-                    Transaction(
-                        type = TransactionType.INCOME,
-                        amountMinor = amountMinor,
-                        categoryId = null,
-                        smartAssetId = null,
-                        accountId = state.selectedAccountId,
-                        currencyCode = state.currencyCode,
-                        originalAmountMinor = amountMinor,
-                        originalCurrencyCode = state.currencyCode,
-                        exchangeRate = 1.0,
-                        note = buildString {
-                            append(
-                                context.getString(
-                                    R.string.goal_deposit_transaction_note_prefix,
-                                    updatedGoal.name,
-                                ),
-                            )
-                            state.depositNote.takeIf { it.isNotBlank() }?.let {
-                                append(context.getString(R.string.common_dash_separator))
-                                append(it)
-                            }
-                        },
-                        dateMillis = now,
-                        createdAtMillis = now,
-                    ),
-                )
-                updatedGoal
             }.onSuccess { updated ->
                 mutableState.update {
                     it.copy(
