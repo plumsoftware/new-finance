@@ -45,41 +45,45 @@ class GoalsWidgetProvider : AppWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int,
         ) {
-            val data = loadWidgetData(context)
-            val views = RemoteViews(context.packageName, R.layout.widget_goals)
-            views.setTextViewText(
-                R.id.widget_goals_total,
-                context.getString(R.string.widget_goals_saved_template, data.totalSavedFormatted),
-            )
-            bindGoalRow(
-                views = views,
-                rowIndex = 0,
-                row = data.rows.getOrNull(0),
-            )
-            bindGoalRow(
-                views = views,
-                rowIndex = 1,
-                row = data.rows.getOrNull(1),
-            )
-            bindGoalRow(
-                views = views,
-                rowIndex = 2,
-                row = data.rows.getOrNull(2),
-            )
-            views.setViewVisibility(
-                R.id.widget_goal_divider_1,
-                if (data.rows.getOrNull(1) != null) View.VISIBLE else View.GONE,
-            )
-            views.setViewVisibility(
-                R.id.widget_goal_divider_2,
-                if (data.rows.getOrNull(2) != null) View.VISIBLE else View.GONE,
-            )
-            val openGoalsIntent = buildGoalsIntent(context)
-            views.setOnClickPendingIntent(R.id.widget_goals_root, openGoalsIntent)
-            views.setOnClickPendingIntent(R.id.widget_goal_row_1, openGoalsIntent)
-            views.setOnClickPendingIntent(R.id.widget_goal_row_2, openGoalsIntent)
-            views.setOnClickPendingIntent(R.id.widget_goal_row_3, openGoalsIntent)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            try {
+                val data = loadWidgetData(context)
+                val views = RemoteViews(context.packageName, R.layout.widget_goals)
+                views.setTextViewText(
+                    R.id.widget_goals_total,
+                    context.getString(R.string.widget_goals_saved_template, data.totalSavedFormatted),
+                )
+                bindGoalRow(
+                    views = views,
+                    rowIndex = 0,
+                    row = data.rows.getOrNull(0),
+                )
+                bindGoalRow(
+                    views = views,
+                    rowIndex = 1,
+                    row = data.rows.getOrNull(1),
+                )
+                bindGoalRow(
+                    views = views,
+                    rowIndex = 2,
+                    row = data.rows.getOrNull(2),
+                )
+                views.setViewVisibility(
+                    R.id.widget_goal_divider_1,
+                    if (data.rows.getOrNull(1) != null) View.VISIBLE else View.GONE,
+                )
+                views.setViewVisibility(
+                    R.id.widget_goal_divider_2,
+                    if (data.rows.getOrNull(2) != null) View.VISIBLE else View.GONE,
+                )
+                val openGoalsIntent = buildGoalsIntent(context)
+                views.setOnClickPendingIntent(R.id.widget_goals_root, openGoalsIntent)
+                views.setOnClickPendingIntent(R.id.widget_goal_row_1, openGoalsIntent)
+                views.setOnClickPendingIntent(R.id.widget_goal_row_2, openGoalsIntent)
+                views.setOnClickPendingIntent(R.id.widget_goal_row_3, openGoalsIntent)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (_: Exception) {
+                // Keep placeholder layout from initialLayout if update fails.
+            }
         }
 
         private fun bindGoalRow(

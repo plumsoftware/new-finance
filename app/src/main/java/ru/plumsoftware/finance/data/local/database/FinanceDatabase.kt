@@ -68,7 +68,16 @@ abstract class FinanceDatabase : RoomDatabase() {
         private const val DATABASE_NAME = "finance.db"
         private val seedMutex = Mutex()
 
+        @Volatile
+        private var instance: FinanceDatabase? = null
+
         fun create(context: Context): FinanceDatabase {
+            return instance ?: synchronized(this) {
+                instance ?: buildDatabase(context.applicationContext).also { instance = it }
+            }
+        }
+
+        private fun buildDatabase(context: Context): FinanceDatabase {
             lateinit var database: FinanceDatabase
             database = Room.databaseBuilder(context, FinanceDatabase::class.java, DATABASE_NAME)
                 .addMigrations(DatabaseMigrations.MIGRATION_10_11)

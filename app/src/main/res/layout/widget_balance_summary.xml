@@ -64,14 +64,11 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <View
-            android:layout_width="8dp"
-            android:layout_height="1dp" />
-
         <LinearLayout
             android:id="@+id/widget_expense_card"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:background="@drawable/widget_balance_expense_card_bg"
             android:orientation="vertical"

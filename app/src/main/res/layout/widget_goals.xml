@@ -88,12 +88,13 @@
             android:textSize="15sp" />
     </LinearLayout>
 
-    <View
+    <TextView
         android:id="@+id/widget_goal_divider_1"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="8dp"
-        android:background="@color/widget_goals_divider" />
+        android:background="@color/widget_goals_divider"
+        android:text="" />
 
     <LinearLayout
         android:id="@+id/widget_goal_row_2"
@@ -149,12 +150,13 @@
             android:textSize="15sp" />
     </LinearLayout>
 
-    <View
+    <TextView
         android:id="@+id/widget_goal_divider_2"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="8dp"
-        android:background="@color/widget_goals_divider" />
+        android:background="@color/widget_goals_divider"
+        android:text="" />
 
     <LinearLayout
         android:id="@+id/widget_goal_row_3"

@@ -51,23 +51,27 @@ class MonthlySummaryWidgetProvider : AppWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int,
         ) {
-            val data = loadWidgetData(context)
-            val views = RemoteViews(context.packageName, R.layout.widget_monthly_summary)
-            views.setTextViewText(R.id.widget_monthly_title, data.monthLabel)
-            views.setTextViewText(
-                R.id.widget_monthly_saved_badge,
-                context.getString(R.string.widget_monthly_saved_badge, data.savedPercent),
-            )
-            views.setTextViewText(R.id.widget_monthly_balance, data.balanceFormatted)
-            views.setTextViewText(R.id.widget_monthly_income_value, data.incomeFormatted)
-            views.setTextViewText(R.id.widget_monthly_expense_value, data.expenseFormatted)
-            views.setTextViewText(
-                R.id.widget_monthly_ops_value,
-                data.operationsCount.toString(),
-            )
-            val openIntent = buildAnalyticsIntent(context)
-            views.setOnClickPendingIntent(R.id.widget_monthly_root, openIntent)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            try {
+                val data = loadWidgetData(context)
+                val views = RemoteViews(context.packageName, R.layout.widget_monthly_summary)
+                views.setTextViewText(R.id.widget_monthly_title, data.monthLabel)
+                views.setTextViewText(
+                    R.id.widget_monthly_saved_badge,
+                    context.getString(R.string.widget_monthly_saved_badge, data.savedPercent),
+                )
+                views.setTextViewText(R.id.widget_monthly_balance, data.balanceFormatted)
+                views.setTextViewText(R.id.widget_monthly_income_value, data.incomeFormatted)
+                views.setTextViewText(R.id.widget_monthly_expense_value, data.expenseFormatted)
+                views.setTextViewText(
+                    R.id.widget_monthly_ops_value,
+                    data.operationsCount.toString(),
+                )
+                val openIntent = buildAnalyticsIntent(context)
+                views.setOnClickPendingIntent(R.id.widget_monthly_root, openIntent)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (_: Exception) {
+                // Keep placeholder layout from initialLayout if update fails.
+            }
         }
 
         private fun loadWidgetData(context: Context): MonthlyWidgetData = runBlocking(Dispatchers.IO) {

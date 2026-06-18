@@ -58,20 +58,24 @@ class BalanceSummaryWidgetProvider : AppWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int,
         ) {
-            val widgetData = loadWidgetData(context)
-            val views = RemoteViews(context.packageName, R.layout.widget_balance_summary)
-            views.setTextViewText(
-                R.id.widget_balance_title,
-                context.getString(R.string.widget_balance_title_with_month, widgetData.monthLabel),
-            )
-            views.setTextViewText(R.id.widget_balance_amount, widgetData.totalBalanceFormatted)
-            views.setTextViewText(R.id.widget_income_value, widgetData.monthIncomeFormatted)
-            views.setTextViewText(R.id.widget_expense_value, widgetData.monthExpenseFormatted)
-            val rootIntent = buildHomeIntent(context)
-            views.setOnClickPendingIntent(R.id.widget_balance_root, rootIntent)
-            views.setOnClickPendingIntent(R.id.widget_income_card, rootIntent)
-            views.setOnClickPendingIntent(R.id.widget_expense_card, rootIntent)
-            appWidgetManager.updateAppWidget(appWidgetId, views)
+            try {
+                val widgetData = loadWidgetData(context)
+                val views = RemoteViews(context.packageName, R.layout.widget_balance_summary)
+                views.setTextViewText(
+                    R.id.widget_balance_title,
+                    context.getString(R.string.widget_balance_title_with_month, widgetData.monthLabel),
+                )
+                views.setTextViewText(R.id.widget_balance_amount, widgetData.totalBalanceFormatted)
+                views.setTextViewText(R.id.widget_income_value, widgetData.monthIncomeFormatted)
+                views.setTextViewText(R.id.widget_expense_value, widgetData.monthExpenseFormatted)
+                val rootIntent = buildHomeIntent(context)
+                views.setOnClickPendingIntent(R.id.widget_balance_root, rootIntent)
+                views.setOnClickPendingIntent(R.id.widget_income_card, rootIntent)
+                views.setOnClickPendingIntent(R.id.widget_expense_card, rootIntent)
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (_: Exception) {
+                // Keep placeholder layout from initialLayout if update fails.
+            }
         }
 
         private fun loadWidgetData(context: Context): BalanceWidgetData = runBlocking(Dispatchers.IO) {
