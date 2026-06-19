@@ -8,4 +8,5 @@ data class GoalDeposit(
     val createdAtMillis: Long,
     val currencyCode: String = "RUB",
     val accountId: Long? = null,
+    val transactionId: Long? = null,
 )

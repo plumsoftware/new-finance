@@ -86,4 +86,17 @@ object DatabaseMigrations {
             )
         }
     }
+
+    val MIGRATION_11_12 = object : Migration(11, 12) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE transactions ADD COLUMN goalId INTEGER")
+            db.execSQL("ALTER TABLE goal_deposits ADD COLUMN transactionId INTEGER")
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS idx_transactions_goalId ON transactions(goalId)",
+            )
+            db.execSQL(
+                "CREATE INDEX IF NOT EXISTS idx_goal_deposits_transactionId ON goal_deposits(transactionId)",
+            )
+        }
+    }
 }

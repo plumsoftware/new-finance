@@ -60,6 +60,7 @@ fun TransactionEntity.toDomain(): Transaction = Transaction(
     amountMinor = amountMinor,
     categoryId = categoryId,
     smartAssetId = smartAssetId,
+    goalId = goalId,
     note = note,
     dateMillis = dateMillis,
     createdAtMillis = createdAtMillis,
@@ -76,6 +77,7 @@ fun Transaction.toEntity(): TransactionEntity = TransactionEntity(
     amountMinor = amountMinor,
     categoryId = categoryId,
     smartAssetId = smartAssetId,
+    goalId = goalId,
     note = note,
     dateMillis = dateMillis,
     createdAtMillis = createdAtMillis,
@@ -198,6 +200,7 @@ fun GoalDepositEntity.toDomain(): GoalDeposit = GoalDeposit(
     createdAtMillis = createdAtMillis,
     currencyCode = currencyCode,
     accountId = accountId,
+    transactionId = transactionId,
 )
 
 fun GoalDeposit.toEntity(): GoalDepositEntity = GoalDepositEntity(
@@ -208,6 +211,7 @@ fun GoalDeposit.toEntity(): GoalDepositEntity = GoalDepositEntity(
     createdAtMillis = createdAtMillis,
     currencyCode = currencyCode,
     accountId = accountId,
+    transactionId = transactionId,
 )
 
 fun DailySummaryRow.toDomain(): DailySummary = DailySummary(

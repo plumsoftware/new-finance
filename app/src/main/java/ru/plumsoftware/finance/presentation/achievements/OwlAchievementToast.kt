@@ -10,12 +10,13 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,20 +25,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.ui.components.MascotImage
 import ru.plumsoftware.finance.ui.theme.MascotEmotion
@@ -48,13 +56,30 @@ fun OwlAchievementToast(
     achievement: Achievement,
     onDismiss: () -> Unit,
 ) {
-    var visible by remember { mutableStateOf(false) }
+    var visible by remember(achievement.key) { mutableStateOf(false) }
+    var dismissed by remember(achievement.key) { mutableStateOf(false) }
+    var dragOffset by remember(achievement.key) { mutableFloatStateOf(0f) }
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val dismissThresholdPx = with(density) { 48.dp.toPx() }
+
+    fun dismissAnimated() {
+        if (dismissed) return
+        dismissed = true
+        dragOffset = 0f
+        visible = false
+        scope.launch {
+            delay(300)
+            onDismiss()
+        }
+    }
+
     LaunchedEffect(achievement.key) {
         visible = true
         delay(4500)
-        visible = false
-        delay(350)
-        onDismiss()
+        if (!dismissed) {
+            dismissAnimated()
+        }
     }
 
     val haptic = LocalHapticFeedback.current
@@ -65,20 +90,21 @@ fun OwlAchievementToast(
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(
-            initialOffsetY = { it },
+            initialOffsetY = { -it },
             animationSpec = spring(
                 stiffness = Spring.StiffnessMediumLow,
                 dampingRatio = Spring.DampingRatioMediumBouncy,
             ),
         ) + fadeIn(),
         exit = slideOutVertically(
-            targetOffsetY = { it },
+            targetOffsetY = { -it },
             animationSpec = tween(300),
         ) + fadeOut(),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .offset { IntOffset(0, dragOffset.roundToInt()) }
                 .padding(horizontal = 16.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .background(MaterialTheme.colorScheme.surface)
@@ -87,7 +113,20 @@ fun OwlAchievementToast(
                     color = Color(0xFFFFD700).copy(alpha = 0.35f),
                     shape = RoundedCornerShape(20.dp),
                 )
-                .clickable { onDismiss() }
+                .pointerInput(achievement.key) {
+                    detectVerticalDragGestures(
+                        onDragEnd = {
+                            if (-dragOffset > dismissThresholdPx) {
+                                dismissAnimated()
+                            } else {
+                                dragOffset = 0f
+                            }
+                        },
+                        onVerticalDrag = { _, dragAmount ->
+                            dragOffset = (dragOffset + dragAmount).coerceAtMost(0f)
+                        },
+                    )
+                }
                 .padding(12.dp),
         ) {
             Row(

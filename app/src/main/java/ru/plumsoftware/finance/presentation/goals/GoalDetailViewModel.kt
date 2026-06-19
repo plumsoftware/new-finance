@@ -1,5 +1,6 @@
 package ru.plumsoftware.finance.presentation.goals
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +18,7 @@ import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.GoalRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
+import ru.plumsoftware.finance.R
 
 data class GoalDetailUiState(
     val goal: Goal? = null,
@@ -38,6 +40,7 @@ class GoalDetailViewModel(
     private val goalRepository: GoalRepository,
     private val accountRepository: AccountRepository,
     settingsRepository: SettingsRepository,
+    private val context: Context,
 ) : ViewModel() {
     private val mutableState = MutableStateFlow(GoalDetailUiState())
     val transientState = mutableState.asStateFlow()
@@ -104,12 +107,25 @@ class GoalDetailViewModel(
             mutableState.update { it.copy(isSaving = true) }
             val wasCompleted = goal.isCompleted
             runCatching {
+                val transactionNote = buildString {
+                    append(
+                        context.getString(
+                            R.string.goal_deposit_transaction_note_prefix,
+                            goal.name,
+                        ),
+                    )
+                    val userNote = state.depositNote.trim()
+                    if (userNote.isNotEmpty()) {
+                        append(" — ").append(userNote)
+                    }
+                }
                 goalRepository.addDeposit(
                     goalId = goalId,
                     amountMinor = amountMinor,
                     note = state.depositNote,
                     currencyCode = state.currencyCode,
                     accountId = state.selectedAccountId,
+                    transactionNote = transactionNote,
                 )
             }.onSuccess { updated ->
                 mutableState.update {
@@ -166,6 +182,16 @@ class GoalDetailViewModel(
         viewModelScope.launch {
             goalRepository.deleteGoal(goalId)
             onDeleted()
+        }
+    }
+
+    fun setShowOnHome(value: Boolean) {
+        val goal = uiState.value.goal ?: return
+        if (goal.showOnHome == value) return
+        viewModelScope.launch {
+            runCatching {
+                goalRepository.upsertGoal(goal.copy(showOnHome = value))
+            }
         }
     }
 

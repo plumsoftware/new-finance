@@ -148,7 +148,9 @@ object BackupSerializer {
                     .put("currencyCode", item.currencyCode)
                     .put("originalAmount", item.originalAmount)
                     .put("originalCurrencyCode", item.originalCurrencyCode)
-                    .put("exchangeRate", item.exchangeRate),
+                    .put("exchangeRate", item.exchangeRate)
+                    .put("type", item.type)
+                    .put("goalId", item.goalId),
             )
         }
         return array
@@ -268,7 +270,8 @@ object BackupSerializer {
                     .put("note", item.note)
                     .put("createdAtMillis", item.createdAtMillis)
                     .put("currencyCode", item.currencyCode)
-                    .put("accountId", item.accountId),
+                    .put("accountId", item.accountId)
+                    .put("transactionId", item.transactionId),
             )
         }
         return array
@@ -338,6 +341,9 @@ object BackupSerializer {
                         originalCurrencyCode = obj.optString("originalCurrencyCode")
                             .takeIf { it.isNotBlank() },
                         exchangeRate = obj.optDouble("exchangeRate", 1.0),
+                        type = obj.optString("type").takeIf { it.isNotBlank() },
+                        goalId = obj.optLong("goalId")
+                            .takeIf { obj.has("goalId") && !obj.isNull("goalId") },
                     ),
                 )
             }
@@ -491,6 +497,8 @@ object BackupSerializer {
                         currencyCode = obj.optString("currencyCode", "RUB"),
                         accountId = obj.optLong("accountId")
                             .takeIf { obj.has("accountId") && !obj.isNull("accountId") },
+                        transactionId = obj.optLong("transactionId")
+                            .takeIf { obj.has("transactionId") && !obj.isNull("transactionId") },
                     ),
                 )
             }

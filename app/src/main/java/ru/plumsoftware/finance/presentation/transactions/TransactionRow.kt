@@ -1,5 +1,6 @@
 package ru.plumsoftware.finance.presentation.transactions
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -15,7 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -43,12 +46,25 @@ fun TransactionRow(
     val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
-    val isIncome = transaction.type == TransactionType.INCOME ||
-        transaction.type == TransactionType.SAVINGS
-    val amountColor = if (isIncome) colors.secondary else colors.error
-    val categoryColor = category?.colorArgb?.let { Color(it.toInt()) }
-        ?: amountColor
+    val isSavings = transaction.type == TransactionType.SAVINGS
+    val isIncome = transaction.type == TransactionType.INCOME
+    val amountColor = when {
+        isSavings -> colors.onSurfaceVariant
+        isIncome -> colors.secondary
+        else -> colors.error
+    }
+    val iconBackgroundColor = when {
+        isSavings -> colors.onSurfaceVariant.copy(alpha = 0.12f)
+        else -> {
+            val categoryColor = category?.colorArgb?.let { Color(it.toInt()) } ?: amountColor
+            categoryColor.copy(alpha = 0.15f)
+        }
+    }
     val formattedDate = formatTransactionDate(transaction.dateMillis)
+    val title = when {
+        isSavings -> transaction.note ?: stringResource(R.string.type_savings)
+        else -> category?.name ?: transaction.note ?: stringResource(R.string.transaction_default)
+    }
 
     Row(
         modifier = modifier
@@ -63,13 +79,22 @@ fun TransactionRow(
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .background(categoryColor.copy(alpha = 0.15f), CircleShape),
+                .background(iconBackgroundColor, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = category?.icon ?: stringResource(R.string.default_bullet),
-                fontSize = 22.sp,
-            )
+            if (isSavings) {
+                Image(
+                    painter = painterResource(R.drawable.pig),
+                    contentDescription = null,
+                    modifier = Modifier.size(28.dp),
+                    contentScale = ContentScale.Fit,
+                )
+            } else {
+                Text(
+                    text = category?.icon ?: stringResource(R.string.default_bullet),
+                    fontSize = 22.sp,
+                )
+            }
         }
         Column(
             modifier = Modifier
@@ -77,9 +102,9 @@ fun TransactionRow(
                 .padding(start = Dimens.SpacingM),
         ) {
             Text(
-                text = category?.name ?: transaction.note ?: stringResource(R.string.transaction_default),
+                text = title,
                 style = typography.bodyLarge,
-                color = colors.onSurface,
+                color = if (isSavings) colors.onSurfaceVariant else colors.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

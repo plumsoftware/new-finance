@@ -166,7 +166,12 @@ class DashboardViewModel(
 
     fun deleteTransaction(id: Long) {
         viewModelScope.launch {
-            transactionRepository.delete(id)
+            val transaction = transactionRepository.getById(id)
+            if (transaction?.type == TransactionType.SAVINGS && transaction.goalId != null) {
+                goalRepository.deleteDepositByTransactionId(id)
+            } else {
+                transactionRepository.delete(id)
+            }
             _snackbar.value = context.getString(R.string.transaction_deleted)
         }
     }

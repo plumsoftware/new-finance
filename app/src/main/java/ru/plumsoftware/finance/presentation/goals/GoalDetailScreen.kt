@@ -57,6 +57,7 @@ import ru.plumsoftware.finance.ui.components.FinanceNumPad
 import ru.plumsoftware.finance.ui.components.IosCard
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
 import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
+import ru.plumsoftware.finance.ui.components.ios.IosSwitch
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.IosRed
 import java.text.SimpleDateFormat
@@ -316,6 +317,29 @@ fun GoalDetailScreen(
                                 style = typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = goalDeadlineColor(goal.isOverdue, left, colors.onSurface),
+                            )
+                        }
+                    }
+                }
+                item {
+                    IosCard {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(
+                                    horizontal = Dimens.paddingMedium,
+                                    vertical = Dimens.SpacingXs,
+                                ),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = stringResource(R.string.goal_field_show_on_home),
+                                style = typography.bodyLarge,
+                            )
+                            IosSwitch(
+                                checked = goal.showOnHome,
+                                onCheckedChange = viewModel::setShowOnHome,
                             )
                         }
                     }

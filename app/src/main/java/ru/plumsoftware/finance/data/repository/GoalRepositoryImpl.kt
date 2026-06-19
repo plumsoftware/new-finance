@@ -4,16 +4,20 @@ import androidx.room.withTransaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import ru.plumsoftware.finance.data.local.dao.GoalDao
+import ru.plumsoftware.finance.data.local.dao.TransactionDao
 import ru.plumsoftware.finance.data.local.database.FinanceDatabase
+import ru.plumsoftware.finance.data.local.entity.TransactionEntity
 import ru.plumsoftware.finance.data.mapper.toDomain
 import ru.plumsoftware.finance.data.mapper.toEntity
 import ru.plumsoftware.finance.domain.model.Goal
 import ru.plumsoftware.finance.domain.model.GoalDeposit
+import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.domain.repository.GoalRepository
 
 class GoalRepositoryImpl(
     private val database: FinanceDatabase,
     private val goalDao: GoalDao,
+    private val transactionDao: TransactionDao,
 ) : GoalRepository {
     override fun observeGoals(): Flow<List<Goal>> =
         goalDao.observeGoals().map { rows -> rows.map { it.toDomain() } }
@@ -45,14 +49,34 @@ class GoalRepositoryImpl(
         note: String?,
         currencyCode: String,
         accountId: Long?,
+        transactionNote: String,
     ): Goal =
         database.withTransaction {
             val current = goalDao.getGoal(goalId)?.toDomain()
                 ?: error("Goal $goalId not found")
+            val now = System.currentTimeMillis()
+            val resolvedAccountId = accountId ?: current.accountId ?: 1L
             val updatedSaved = (current.savedAmountMinor + amountMinor).coerceAtMost(current.targetAmountMinor)
             val updated = current.copy(
                 savedAmountMinor = updatedSaved,
                 isCompleted = updatedSaved >= current.targetAmountMinor && current.targetAmountMinor > 0L,
+            )
+            val transactionId = transactionDao.insert(
+                TransactionEntity(
+                    type = TransactionType.SAVINGS,
+                    amountMinor = amountMinor,
+                    categoryId = null,
+                    smartAssetId = null,
+                    goalId = goalId,
+                    note = transactionNote,
+                    dateMillis = now,
+                    createdAtMillis = now,
+                    accountId = resolvedAccountId,
+                    currencyCode = currencyCode,
+                    originalAmountMinor = amountMinor,
+                    originalCurrencyCode = currencyCode,
+                    exchangeRate = 1.0,
+                ),
             )
             goalDao.updateGoal(updated.toEntity())
             goalDao.insertDeposit(
@@ -60,9 +84,10 @@ class GoalRepositoryImpl(
                     goalId = goalId,
                     amountMinor = amountMinor,
                     note = note?.takeIf { it.isNotBlank() },
-                    createdAtMillis = System.currentTimeMillis(),
+                    createdAtMillis = now,
                     currencyCode = currencyCode,
-                    accountId = accountId,
+                    accountId = resolvedAccountId,
+                    transactionId = transactionId,
                 ).toEntity(),
             )
             updated
@@ -71,6 +96,7 @@ class GoalRepositoryImpl(
     override suspend fun deleteDeposit(deposit: GoalDeposit) {
         database.withTransaction {
             val goal = goalDao.getGoal(deposit.goalId)?.toDomain() ?: return@withTransaction
+            deposit.transactionId?.let { transactionDao.deleteById(it) }
             if (deposit.id > 0L) {
                 goalDao.deleteDepositById(deposit.id)
             } else {
@@ -78,7 +104,6 @@ class GoalRepositoryImpl(
             }
             val totalFromDeposits = goalDao.getTotalDepositsByGoalId(deposit.goalId)
             val afterSubtract = (goal.savedAmountMinor - deposit.amountMinor).coerceAtLeast(0L)
-            // Не обнуляем накопления, заданные при создании цели без записи в goal_deposits
             val newSaved = maxOf(totalFromDeposits, afterSubtract)
                 .coerceAtMost(goal.targetAmountMinor)
             val updated = goal.copy(
@@ -89,7 +114,20 @@ class GoalRepositoryImpl(
         }
     }
 
+    override suspend fun deleteDepositByTransactionId(transactionId: Long) {
+        val deposit = goalDao.getDepositByTransactionId(transactionId)?.toDomain() ?: run {
+            transactionDao.deleteById(transactionId)
+            return
+        }
+        deleteDeposit(deposit)
+    }
+
     override suspend fun deleteGoal(goalId: Long) {
-        goalDao.deleteGoal(goalId)
+        database.withTransaction {
+            goalDao.getDepositsSync(goalId).forEach { deposit ->
+                deposit.transactionId?.let { transactionDao.deleteById(it) }
+            }
+            goalDao.deleteGoal(goalId)
+        }
     }
 }

@@ -6,6 +6,7 @@ data class Transaction(
     val amountMinor: Long,
     val categoryId: Long?,
     val smartAssetId: Long?,
+    val goalId: Long? = null,
     val note: String?,
     val dateMillis: Long,
     val createdAtMillis: Long,

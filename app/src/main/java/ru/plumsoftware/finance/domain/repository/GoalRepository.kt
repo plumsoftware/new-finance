@@ -17,8 +17,10 @@ interface GoalRepository {
         note: String?,
         currencyCode: String = "RUB",
         accountId: Long? = null,
+        transactionNote: String,
     ): Goal
 
     suspend fun deleteDeposit(deposit: GoalDeposit)
+    suspend fun deleteDepositByTransactionId(transactionId: Long)
     suspend fun deleteGoal(goalId: Long)
 }

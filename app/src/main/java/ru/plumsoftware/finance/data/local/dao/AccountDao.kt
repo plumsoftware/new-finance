@@ -86,6 +86,9 @@ interface AccountDao {
                 - COALESCE(SUM(
                     CASE WHEN t.type = 'EXPENSE'
                     THEN t.amountMinor ELSE 0 END), 0)
+                - COALESCE(SUM(
+                    CASE WHEN t.type = 'SAVINGS'
+                    THEN t.amountMinor ELSE 0 END), 0)
             ) AS calculatedBalance
         FROM accounts a
         LEFT JOIN transactions t ON t.accountId = a.id

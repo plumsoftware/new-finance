@@ -31,7 +31,7 @@ import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsViewModel
 val presentationModule = module {
     viewModel { OnboardingViewModel(get()) }
     viewModel { DashboardViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), androidContext()) }
-    viewModel { HistoryViewModel(get(), get(), get()) }
+    viewModel { HistoryViewModel(get(), get(), get(), get()) }
     viewModel { CategoriesViewModel(get()) }
     viewModel { CategoryEditorViewModel(get(), get(), androidContext()) }
     viewModel { AddTransactionViewModel(get(), get(), get(), get(), get(),androidContext()) }
@@ -39,7 +39,7 @@ val presentationModule = module {
     viewModel { GoalsViewModel(get(), get()) }
     viewModel { AchievementsViewModel(get(), get(), get(), get(), get(), androidContext()) }
     viewModel { CreateGoalViewModel(get(), get(), get()) }
-    viewModel { (goalId: Long) -> GoalDetailViewModel(goalId, get(), get(), get()) }
+    viewModel { (goalId: Long) -> GoalDetailViewModel(goalId, get(), get(), get(), androidContext()) }
     viewModel { CreateSmartSavingsViewModel(get(), get(), get(), androidContext()) }
     viewModel { (assetId: Long) ->
         SmartSavingsDetailViewModel(assetId, get(), get(), androidContext())

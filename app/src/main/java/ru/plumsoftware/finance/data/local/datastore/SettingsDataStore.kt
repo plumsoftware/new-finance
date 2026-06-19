@@ -32,6 +32,7 @@ class SettingsDataStore(
                 prefs[Keys.THEME_MODE]?.toIntOrNull() ?: 0,
             ) { ThemeMode.SYSTEM },
             permissionsPromptHidden = prefs[Keys.PERMISSIONS_PROMPT_HIDDEN] ?: false,
+            initialBalancePromptCompleted = prefs[Keys.INITIAL_BALANCE_PROMPT_COMPLETED] ?: false,
         )
     }
 
@@ -46,6 +47,7 @@ class SettingsDataStore(
                     prefs[Keys.THEME_MODE]?.toIntOrNull() ?: 0,
                 ) { ThemeMode.SYSTEM },
                 permissionsPromptHidden = prefs[Keys.PERMISSIONS_PROMPT_HIDDEN] ?: false,
+                initialBalancePromptCompleted = prefs[Keys.INITIAL_BALANCE_PROMPT_COMPLETED] ?: false,
             )
             val updated = transform(current)
             prefs[Keys.DEFAULT_CURRENCY] = updated.defaultCurrencyCode
@@ -54,6 +56,7 @@ class SettingsDataStore(
             prefs[Keys.BIOMETRIC_ENABLED] = updated.biometricEnabled
             prefs[Keys.THEME_MODE] = updated.themeMode.ordinal.toString()
             prefs[Keys.PERMISSIONS_PROMPT_HIDDEN] = updated.permissionsPromptHidden
+            prefs[Keys.INITIAL_BALANCE_PROMPT_COMPLETED] = updated.initialBalancePromptCompleted
         }
     }
 
@@ -64,5 +67,6 @@ class SettingsDataStore(
         val BIOMETRIC_ENABLED = booleanPreferencesKey("biometric_enabled")
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val PERMISSIONS_PROMPT_HIDDEN = booleanPreferencesKey("permissions_prompt_hidden")
+        val INITIAL_BALANCE_PROMPT_COMPLETED = booleanPreferencesKey("initial_balance_prompt_completed")
     }
 }

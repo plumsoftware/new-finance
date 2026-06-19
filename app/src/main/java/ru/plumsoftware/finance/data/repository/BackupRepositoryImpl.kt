@@ -141,6 +141,8 @@ class BackupRepositoryImpl(
                 ),
                 originalCurrencyCode = tx.originalCurrencyCode ?: tx.currencyCode,
                 exchangeRate = tx.exchangeRate,
+                type = tx.type.name,
+                goalId = tx.goalId,
             )
         }
         val backupRecurring = recurring.map { item ->
@@ -207,6 +209,7 @@ class BackupRepositoryImpl(
                 createdAtMillis = deposit.createdAtMillis,
                 currencyCode = deposit.currencyCode,
                 accountId = deposit.accountId,
+                transactionId = deposit.transactionId,
             )
         }
         val backupAchievements = achievementUnlocks.map { unlock ->
@@ -651,10 +654,13 @@ class BackupRepositoryImpl(
         )
         return TransactionEntity(
             id = 0,
-            type = if (dto.isIncome) TransactionType.INCOME else TransactionType.EXPENSE,
+            type = dto.type
+                ?.let { runCatching { TransactionType.valueOf(it) }.getOrNull() }
+                ?: if (dto.isIncome) TransactionType.INCOME else TransactionType.EXPENSE,
             amountMinor = amountMinor,
             categoryId = categoryId,
             smartAssetId = smartAssetId,
+            goalId = dto.goalId,
             note = dto.note,
             dateMillis = dateMillis,
             createdAtMillis = dateMillis,
@@ -736,6 +742,7 @@ class BackupRepositoryImpl(
         createdAtMillis = dto.createdAtMillis,
         currencyCode = dto.currencyCode,
         accountId = dto.accountId,
+        transactionId = dto.transactionId,
     )
 
     private fun resolvePeriodMillis(

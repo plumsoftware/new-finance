@@ -15,6 +15,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,7 +60,9 @@ fun FinanceNumPad(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(colors.background),
+            .background(colors.background)
+            .padding(all = Dimens.paddingMedium)
+            .clip(shape = RoundedCornerShape(Dimens.cornerRadiusChip)),
         verticalArrangement = Arrangement.spacedBy(Dimens.numPadGapVertical),
     ) {
         keys.forEach { row ->

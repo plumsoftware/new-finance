@@ -12,7 +12,9 @@ import kotlinx.coroutines.flow.stateIn
 import ru.plumsoftware.finance.domain.model.Category
 import ru.plumsoftware.finance.domain.model.CategoryType
 import ru.plumsoftware.finance.domain.model.Transaction
+import ru.plumsoftware.finance.domain.model.TransactionType
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
+import ru.plumsoftware.finance.domain.repository.GoalRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.domain.repository.TransactionRepository
 import java.time.LocalDate
@@ -30,6 +32,7 @@ data class HistoryUiState(
 
 class HistoryViewModel(
     private val transactionRepository: TransactionRepository,
+    private val goalRepository: GoalRepository,
     categoryRepository: CategoryRepository,
     settingsRepository: SettingsRepository,
 ) : ViewModel() {
@@ -76,7 +79,12 @@ class HistoryViewModel(
 
     fun deleteTransaction(id: Long) {
         viewModelScope.launch {
-            transactionRepository.delete(id)
+            val transaction = transactionRepository.getById(id)
+            if (transaction?.type == TransactionType.SAVINGS && transaction.goalId != null) {
+                goalRepository.deleteDepositByTransactionId(id)
+            } else {
+                transactionRepository.delete(id)
+            }
         }
     }
 
@@ -99,7 +107,14 @@ class HistoryViewModel(
                 .filter { it.dateMillis < cutoffMillis }
                 .map { it.id }
                 .toList()
-            oldTransactionIds.forEach { id -> transactionRepository.delete(id) }
+            oldTransactionIds.forEach { id ->
+                val transaction = transactionRepository.getById(id)
+                if (transaction?.type == TransactionType.SAVINGS && transaction.goalId != null) {
+                    goalRepository.deleteDepositByTransactionId(id)
+                } else {
+                    transactionRepository.delete(id)
+                }
+            }
         }
     }
 

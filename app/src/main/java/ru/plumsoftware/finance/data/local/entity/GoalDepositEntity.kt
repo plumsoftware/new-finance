@@ -15,7 +15,7 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("goalId"), Index("createdAtMillis")],
+    indices = [Index("goalId"), Index("createdAtMillis"), Index("transactionId")],
 )
 data class GoalDepositEntity(
     @PrimaryKey(autoGenerate = true)
@@ -26,4 +26,5 @@ data class GoalDepositEntity(
     val createdAtMillis: Long,
     val currencyCode: String = "RUB",
     val accountId: Long? = null,
+    val transactionId: Long? = null,
 )

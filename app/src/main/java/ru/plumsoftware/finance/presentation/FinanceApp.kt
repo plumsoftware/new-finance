@@ -654,8 +654,8 @@ fun FinanceApp(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(bottom = if (showBottomBar) 100.dp else Dimens.SpacingL),
-                        contentAlignment = Alignment.BottomCenter,
+                            .padding(top = Dimens.statusBarInset),
+                        contentAlignment = Alignment.TopCenter,
                     ) {
                         OwlAchievementToast(
                             achievement = achievement,

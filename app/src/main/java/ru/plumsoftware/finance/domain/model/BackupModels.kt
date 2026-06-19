@@ -86,6 +86,8 @@ data class BackupTransactionDto(
     val originalAmount: Double = 0.0,
     val originalCurrencyCode: String? = null,
     val exchangeRate: Double = 1.0,
+    val type: String? = null,
+    val goalId: Long? = null,
 )
 
 data class BackupRecurringDto(
@@ -152,6 +154,7 @@ data class BackupGoalDepositDto(
     val createdAtMillis: Long,
     val currencyCode: String = "RUB",
     val accountId: Long? = null,
+    val transactionId: Long? = null,
 )
 
 data class BackupAchievementUnlockDto(

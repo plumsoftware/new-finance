@@ -31,6 +31,12 @@ interface GoalDao {
     @Query("SELECT * FROM goals ORDER BY createdAtMillis DESC")
     suspend fun getAllGoalsSync(): List<GoalEntity>
 
+    @Query("SELECT * FROM goal_deposits WHERE goalId = :goalId ORDER BY createdAtMillis DESC")
+    suspend fun getDepositsSync(goalId: Long): List<GoalDepositEntity>
+
+    @Query("SELECT * FROM goal_deposits WHERE transactionId = :transactionId LIMIT 1")
+    suspend fun getDepositByTransactionId(transactionId: Long): GoalDepositEntity?
+
     @Query("SELECT * FROM goal_deposits ORDER BY createdAtMillis DESC")
     suspend fun getAllDepositsSync(): List<GoalDepositEntity>
 

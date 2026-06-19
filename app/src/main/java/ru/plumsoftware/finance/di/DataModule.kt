@@ -68,7 +68,7 @@ val dataModule = module {
     single<SmartAssetRepository> {
         SmartAssetRepositoryImpl(get(), get(), get())
     }
-    single<GoalRepository> { GoalRepositoryImpl(get(), get()) }
+    single<GoalRepository> { GoalRepositoryImpl(get(), get(), get()) }
     single<AnalyticsRepository> { AnalyticsRepositoryImpl(get(), get(), get(), get()) }
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
     single { StreakRepository(get(), get()) }

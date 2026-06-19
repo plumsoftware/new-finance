@@ -742,8 +742,7 @@ private fun HistoryFilterChip(
 private fun matchesTypeFilter(transaction: Transaction, filter: HistoryFilter): Boolean =
     when (filter) {
         HistoryFilter.ALL -> true
-        HistoryFilter.INCOME -> transaction.type == TransactionType.INCOME ||
-            transaction.type == TransactionType.SAVINGS
+        HistoryFilter.INCOME -> transaction.type == TransactionType.INCOME
         HistoryFilter.EXPENSE -> transaction.type == TransactionType.EXPENSE
     }
 
@@ -795,8 +794,17 @@ fun TransactionDetailSheet(
     val typography = MaterialTheme.typography
     val dateLabel =
         SimpleDateFormat("d MMMM yyyy, HH:mm", Locale("ru")).format(Date(transaction.dateMillis))
-    val amountColor = if (transaction.type == TransactionType.INCOME) colors.secondary else colors.error
+    val isSavings = transaction.type == TransactionType.SAVINGS
     val isIncome = transaction.type == TransactionType.INCOME
+    val amountColor = when {
+        isSavings -> colors.onSurfaceVariant
+        isIncome -> colors.secondary
+        else -> colors.error
+    }
+    val title = when {
+        isSavings -> transaction.note ?: stringResource(R.string.type_savings)
+        else -> category?.name ?: stringResource(R.string.transaction_default)
+    }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = colors.surface,
@@ -810,17 +818,33 @@ fun TransactionDetailSheet(
             Box(
                 modifier = Modifier
                     .size(Dimens.avatarSizeDetail)
-                    .background(amountColor.copy(alpha = 0.12f), androidx.compose.foundation.shape.CircleShape)
+                    .background(
+                        if (isSavings) {
+                            colors.onSurfaceVariant.copy(alpha = 0.12f)
+                        } else {
+                            amountColor.copy(alpha = 0.12f)
+                        },
+                        androidx.compose.foundation.shape.CircleShape,
+                    )
                     .align(Alignment.CenterHorizontally),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = category?.icon ?: stringResource(R.string.default_bullet),
-                    style = typography.headlineMedium,
-                )
+                if (isSavings) {
+                    Image(
+                        painter = painterResource(R.drawable.pig),
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp),
+                        contentScale = ContentScale.Fit,
+                    )
+                } else {
+                    Text(
+                        text = category?.icon ?: stringResource(R.string.default_bullet),
+                        style = typography.headlineMedium,
+                    )
+                }
             }
             Text(
-                text = category?.name ?: stringResource(R.string.transaction_default),
+                text = title,
                 style = typography.headlineMedium,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )

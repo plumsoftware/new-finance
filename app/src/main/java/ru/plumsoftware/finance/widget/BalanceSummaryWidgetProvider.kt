@@ -87,7 +87,7 @@ class BalanceSummaryWidgetProvider : AppWidgetProvider() {
                 when (tx.type) {
                     TransactionType.INCOME -> tx.amountMinor
                     TransactionType.EXPENSE -> -tx.amountMinor
-                    TransactionType.SAVINGS -> 0L
+                    TransactionType.SAVINGS -> -tx.amountMinor
                 }
             }
             val monthRange = currentMonthRange()

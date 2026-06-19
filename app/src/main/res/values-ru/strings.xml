@@ -679,6 +679,11 @@
     <string name="account_field_type">Тип счёта</string>
     <string name="account_field_currency">Валюта</string>
     <string name="account_field_initial_balance">Начальный баланс</string>
+    <string name="initial_balance_prompt_title">Укажите начальный баланс</string>
+    <string name="initial_balance_prompt_message">Сколько сейчас на основном счёте? Позже можно изменить в настройках счёта.</string>
+    <string name="initial_balance_prompt_skip">Пропустить</string>
+    <string name="edit_balance_dialog_title">Баланс счёта</string>
+    <string name="edit_balance_dialog_message">Укажите текущую сумму на счёте. Операции сохранятся.</string>
     <string name="account_type_debit">Дебетовый</string>
     <string name="account_type_credit">Кредитный</string>
     <string name="account_type_cash">Наличные</string>

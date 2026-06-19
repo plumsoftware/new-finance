@@ -7,4 +7,5 @@ data class AppSettings(
     val biometricEnabled: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val permissionsPromptHidden: Boolean = false,
+    val initialBalancePromptCompleted: Boolean = false,
 )

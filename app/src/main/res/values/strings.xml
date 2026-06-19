@@ -679,6 +679,11 @@
     <string name="account_field_type">Account type</string>
     <string name="account_field_currency">Currency</string>
     <string name="account_field_initial_balance">Initial balance</string>
+    <string name="initial_balance_prompt_title">Set starting balance</string>
+    <string name="initial_balance_prompt_message">How much is on your main account right now? You can change this later in account settings.</string>
+    <string name="initial_balance_prompt_skip">Skip</string>
+    <string name="edit_balance_dialog_title">Account balance</string>
+    <string name="edit_balance_dialog_message">Enter the current amount on your account. Transactions will be preserved.</string>
     <string name="account_type_debit">Debit</string>
     <string name="account_type_credit">Credit</string>
     <string name="account_type_cash">Cash</string>

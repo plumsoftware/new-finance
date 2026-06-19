@@ -79,6 +79,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
@@ -99,6 +100,8 @@ import ru.plumsoftware.finance.presentation.notifications.NotificationsViewModel
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.presentation.common.hasPendingPermissions
 import ru.plumsoftware.finance.presentation.permissions.PermissionsBottomSheet
+import ru.plumsoftware.finance.domain.model.Account
+import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.MascotImage
@@ -130,6 +133,7 @@ fun HomeScreen(
     viewModel: DashboardViewModel = koinViewModel(),
     notificationsViewModel: NotificationsViewModel = koinViewModel(),
     settingsRepository: SettingsRepository = koinInject(),
+    accountRepository: AccountRepository = koinInject(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -139,6 +143,14 @@ fun HomeScreen(
     val unreadCount by notificationsViewModel.unreadCount.collectAsStateWithLifecycle()
     val snackbarHost = remember { SnackbarHostState() }
     var showPermissionsSheet by remember { mutableStateOf(false) }
+    var showInitialBalanceDialog by remember { mutableStateOf(false) }
+    var showEditBalanceDialog by remember { mutableStateOf(false) }
+    var initialBalanceDigits by remember { mutableStateOf("") }
+    var editBalanceDigits by remember { mutableStateOf("") }
+    var isSavingInitialBalance by remember { mutableStateOf(false) }
+    var isSavingEditBalance by remember { mutableStateOf(false) }
+    var initialBalanceOffered by rememberSaveable { mutableStateOf(false) }
+    var settingsLoaded by remember { mutableStateOf(false) }
     var permissionResumeTick by remember { mutableIntStateOf(0) }
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
@@ -165,6 +177,130 @@ fun HomeScreen(
         } else if (hasPendingPermissions(context)) {
             showPermissionsSheet = true
         }
+    }
+
+    LaunchedEffect(Unit) {
+        settingsRepository.settings.first()
+        settingsLoaded = true
+    }
+
+    LaunchedEffect(
+        settings.initialBalancePromptCompleted,
+        settingsLoaded,
+        state.isLoading,
+        state.totalBalanceMinor,
+        showPermissionsSheet,
+        initialBalanceOffered,
+    ) {
+        if (!settingsLoaded || state.isLoading) {
+            showInitialBalanceDialog = false
+            return@LaunchedEffect
+        }
+        if (settings.initialBalancePromptCompleted || initialBalanceOffered) {
+            showInitialBalanceDialog = false
+            return@LaunchedEffect
+        }
+        val account = accountRepository.getDefault() ?: return@LaunchedEffect
+        val alreadyConfigured = account.initialBalanceMinor != 0L || state.totalBalanceMinor != 0L
+        if (alreadyConfigured) {
+            settingsRepository.update { it.copy(initialBalancePromptCompleted = true) }
+            showInitialBalanceDialog = false
+            return@LaunchedEffect
+        }
+        val permissionsReady = !hasPendingPermissions(context) && !showPermissionsSheet
+        if (permissionsReady) {
+            initialBalanceOffered = true
+            showInitialBalanceDialog = true
+        }
+    }
+
+    if (showInitialBalanceDialog) {
+        InitialBalanceDialog(
+            title = stringResource(R.string.initial_balance_prompt_title),
+            message = stringResource(R.string.initial_balance_prompt_message),
+            currencyCode = state.currencyCode,
+            amountDigits = initialBalanceDigits,
+            isSaving = isSavingInitialBalance,
+            dismissLabel = stringResource(R.string.initial_balance_prompt_skip),
+            onDigit = { digit ->
+                initialBalanceDigits = normalizeBalanceDigits(initialBalanceDigits + digit)
+            },
+            onBackspace = {
+                initialBalanceDigits = initialBalanceDigits.dropLast(1)
+            },
+            onSave = {
+                scope.launch {
+                    isSavingInitialBalance = true
+                    val amountMinor = MoneyFormat.majorDigitsToMinor(
+                        initialBalanceDigits.ifBlank { "0" },
+                        state.currencyCode,
+                    )
+                    val account = accountRepository.getDefault()
+                    if (account != null && amountMinor > 0L) {
+                        accountRepository.upsert(
+                            account.copy(initialBalanceMinor = amountMinor),
+                        )
+                    }
+                    settingsRepository.update {
+                        it.copy(initialBalancePromptCompleted = true)
+                    }
+                    isSavingInitialBalance = false
+                    showInitialBalanceDialog = false
+                    initialBalanceDigits = ""
+                }
+            },
+            onDismiss = {
+                scope.launch {
+                    settingsRepository.update {
+                        it.copy(initialBalancePromptCompleted = true)
+                    }
+                    showInitialBalanceDialog = false
+                    initialBalanceDigits = ""
+                }
+            },
+        )
+    }
+
+    if (showEditBalanceDialog) {
+        InitialBalanceDialog(
+            title = stringResource(R.string.edit_balance_dialog_title),
+            message = stringResource(R.string.edit_balance_dialog_message),
+            currencyCode = state.currencyCode,
+            amountDigits = editBalanceDigits,
+            isSaving = isSavingEditBalance,
+            dismissLabel = stringResource(R.string.cancel),
+            onDigit = { digit ->
+                editBalanceDigits = normalizeBalanceDigits(editBalanceDigits + digit)
+            },
+            onBackspace = {
+                editBalanceDigits = editBalanceDigits.dropLast(1)
+            },
+            onSave = {
+                scope.launch {
+                    isSavingEditBalance = true
+                    val enteredMinor = MoneyFormat.majorDigitsToMinor(
+                        editBalanceDigits.ifBlank { "0" },
+                        state.currencyCode,
+                    )
+                    val account = accountRepository.getById(settings.selectedAccountId)
+                        ?: accountRepository.getDefault()
+                    if (account != null) {
+                        val transactionsDelta = state.totalBalanceMinor - account.initialBalanceMinor
+                        val newInitialBalance = (enteredMinor - transactionsDelta).coerceAtLeast(0L)
+                        accountRepository.upsert(
+                            account.copy(initialBalanceMinor = newInitialBalance),
+                        )
+                    }
+                    isSavingEditBalance = false
+                    showEditBalanceDialog = false
+                    editBalanceDigits = ""
+                }
+            },
+            onDismiss = {
+                showEditBalanceDialog = false
+                editBalanceDigits = ""
+            },
+        )
     }
 
     if (showPermissionsSheet) {
@@ -218,6 +354,13 @@ fun HomeScreen(
                     monthExpenseMinor = state.monthExpenseMinor,
                     currencyCode = state.currencyCode,
                     onMonthClick = onOpenAnalyticsClick,
+                    onBalanceClick = {
+                        editBalanceDigits = MoneyFormat.minorToMajorDigits(
+                            amountMinor = state.totalBalanceMinor,
+                            currencyCode = state.currencyCode,
+                        ).takeIf { it != "0" }.orEmpty()
+                        showEditBalanceDialog = true
+                    },
                 )
             }
             if (!NativeAdSession.dismissed) {
@@ -443,6 +586,7 @@ private fun BalanceCard(
     monthExpenseMinor: Long,
     currencyCode: String,
     onMonthClick: () -> Unit,
+    onBalanceClick: () -> Unit,
 ) {
     val context = LocalContext.current
     val colors = MaterialTheme.colorScheme
@@ -469,6 +613,7 @@ private fun BalanceCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = Dimens.SpacingL),
+        onClick = onBalanceClick,
     ) {
         Column(
             modifier = Modifier.padding(balancePadding),
@@ -1150,6 +1295,21 @@ private fun AssetMiniCard(
                 )
             }
         }
+    }
+}
+
+private fun normalizeBalanceDigits(raw: String): String {
+    val filtered = raw.filter { it.isDigit() || it == '.' }
+    if (filtered.isEmpty()) return ""
+    if (filtered == ".") return "0."
+    val dotIndex = filtered.indexOf('.')
+    return if (dotIndex >= 0) {
+        val intPart = filtered.substring(0, dotIndex).filter { it.isDigit() }
+        val fracPart = filtered.substring(dotIndex + 1).filter { it.isDigit() }.take(2)
+        val safeInt = intPart.ifEmpty { "0" }.trimStart('0').ifEmpty { "0" }.take(9)
+        "$safeInt.$fracPart"
+    } else {
+        filtered.filter { it.isDigit() }.trimStart('0').ifEmpty { "0" }.take(9)
     }
 }
 

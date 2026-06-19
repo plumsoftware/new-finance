@@ -49,7 +49,7 @@ import ru.plumsoftware.finance.data.repository.AccountRepositoryImpl
         StreakDataEntity::class,
         AchievementUnlockEntity::class,
     ],
-    version = 11,
+    version = 12,
     exportSchema = false,
 )
 @TypeConverters(EnumConverters::class)
@@ -80,7 +80,10 @@ abstract class FinanceDatabase : RoomDatabase() {
         private fun buildDatabase(context: Context): FinanceDatabase {
             lateinit var database: FinanceDatabase
             database = Room.databaseBuilder(context, FinanceDatabase::class.java, DATABASE_NAME)
-                .addMigrations(DatabaseMigrations.MIGRATION_10_11)
+                .addMigrations(
+                    DatabaseMigrations.MIGRATION_10_11,
+                    DatabaseMigrations.MIGRATION_11_12,
+                )
                 .addCallback(
                     object : Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
