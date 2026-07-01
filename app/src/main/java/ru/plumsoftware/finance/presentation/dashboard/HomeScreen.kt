@@ -116,7 +116,21 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
+import android.content.Intent
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.rounded.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import ru.plumsoftware.finance.data.util.startOfDayMillis
+import ru.plumsoftware.finance.domain.model.*
+import ru.plumsoftware.finance.presentation.export.ExportViewModel
+import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
@@ -132,15 +146,18 @@ fun HomeScreen(
     onGoalClick: (Long) -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel(),
     notificationsViewModel: NotificationsViewModel = koinViewModel(),
+    exportViewModel: ExportViewModel = koinViewModel(),
     settingsRepository: SettingsRepository = koinInject(),
     accountRepository: AccountRepository = koinInject(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
     val settings by settingsRepository.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val unreadCount by notificationsViewModel.unreadCount.collectAsStateWithLifecycle()
+    val exportState by exportViewModel.exportState.collectAsStateWithLifecycle() // Стейт экспорта
+
     val snackbarHost = remember { SnackbarHostState() }
     var showPermissionsSheet by remember { mutableStateOf(false) }
     var showInitialBalanceDialog by remember { mutableStateOf(false) }
@@ -152,8 +169,47 @@ fun HomeScreen(
     var initialBalanceOffered by rememberSaveable { mutableStateOf(false) }
     var settingsLoaded by remember { mutableStateOf(false) }
     var permissionResumeTick by remember { mutableIntStateOf(0) }
+
+    // Переменные для Share Bottom Sheet
+    var showShareSheet by rememberSaveable { mutableStateOf(false) }
+    var selectedFormat by rememberSaveable { mutableStateOf(ExportFormat.PDF) } // По умолчанию PDF
+    var selectedPeriod by rememberSaveable { mutableStateOf(ExportPeriod.THIS_MONTH) }
+    var customStartMillis by rememberSaveable { mutableStateOf<Long?>(null) }
+    var customEndMillis by rememberSaveable { mutableStateOf<Long?>(null) }
+    var showDateRangePicker by rememberSaveable { mutableStateOf(false) }
+
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
+
+    // Слушатель состояния экспорта
+    LaunchedEffect(exportState) {
+        when (val expState = exportState) {
+            is ExportState.Success -> {
+                val uri = expState.shareUri
+                if (uri != null) {
+                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                        type = selectedFormat.mimeType
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    context.startActivity(
+                        Intent.createChooser(
+                            shareIntent,
+                            context.getString(R.string.export_share_title),
+                        ),
+                    )
+                    exportViewModel.resetState()
+                    showShareSheet = false // Закрываем шторку при успешном шаре
+                }
+            }
+            is ExportState.Error -> {
+                val errorMsg = expState.message.ifBlank { context.getString(R.string.export_error_generic) }
+                snackbarHost.showSnackbar(errorMsg)
+                exportViewModel.resetState()
+            }
+            else -> Unit
+        }
+    }
 
     DisposableEffect(lifecycleOwner, settings.permissionsPromptHidden) {
         val observer = LifecycleEventObserver { _, event ->
@@ -316,6 +372,347 @@ fun HomeScreen(
         )
     }
 
+    // Модальное окно выбора дат для кастомного периода
+    val dateRangePickerState = rememberDateRangePickerState(
+        initialSelectedStartDateMillis = customStartMillis,
+        initialSelectedEndDateMillis = customEndMillis,
+        initialDisplayMode = DisplayMode.Picker,
+    )
+
+    if (showDateRangePicker) {
+        ModalBottomSheet(
+            onDismissRequest = { showDateRangePicker = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(topStart = Dimens.RadiusXl, topEnd = Dimens.RadiusXl),
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(top = Dimens.SpacingS)
+                        .size(width = Dimens.bottomSheetHandleWidth, height = Dimens.bottomSheetHandleHeight)
+                        .clip(RoundedCornerShape(Dimens.RadiusPill))
+                        .background(colors.surfaceVariant),
+                )
+            },
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+                    .heightIn(min = 580.dp)
+                    .navigationBarsPadding(),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = Dimens.SpacingL,
+                            end = Dimens.SpacingM,
+                            top = Dimens.SpacingM,
+                            bottom = Dimens.SpacingXs,
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.pick_date_range),
+                        style = typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.weight(1f),
+                    )
+                    IconButton(onClick = { showDateRangePicker = false }) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = stringResource(R.string.action_cancel),
+                            tint = colors.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                DateRangePicker(
+                    state = dateRangePickerState,
+                    title = null,
+                    headline = null,
+                    showModeToggle = false,
+                    colors = DatePickerDefaults.colors(
+                        containerColor = colors.surface,
+                        titleContentColor = colors.onSurfaceVariant,
+                        headlineContentColor = colors.onSurface,
+                        weekdayContentColor = colors.onSurfaceVariant,
+                        selectedDayContainerColor = colors.primary,
+                        selectedDayContentColor = Color.White,
+                        dayInSelectionRangeContainerColor = colors.primary.copy(alpha = 0.12f),
+                        dayInSelectionRangeContentColor = colors.primary,
+                        todayContentColor = colors.primary,
+                        todayDateBorderColor = colors.primary,
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                )
+
+                val todayStart = startOfDayMillis(System.currentTimeMillis())
+                val presets = listOf(
+                    R.string.preset_week to (startOfDayOffset(Calendar.DAY_OF_YEAR, -7) to todayStart),
+                    R.string.preset_month to (startOfDayOffset(Calendar.MONTH, -1) to todayStart),
+                    R.string.preset_3m to (startOfDayOffset(Calendar.MONTH, -3) to todayStart),
+                    R.string.preset_year to (startOfDayOffset(Calendar.YEAR, -1) to todayStart),
+                )
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = Dimens.SpacingL),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
+                    modifier = Modifier.padding(bottom = Dimens.SpacingS),
+                ) {
+                    items(presets, key = { it.first }) { (labelRes, range) ->
+                        FilterChip(
+                            selected = false,
+                            onClick = {
+                                dateRangePickerState.setSelection(
+                                    startOfDayMillis(range.first),
+                                    startOfDayMillis(range.second),
+                                )
+                            },
+                            label = { Text(text = stringResource(labelRes), style = typography.bodySmall) },
+                            shape = RoundedCornerShape(Dimens.RadiusPill),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = false,
+                                borderColor = colors.surfaceVariant,
+                                selectedBorderColor = Color.Transparent,
+                            ),
+                            colors = FilterChipDefaults.filterChipColors(
+                                containerColor = colors.surfaceVariant,
+                                labelColor = colors.onSurfaceVariant,
+                            ),
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimens.SpacingL, vertical = Dimens.SpacingM),
+                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
+                ) {
+                    OutlinedButton(
+                        onClick = { showDateRangePicker = false },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(Dimens.ButtonHeight),
+                        shape = RoundedCornerShape(Dimens.RadiusL),
+                        border = BorderStroke(Dimens.borderThin, colors.surfaceVariant),
+                    ) {
+                        Text(text = stringResource(R.string.action_cancel), color = colors.onSurface)
+                    }
+
+                    Button(
+                        onClick = {
+                            val startMs = dateRangePickerState.selectedStartDateMillis
+                            val endMs = dateRangePickerState.selectedEndDateMillis
+                            if (startMs != null && endMs != null) {
+                                customStartMillis = startOfDayMillis(startMs)
+                                customEndMillis = startOfDayMillis(endMs)
+                            }
+                            showDateRangePicker = false
+                        },
+                        enabled = dateRangePickerState.selectedStartDateMillis != null &&
+                                dateRangePickerState.selectedEndDateMillis != null,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(Dimens.ButtonHeight),
+                        shape = RoundedCornerShape(Dimens.RadiusL),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.primary,
+                            disabledContainerColor = colors.primary.copy(alpha = 0.3f),
+                        ),
+                        elevation = ButtonDefaults.buttonElevation(0.dp),
+                    ) {
+                        Text(text = stringResource(R.string.action_apply), color = Color.White)
+                    }
+                }
+            }
+        }
+    }
+
+    // Основная шторка Share Bottom Sheet (стиль iOS, без JSON)
+    if (showShareSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showShareSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
+            containerColor = colors.surface,
+            shape = RoundedCornerShape(topStart = Dimens.RadiusXl, topEnd = Dimens.RadiusXl),
+            dragHandle = {
+                Box(
+                    modifier = Modifier
+                        .padding(top = Dimens.SpacingS)
+                        .size(width = Dimens.bottomSheetHandleWidth, height = Dimens.bottomSheetHandleHeight)
+                        .clip(RoundedCornerShape(Dimens.RadiusPill))
+                        .background(colors.surfaceVariant),
+                )
+            },
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = Dimens.SpacingL, vertical = Dimens.SpacingM),
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpacingL),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = stringResource(R.string.export_share_title),
+                        style = typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    IconButton(onClick = { showShareSheet = false }) {
+                        Icon(
+                            imageVector = Icons.Rounded.Close,
+                            contentDescription = stringResource(R.string.action_cancel),
+                            tint = colors.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                // Выбор формата (кроме JSON)
+                Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs)) {
+                    SectionLabel(text = stringResource(R.string.export_section_format), withBottomSpacing = false)
+                    AppCard(modifier = Modifier.fillMaxWidth()) {
+                        val availableFormats = ExportFormat.entries.filter { it != ExportFormat.JSON }
+                        availableFormats.forEachIndexed { index, format ->
+                            ShareSelectionRow(
+                                label = stringResource(format.labelRes),
+                                selected = selectedFormat == format,
+                                onClick = { selectedFormat = format },
+                            )
+                            if (index < availableFormats.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(start = Dimens.SpacingM),
+                                    color = colors.surfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Выбор периода
+                Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs)) {
+                    SectionLabel(text = stringResource(R.string.export_section_period), withBottomSpacing = false)
+                    AppCard(modifier = Modifier.fillMaxWidth()) {
+                        ExportPeriod.entries.forEachIndexed { index, period ->
+                            ShareSelectionRow(
+                                label = stringResource(period.labelRes),
+                                selected = selectedPeriod == period,
+                                onClick = {
+                                    selectedPeriod = period
+                                    if (period == ExportPeriod.CUSTOM) {
+                                        showDateRangePicker = true
+                                    }
+                                },
+                            )
+                            if (index < ExportPeriod.entries.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(start = Dimens.SpacingM),
+                                    color = colors.surfaceVariant,
+                                )
+                            }
+                        }
+                    }
+
+                    if (selectedPeriod == ExportPeriod.CUSTOM && customStartMillis != null && customEndMillis != null) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = Dimens.SpacingXs)
+                                .clip(RoundedCornerShape(Dimens.RadiusM))
+                                .background(colors.primary.copy(alpha = 0.08f))
+                                .clickable { showDateRangePicker = true }
+                                .padding(horizontal = Dimens.SpacingM, vertical = Dimens.SpacingXs),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.DateRange,
+                                contentDescription = null,
+                                tint = colors.primary,
+                                modifier = Modifier.size(Dimens.IconSizeS),
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.date_range_label,
+                                    formatEpochMillis(customStartMillis!!, "d MMM"),
+                                    formatEpochMillis(customEndMillis!!, "d MMM yyyy"),
+                                ),
+                                style = typography.bodySmall,
+                                color = colors.primary,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = Dimens.SpacingXs),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            IconButton(
+                                onClick = {
+                                    selectedPeriod = ExportPeriod.THIS_MONTH
+                                    customStartMillis = null
+                                    customEndMillis = null
+                                },
+                                modifier = Modifier.size(Dimens.IconSizeL),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = stringResource(R.string.cd_clear_date_range),
+                                    tint = colors.primary,
+                                    modifier = Modifier.size(Dimens.IconSizeS),
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Кнопка экспорта и отправки
+                val isExporting = exportState is ExportState.Loading
+                Button(
+                    onClick = {
+                        exportViewModel.exportAndShare(
+                            format = selectedFormat,
+                            period = selectedPeriod,
+                            customStartMillis = customStartMillis,
+                            customEndMillis = customEndMillis,
+                        )
+                    },
+                    enabled = !isExporting && (selectedPeriod != ExportPeriod.CUSTOM || (customStartMillis != null && customEndMillis != null)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(Dimens.ButtonHeight),
+                    shape = RoundedCornerShape(Dimens.RadiusL),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
+                    elevation = ButtonDefaults.buttonElevation(0.dp),
+                ) {
+                    if (isExporting) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.Share,
+                            contentDescription = null,
+                            modifier = Modifier.size(Dimens.IconSizeM),
+                        )
+                        Spacer(Modifier.width(Dimens.SpacingXs))
+                        Text(
+                            text = stringResource(R.string.export_share),
+                            style = typography.titleMedium,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     LaunchedEffect(state.snackbarMessage) {
         state.snackbarMessage?.let {
             snackbarHost.showSnackbar(it)
@@ -345,6 +742,7 @@ fun HomeScreen(
                 GreetingHeader(
                     unreadCount = unreadCount,
                     onNotificationsClick = onOpenNotificationsClick,
+                    onShareClick = { showShareSheet = true }, // Клик по шару открывает шторку
                 )
             }
             item {
@@ -457,6 +855,7 @@ fun DashboardScreen(
     onCreateGoalClick: () -> Unit = {},
     onGoalClick: (Long) -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel(),
+    exportViewModel: ExportViewModel = koinViewModel(), // Передан в DashboardScreen
 ) {
     HomeScreen(
         onOpenSmartSavingsClick = onOpenSmartSavingsClick,
@@ -470,6 +869,7 @@ fun DashboardScreen(
         onCreateGoalClick = onCreateGoalClick,
         onGoalClick = onGoalClick,
         viewModel = viewModel,
+        exportViewModel = exportViewModel, // Передаем далее
     )
 }
 
@@ -477,6 +877,7 @@ fun DashboardScreen(
 private fun GreetingHeader(
     unreadCount: Int,
     onNotificationsClick: () -> Unit,
+    onShareClick: () -> Unit, // Параметр обработки клика «Поделиться»
 ) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
@@ -501,30 +902,79 @@ private fun GreetingHeader(
                 color = colors.onSurface,
             )
         }
-        BadgedBox(
-            badge = {
-                if (unreadCount > 0) {
-                    Badge {
-                        Text(
-                            text = if (unreadCount > 99) {
-                                stringResource(R.string.badge_count_overflow)
-                            } else {
-                                unreadCount.toString()
-                            },
-                            style = typography.labelSmall,
-                        )
-                    }
-                }
-            },
+
+        // Кнопки управления (Share и Notifications в одну линию)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
         ) {
-            IconButton(onClick = onNotificationsClick) {
+            IconButton(onClick = onShareClick) {
                 Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = stringResource(R.string.cd_notifications),
+                    imageVector = Icons.Outlined.Share,
+                    contentDescription = stringResource(R.string.export_share),
                     tint = colors.onSurfaceVariant,
                     modifier = Modifier.size(Dimens.IconSizeM),
                 )
             }
+
+            BadgedBox(
+                badge = {
+                    if (unreadCount > 0) {
+                        Badge {
+                            Text(
+                                text = if (unreadCount > 99) {
+                                    stringResource(R.string.badge_count_overflow)
+                                } else {
+                                    unreadCount.toString()
+                                },
+                                style = typography.labelSmall,
+                            )
+                        }
+                    }
+                },
+            ) {
+                IconButton(onClick = onNotificationsClick) {
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = stringResource(R.string.cd_notifications),
+                        tint = colors.onSurfaceVariant,
+                        modifier = Modifier.size(Dimens.IconSizeM),
+                    )
+                }
+            }
+        }
+    }
+}
+
+// Элемент списка выбора параметров в стиле iOS (с галочкой справа)
+@Composable
+private fun ShareSelectionRow(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = Dimens.SpacingM, vertical = Dimens.SpacingS),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = colors.onSurface,
+        )
+        if (selected) {
+            Icon(
+                imageVector = Icons.Rounded.Check,
+                contentDescription = null,
+                tint = colors.primary,
+                modifier = Modifier.size(Dimens.IconSizeM),
+            )
         }
     }
 }
@@ -603,7 +1053,7 @@ private fun BalanceCard(
         0f
     }
     val savingsPercent = (savingsRate * 100).roundToInt()
-    val monthLabel = SimpleDateFormat("LLLL yyyy", Locale.forLanguageTag("ru"))
+    val monthLabel = SimpleDateFormat("LLLL yyyy", Locale.getDefault()) // Использует локаль устройства вместо жесткого "ru"
         .format(Date())
         .replaceFirstChar { it.uppercase() }
 
@@ -1313,3 +1763,100 @@ private fun normalizeBalanceDigits(raw: String): String {
     }
 }
 
+private fun startOfDayOffset(field: Int, amount: Int): Long {
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.HOUR_OF_DAY, 0)
+    calendar.set(Calendar.MINUTE, 0)
+    calendar.set(Calendar.SECOND, 0)
+    calendar.set(Calendar.MILLISECOND, 0)
+    calendar.add(field, amount)
+    return calendar.timeInMillis
+}
+
+private fun formatEpochMillis(millis: Long, pattern: String): String =
+    SimpleDateFormat(pattern, Locale.getDefault()).format(Date(millis))
+
+@Composable
+fun DashboardScreen(
+    onOpenSmartSavingsClick: () -> Unit = {},
+    onOpenGoalsClick: () -> Unit = {},
+    onOpenHistoryClick: () -> Unit = {},
+    onOpenAnalyticsClick: () -> Unit = {},
+    onOpenLimitsClick: () -> Unit = {},
+    onOpenAchievementsClick: () -> Unit = {},
+    onOpenNotificationsClick: () -> Unit = {},
+    onCreateAssetClick: () -> Unit = {},
+    onCreateGoalClick: () -> Unit = {},
+    onGoalClick: (Long) -> Unit = {},
+    viewModel: DashboardViewModel = koinViewModel(),
+) {
+    HomeScreen(
+        onOpenSmartSavingsClick = onOpenSmartSavingsClick,
+        onOpenGoalsClick = onOpenGoalsClick,
+        onOpenHistoryClick = onOpenHistoryClick,
+        onOpenAnalyticsClick = onOpenAnalyticsClick,
+        onOpenLimitsClick = onOpenLimitsClick,
+        onOpenAchievementsClick = onOpenAchievementsClick,
+        onOpenNotificationsClick = onOpenNotificationsClick,
+        onCreateAssetClick = onCreateAssetClick,
+        onCreateGoalClick = onCreateGoalClick,
+        onGoalClick = onGoalClick,
+        viewModel = viewModel,
+    )
+}
+
+@Composable
+private fun GreetingHeader(
+    unreadCount: Int,
+    onNotificationsClick: () -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = Dimens.SpacingL),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column {
+            Text(
+                text = greetingWithTime(),
+                style = typography.bodyMedium,
+                color = colors.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(R.string.dashboard_title),
+                style = typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                color = colors.onSurface,
+            )
+        }
+        BadgedBox(
+            badge = {
+                if (unreadCount > 0) {
+                    Badge {
+                        Text(
+                            text = if (unreadCount > 99) {
+                                stringResource(R.string.badge_count_overflow)
+                            } else {
+                                unreadCount.toString()
+                            },
+                            style = typography.labelSmall,
+                        )
+                    }
+                }
+            },
+        ) {
+            IconButton(onClick = onNotificationsClick) {
+                Icon(
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = stringResource(R.string.cd_notifications),
+                    tint = colors.onSurfaceVariant,
+                    modifier = Modifier.size(Dimens.IconSizeM),
+                )
+            }
+        }
+    }
+}

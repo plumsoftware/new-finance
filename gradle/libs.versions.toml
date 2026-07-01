@@ -11,6 +11,10 @@ composeBom = "2026.02.01"
 
 # 2.3.1+ — поддержка AGP 9 built-in Kotlin (без kotlin.sourceSets)
 ksp = "2.3.5"
+pdfboxAndroid = "2.0.27.0"
+poi = "5.5.1"
+poiOoxml = "5.5.1"
+poiOoxmlLite = "5.5.1"
 room = "2.8.4"
 navCompose = "2.9.8"
 vico = "3.1.0"
@@ -67,6 +71,14 @@ vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", ve
 
 # Icons
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+
+#PDF
+pdfbox-android = { module = "com.tom-roush:pdfbox-android", version.ref = "pdfboxAndroid" }
+
+#POI
+poi = { module = "org.apache.poi:poi", version.ref = "poi" }
+poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poiOoxml" }
+poi-ooxml-lite = { module = "org.apache.poi:poi-ooxml-lite", version.ref = "poiOoxmlLite" }
 
 # Firebase
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }

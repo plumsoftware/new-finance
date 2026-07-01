@@ -51,7 +51,7 @@ val presentationModule = module {
     viewModel { (accountId: Long?) -> AccountEditorViewModel(accountId, get(), get()) }
     viewModel { SettingsViewModel(get(), get(), androidContext()) }
     viewModel { PermissionsViewModel(get()) }
-    viewModel { ExportViewModel(get()) }
+    viewModel { ExportViewModel(get(), get()) }
     viewModel { ImportViewModel(get(), androidContext()) }
     viewModel { RecurringViewModel(get(), get()) }
     viewModel { AppLockViewModel() }

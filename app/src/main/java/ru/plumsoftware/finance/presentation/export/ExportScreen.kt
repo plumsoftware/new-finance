@@ -47,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.SaveAlt
 import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.Snackbar
@@ -577,24 +578,25 @@ private fun ExportRadioRow(
             .clickable(onClick = onClick)
             .padding(
                 horizontal = Dimens.SpacingM,
-                vertical = Dimens.SpacingXs,
+                vertical = Dimens.SpacingS, // Чуть больше вертикального пространства для стиля iOS
             ),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween, // Текст слева, галочка справа
     ) {
-        RadioButton(
-            selected = selected,
-            onClick = onClick,
-            colors = RadioButtonDefaults.colors(
-                selectedColor = colors.primary,
-                unselectedColor = colors.onSurfaceVariant,
-            ),
-        )
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
             color = colors.onSurface,
-            modifier = Modifier.padding(start = Dimens.SpacingXs),
+            modifier = Modifier.weight(1f)
         )
+        if (selected) {
+            Icon(
+                imageVector = Icons.Rounded.Check,
+                contentDescription = null,
+                tint = colors.primary,
+                modifier = Modifier.size(Dimens.IconSizeM),
+            )
+        }
     }
 }
 
@@ -609,4 +611,4 @@ private fun startOfDayOffset(field: Int, amount: Int): Long {
 }
 
 private fun formatEpochMillis(millis: Long, pattern: String): String =
-    SimpleDateFormat(pattern, Locale("ru")).format(Date(millis))
+    SimpleDateFormat(pattern, Locale.US).format(Date(millis))

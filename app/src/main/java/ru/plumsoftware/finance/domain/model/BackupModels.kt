@@ -1,7 +1,16 @@
 package ru.plumsoftware.finance.domain.model
 
+import android.content.Context
 import androidx.annotation.StringRes
 import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.domain.repository.AccountRepository
+import ru.plumsoftware.finance.domain.repository.CategoryRepository
+import ru.plumsoftware.finance.domain.repository.TransactionRepository
+import java.util.Calendar
+import kotlinx.coroutines.flow.first
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 const val BACKUP_FORMAT_VERSION = 5
 
@@ -12,6 +21,21 @@ enum class ExportFormat(
 ) {
     BACKUP(R.string.export_format_backup, "application/json", "owlbackup"),
     JSON(R.string.export_format_json, "application/json", "json"),
+    PDF(
+        labelRes = R.string.export_format_pdf,
+        mimeType = "application/pdf",
+        extension = "pdf",
+    ),
+    XLSX(
+        labelRes = R.string.export_format_xlsx,
+        mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        extension = "xlsx",
+    ),
+    CSV(
+        labelRes = R.string.export_format_csv,
+        mimeType = "text/csv",
+        extension = "csv",
+    ),
 }
 
 enum class ExportPeriod(@StringRes val labelRes: Int) {
@@ -20,6 +44,115 @@ enum class ExportPeriod(@StringRes val labelRes: Int) {
     THIS_YEAR(R.string.period_this_year),
     ALL_TIME(R.string.period_all_time),
     CUSTOM(R.string.period_custom),
+}
+
+class ExportDataBuilder(
+    private val context: Context,
+    private val transactionRepository: TransactionRepository,
+    private val accountRepository: AccountRepository,
+    private val categoryRepository: CategoryRepository,
+) {
+
+    suspend fun build(
+        period: ExportPeriod,
+        customStartMillis: Long?,
+        customEndMillis: Long?,
+        currencyCode: String,
+    ): ExportData {
+        val (from, to) = resolvePeriodRange(period, customStartMillis, customEndMillis)
+
+        val transactions = transactionRepository.observeByPeriod(from, to).first()
+        val accountsWithBalances = accountRepository.observeAllWithBalances().first()
+
+        val incomeCategories = categoryRepository.observeByType(CategoryType.INCOME, includeHidden = true).first()
+        val expenseCategories = categoryRepository.observeByType(CategoryType.EXPENSE, includeHidden = true).first()
+        val categories = incomeCategories + expenseCategories
+
+        val exportTransactions = transactions.map { tx ->
+            ExportTransaction(
+                date = tx.dateMillis,
+                type = if (tx.type == TransactionType.INCOME) "Income" else "Expense",
+                amountMinor = tx.amountMinor,
+                currencyCode = tx.currencyCode,
+                originalAmountMinor = tx.originalAmountMinor,
+                originalCurrencyCode = tx.originalCurrencyCode,
+                categoryName = categories.find { it.id == tx.categoryId }?.name,
+                accountName = accountsWithBalances.find { it.account.id == tx.accountId }?.account?.name ?: context.getString(R.string.pdf_main_account),
+                note = tx.note,
+            )
+        }
+
+        val totalIncome = exportTransactions.filter { it.type == "Income" }.sumOf { it.amountMinor }
+        val totalExpense = exportTransactions.filter { it.type == "Expense" }.sumOf { it.amountMinor }
+
+        return ExportData(
+            periodLabel = formatPeriodLabel(period, from, to),
+            generatedAt = System.currentTimeMillis(),
+            accounts = accountsWithBalances.map { accWithBal ->
+                ExportAccount(
+                    name = accWithBal.account.name,
+                    type = accWithBal.account.type.toString(),
+                    currencyCode = accWithBal.account.currencyCode,
+                    balanceMinor = accWithBal.calculatedBalanceMinor,
+                )
+            },
+            transactions = exportTransactions,
+            totalIncomeMinor = totalIncome,
+            totalExpenseMinor = totalExpense,
+            currencyCode = currencyCode,
+        )
+    }
+
+    private fun resolvePeriodRange(
+        period: ExportPeriod,
+        customStart: Long?,
+        customEnd: Long?,
+    ): Pair<Long, Long> {
+        val cal = Calendar.getInstance()
+        return when (period) {
+            ExportPeriod.THIS_MONTH -> {
+                cal.set(Calendar.DAY_OF_MONTH, 1)
+                startOfDay(cal.timeInMillis) to System.currentTimeMillis()
+            }
+            ExportPeriod.LAST_3_MONTHS -> {
+                cal.add(Calendar.MONTH, -3)
+                cal.set(Calendar.DAY_OF_MONTH, 1)
+                val start = startOfDay(cal.timeInMillis)
+                cal.add(Calendar.MONTH, 3)
+                cal.set(Calendar.DAY_OF_MONTH, 1)
+                val end = startOfDay(cal.timeInMillis) - 1
+                start to end
+            }
+            ExportPeriod.ALL_TIME -> 0L to System.currentTimeMillis()
+            ExportPeriod.CUSTOM -> (customStart ?: 0L) to (customEnd ?: System.currentTimeMillis())
+            ExportPeriod.THIS_YEAR -> {
+                cal.set(Calendar.DAY_OF_YEAR, 1)
+                startOfDay(cal.timeInMillis) to System.currentTimeMillis()
+            }
+        }
+    }
+
+    private fun formatPeriodLabel(period: ExportPeriod, from: Long, to: Long): String = when (period) {
+        ExportPeriod.ALL_TIME -> context.getString(R.string.period_all_time) // Локализованная строка
+        ExportPeriod.CUSTOM -> {
+            val startStr = formatDate(from, "d MMM")
+            val endStr = formatDate(to, "d MMM yyyy")
+            context.getString(R.string.date_range_label, startStr, endStr)
+        }
+        else -> formatDate(from, "LLLL yyyy")
+    }
+
+    private fun startOfDay(millis: Long): Long {
+        val cal = Calendar.getInstance().apply { timeInMillis = millis }
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
+    }
+
+    private fun formatDate(millis: Long, pattern: String): String =
+        SimpleDateFormat(pattern, Locale.getDefault()).format(Date(millis)) // Локаль устройства
 }
 
 enum class ImportStrategy(@StringRes val titleRes: Int, @StringRes val descRes: Int) {

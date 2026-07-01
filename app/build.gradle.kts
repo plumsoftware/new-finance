@@ -22,10 +22,10 @@ android {
 
     defaultConfig {
         applicationId = "ru.plumsoftware.finance"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.0.7"
+        versionCode = 8
+        versionName = "1.0.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -115,6 +115,14 @@ dependencies {
 
     // Yandex Mobile Ads (RuStore)
     implementation(libs.yandex.mobileads)
+
+    // PDF
+    implementation(libs.pdfbox.android)
+
+    // XLSX
+    implementation(libs.poi)
+    implementation(libs.poi.ooxml)
+    implementation(libs.poi.ooxml.lite)
 
     // Tests
     testImplementation(libs.junit)

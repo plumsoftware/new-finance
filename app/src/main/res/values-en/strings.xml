@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Finance</string>
+    <string name="app_name">Expense Control</string>
     <string name="notification_channel_name">Notifications</string>
     <string name="notification_channel_description">Push notifications and app reminders</string>
 
@@ -128,7 +128,6 @@
     <string name="week">Week</string>
     <string name="month">Month</string>
     <string name="year">Year</string>
-    <string name="period_custom">Period</string>
     <string name="net">Net</string>
     <string name="expense_chart">Daily expenses</string>
     <string name="top_categories">Top categories</string>
@@ -164,18 +163,24 @@
     <string name="amount">Amount</string>
     <string name="category">Category</string>
     <string name="frequency">Frequency</string>
-    <string name="export_data">Export\ndata</string>
-    <string name="export_section_format">Format</string>
-    <string name="export_section_period">Transaction period</string>
-    <string name="export_period_hint">The period only affects transactions. Categories, limits, goals, achievements, and other reference data are exported in full.</string>
     <string name="export_section_include">Include</string>
-    <string name="export_format_backup">Backup (.owlbackup)</string>
-    <string name="export_format_json">JSON (.json)</string>
-    <string name="export_hint">A full backup will be saved to Downloads and the Share menu will open</string>
-    <string name="export_save_backup">Save backup</string>
-    <string name="export_share">Save and share</string>
-    <string name="export_saved_success">Backup saved</string>
-    <string name="export_share_title">Share backup</string>
+    <string name="export_format_backup">Backup file (.owlbackup)</string>
+    <string name="export_format_json">JSON database backup (.json)</string>
+    <string name="export_format_pdf">PDF Document (.pdf)</string>
+    <string name="export_format_xlsx">Excel Spreadsheet (.xlsx)</string>
+    <string name="export_format_csv">CSV Table (.csv)</string>
+    <string name="period_custom">Custom Period</string>
+    <string name="export_data">Export Data</string>
+    <string name="export_section_format">Export Format</string>
+    <string name="export_section_period">Period</string>
+    <string name="export_period_hint">Select the timeframe for the exported transactions</string>
+    <string name="export_save_backup">Export</string>
+    <string name="export_share">Share</string>
+    <string name="export_saved_success">Export saved successfully!</string>
+    <string name="export_share_title">Share Export File</string>
+    <string name="export_error_generic">An error occurred during export</string>
+    <string name="export_hint">The exported file will be saved in your cache directory and can be shared with external applications.</string>
+
     <string name="import_error_title">Could not open file</string>
     <string name="import_error_permission">No access to the file. Use the \"Choose file\" button inside the app.</string>
     <string name="import_error_cannot_open">Could not read the file.\nPlease try again.</string>
@@ -214,7 +219,6 @@
     <string name="strategy_replace_desc">Add new ones, update matching ones from the file.</string>
     <string name="strategy_overwrite_title">Overwrite all</string>
     <string name="strategy_overwrite_desc">Delete current data and load from file. Irreversible.</string>
-    <string name="export_error_generic">Export failed</string>
     <string name="settings_biometric">Biometrics</string>
     <string name="biometrics">Biometrics</string>
     <string name="settings_biometric_hint">Login protection (local)</string>
@@ -467,6 +471,33 @@
     <string name="action_apply">Apply</string>
     <string name="action_cancel">Cancel</string>
     <string name="date_range_label">%1$s — %2$s</string>
+
+    <string name="pdf_report_title">Financial Report</string>
+    <string name="pdf_report_period">Period: %s</string>
+    <string name="pdf_report_generated">Generated: %s</string>
+    <string name="pdf_report_income">Income: +%s</string>
+    <string name="pdf_report_expense">Expenses: −%s</string>
+    <string name="pdf_report_balance">Balance: %s</string>
+    <string name="pdf_type_income">Income</string>
+    <string name="pdf_type_expense">Expense</string>
+    <string name="pdf_col_date">Date</string>
+    <string name="pdf_col_type">Type</string>
+    <string name="pdf_col_amount">Amount</string>
+    <string name="pdf_col_category">Category</string>
+    <string name="pdf_col_account">Account</string>
+    <string name="pdf_col_note">Note</string>
+
+    <string name="pdf_main_account">Main Account</string>
+    <string name="excel_sheet_summary">Summary</string>
+    <string name="excel_sheet_transactions">Transactions</string>
+    <string name="excel_sheet_accounts">Accounts</string>
+    <string name="excel_income_label">Income</string>
+    <string name="excel_expense_label">Expenses</string>
+    <string name="excel_balance_label">Balance</string>
+    <string name="excel_col_currency">Currency</string>
+    <string name="excel_col_name">Name</string>
+    <string name="excel_col_type">Type</string>
+    <string name="excel_col_balance">Balance</string>
 
     <string name="notifications">Notifications</string>
     <string name="clear_all">Clear</string>

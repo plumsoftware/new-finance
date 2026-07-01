@@ -42,7 +42,13 @@ import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.domain.repository.SmartAssetRepository
 import ru.plumsoftware.finance.domain.repository.TransactionRepository
 import ru.plumsoftware.finance.domain.insights.InsightsEngine
+import ru.plumsoftware.finance.domain.model.CsvExporter
+import ru.plumsoftware.finance.domain.model.ExportDataBuilder
+import ru.plumsoftware.finance.domain.model.PdfExporter
+import ru.plumsoftware.finance.domain.model.XlsxExporter
 import ru.plumsoftware.finance.domain.notifications.LimitNotificationsEngine
+import ru.plumsoftware.finance.domain.repository.ExportRepository
+import kotlin.math.sin
 
 val dataModule = module {
     single { FinanceDatabase.create(androidContext()) }
@@ -81,4 +87,11 @@ val dataModule = module {
     single<PermissionsRepository> { PermissionsRepositoryImpl(androidContext()) }
     single { InsightsEngine() }
     single { LimitNotificationsEngine(get()) }
+
+    // Внедрение зависимостей для модулей экспорта
+    single { ExportDataBuilder(androidContext(), get(), get(), get()) }
+    single { CsvExporter(androidContext()) }
+    single { XlsxExporter(androidContext()) }
+    single { PdfExporter(androidContext()) }
+    single { ExportRepository(androidContext(), get(), get(), get(), get(), get()) }
 }

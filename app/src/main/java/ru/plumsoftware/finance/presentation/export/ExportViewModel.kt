@@ -13,9 +13,11 @@ import ru.plumsoftware.finance.domain.model.ExportFormat
 import ru.plumsoftware.finance.domain.model.ExportPeriod
 import ru.plumsoftware.finance.domain.model.ExportState
 import ru.plumsoftware.finance.domain.repository.BackupRepository
+import ru.plumsoftware.finance.domain.repository.ExportRepository
 
 class ExportViewModel(
     private val backupRepository: BackupRepository,
+    private val exportRepository: ExportRepository,
 ) : ViewModel() {
 
     private val _exportState = MutableStateFlow<ExportState>(ExportState.Idle)
@@ -33,9 +35,10 @@ class ExportViewModel(
                 val result = withContext(Dispatchers.IO) {
                     performExport(format, period, customStartMillis, customEndMillis)
                 }
+                val shareUri = if (format == ExportFormat.BACKUP) null else result.second
                 _exportState.value = ExportState.Success(
                     fileName = result.first,
-                    shareUri = null,
+                    shareUri = shareUri,
                 )
             } catch (e: Exception) {
                 _exportState.value = ExportState.Error(e.message.orEmpty())
@@ -75,13 +78,26 @@ class ExportViewModel(
         customStartMillis: Long?,
         customEndMillis: Long?,
     ): Pair<String, Uri> {
-        val backup = backupRepository.buildBackup(
-            period = period,
-            customStartMillis = customStartMillis,
-            customEndMillis = customEndMillis,
-        )
-        val fileName = BackupFileWriter.buildFileName(format)
-        val uri = backupRepository.exportToUri(backup, format)
-        return fileName to uri
+        return when (format) {
+            ExportFormat.BACKUP, ExportFormat.JSON -> {
+                // Системный бекап и JSON строятся на базе общей BackupModel для переносимости данных
+                val backup = backupRepository.buildBackup(
+                    period = period,
+                    customStartMillis = customStartMillis,
+                    customEndMillis = customEndMillis,
+                )
+                val fileName = BackupFileWriter.buildFileName(format)
+                val uri = backupRepository.exportToUri(backup, format)
+                fileName to uri
+            }
+            ExportFormat.PDF, ExportFormat.XLSX, ExportFormat.CSV -> {
+                exportRepository.exportToFile(
+                    format = format,
+                    period = period,
+                    customStartMillis = customStartMillis,
+                    customEndMillis = customEndMillis,
+                )
+            }
+        }
     }
 }
