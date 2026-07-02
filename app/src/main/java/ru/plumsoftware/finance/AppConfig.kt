@@ -19,7 +19,7 @@ object AppConfig {
      */
     val storeListingUrl: String = when (BuildConfig.PLATFORM) {
         1 -> RuStore.STORE_LISTING
-        2 -> ""
+        2 -> GooglePlay.STORE_LISTING
         3 -> HuaweiAppStore.STORE_LISTING
         else -> RuStore.STORE_LISTING
     }
@@ -43,6 +43,11 @@ object AppConfig {
         const val INTERSTITIAL_GOAL = "R-M-19374501-6"
         const val INTERSTITIAL_SMART_SAVINGS = "R-M-19374501-7"
         const val NATIVE_HOME = "R-M-19374501-8"
+    }
+
+    private object GooglePlay {
+        // Стандартный формат ссылки на приложение в Google Play
+        const val STORE_LISTING = "https://play.google.com/store/apps/details?id=$APP_PACKAGE"
     }
 
     private object HuaweiAppStore {
