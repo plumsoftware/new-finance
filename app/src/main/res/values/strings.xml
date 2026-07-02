@@ -471,7 +471,7 @@
     <string name="action_apply">Apply</string>
     <string name="action_cancel">Cancel</string>
     <string name="date_range_label">%1$s — %2$s</string>
-
+    <string name="export_format_hint">PDF is suitable for printing and archiving, Excel is best for spreadsheet analysis, CSV is used for importing into other apps, and Backup is for fully transferring data between devices.</string>
     <string name="pdf_report_title">Financial Report</string>
     <string name="pdf_report_period">Period: %s</string>
     <string name="pdf_report_generated">Generated: %s</string>

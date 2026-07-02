@@ -30,7 +30,26 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("boolean", "FIREBASE_ENABLED", isFirebaseEnabled.toString())
-        buildConfigField("int", "PLATFORM", "1")
+    }
+
+    flavorDimensions += "distribution"
+
+    // 2. Описываем сами флейворы с разными значениями PLATFORM
+    productFlavors {
+        create("RuStore") {
+            dimension = "distribution"
+            buildConfigField("int", "PLATFORM", "1")
+            // Здесь при необходимости можно переопределить applicationId:
+            // applicationIdSuffix = ".play"
+        }
+        create("GooglePlay") {
+            dimension = "distribution"
+            buildConfigField("int", "PLATFORM", "2")
+        }
+        create("HuaweiappGallery") {
+            dimension = "distribution"
+            buildConfigField("int", "PLATFORM", "3")
+        }
     }
 
     signingConfigs {
