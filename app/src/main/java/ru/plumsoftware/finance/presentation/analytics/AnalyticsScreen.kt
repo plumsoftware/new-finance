@@ -64,15 +64,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -85,6 +86,7 @@ import ru.plumsoftware.finance.presentation.common.StatsPeriod
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.theme.Dimens
+import ru.plumsoftware.finance.ui.theme.IosBlue
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -112,8 +114,8 @@ fun AnalyticsScreen(
     var showDateRangePicker by remember { mutableStateOf(false) }
 
     val dateRangeActive = state.period == StatsPeriod.CUSTOM &&
-        state.customStartMillis != null &&
-        state.customEndMillis != null
+            state.customStartMillis != null &&
+            state.customEndMillis != null
 
     val dateRangePickerState = rememberDateRangePickerState(
         initialSelectedStartDateMillis = state.customStartMillis,
@@ -121,20 +123,16 @@ fun AnalyticsScreen(
         initialDisplayMode = DisplayMode.Picker,
     )
 
+    // ── Date range bottom sheet ────────────────────────────
     if (showDateRangePicker || state.showDateRangePicker) {
         ModalBottomSheet(
             onDismissRequest = {
                 showDateRangePicker = false
                 viewModel.dismissDateRangePicker()
             },
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true,
-            ),
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             containerColor = colors.surface,
-            shape = RoundedCornerShape(
-                topStart = Dimens.RadiusXl,
-                topEnd = Dimens.RadiusXl,
-            ),
+            shape = RoundedCornerShape(topStart = Dimens.RadiusXl, topEnd = Dimens.RadiusXl),
             dragHandle = {
                 Box(
                     modifier = Modifier
@@ -198,9 +196,7 @@ fun AnalyticsScreen(
                         todayContentColor = colors.primary,
                         todayDateBorderColor = colors.primary,
                     ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
+                    modifier = Modifier.fillMaxWidth().weight(1f),
                 )
 
                 val todayStart = startOfDayMillis(System.currentTimeMillis())
@@ -224,12 +220,7 @@ fun AnalyticsScreen(
                                     startOfDayMillis(range.second),
                                 )
                             },
-                            label = {
-                                Text(
-                                    text = stringResource(labelRes),
-                                    style = typography.bodySmall,
-                                )
-                            },
+                            label = { Text(stringResource(labelRes), style = typography.bodySmall) },
                             shape = RoundedCornerShape(Dimens.RadiusPill),
                             border = FilterChipDefaults.filterChipBorder(
                                 enabled = true,
@@ -248,10 +239,7 @@ fun AnalyticsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(
-                            horizontal = Dimens.SpacingL,
-                            vertical = Dimens.SpacingM,
-                        ),
+                        .padding(horizontal = Dimens.SpacingL, vertical = Dimens.SpacingM),
                     horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
                 ) {
                     OutlinedButton(
@@ -259,18 +247,12 @@ fun AnalyticsScreen(
                             showDateRangePicker = false
                             viewModel.dismissDateRangePicker()
                         },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(Dimens.ButtonHeight),
+                        modifier = Modifier.weight(1f).height(Dimens.ButtonHeight),
                         shape = RoundedCornerShape(Dimens.RadiusL),
                         border = BorderStroke(1.dp, colors.surfaceVariant),
                     ) {
-                        Text(
-                            text = stringResource(R.string.action_cancel),
-                            color = colors.onSurface,
-                        )
+                        Text(stringResource(R.string.action_cancel), color = colors.onSurface)
                     }
-
                     Button(
                         onClick = {
                             val startMs = dateRangePickerState.selectedStartDateMillis
@@ -281,10 +263,8 @@ fun AnalyticsScreen(
                             showDateRangePicker = false
                         },
                         enabled = dateRangePickerState.selectedStartDateMillis != null &&
-                            dateRangePickerState.selectedEndDateMillis != null,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(Dimens.ButtonHeight),
+                                dateRangePickerState.selectedEndDateMillis != null,
+                        modifier = Modifier.weight(1f).height(Dimens.ButtonHeight),
                         shape = RoundedCornerShape(Dimens.RadiusL),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = colors.primary,
@@ -292,10 +272,7 @@ fun AnalyticsScreen(
                         ),
                         elevation = ButtonDefaults.buttonElevation(0.dp),
                     ) {
-                        Text(
-                            text = stringResource(R.string.action_apply),
-                            color = Color.White,
-                        )
+                        Text(stringResource(R.string.action_apply), color = Color.White)
                     }
                 }
             }
@@ -315,9 +292,7 @@ fun AnalyticsScreen(
     val netTotal = state.summary.netMinor
     val savingsRate = if (incomeTotal > 0L) {
         ((incomeTotal - expenseTotal).coerceAtLeast(0L).toFloat() / incomeTotal).coerceIn(0f, 1f)
-    } else {
-        0f
-    }
+    } else 0f
     val savingsPercent = (savingsRate * 100).roundToInt()
     val expenseSegments = categoryDonutSegments(state.expenseCategories, colors)
 
@@ -325,10 +300,9 @@ fun AnalyticsScreen(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
     ) { _ ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize(),
-        ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+
+            // ── Sticky header ──────────────────────────────
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -338,11 +312,7 @@ fun AnalyticsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(
-                            start = Dimens.SpacingL,
-                            end = Dimens.SpacingM,
-                            bottom = Dimens.SpacingXs,
-                        ),
+                        .padding(start = Dimens.SpacingL, end = Dimens.SpacingM, bottom = Dimens.SpacingXs),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
@@ -355,11 +325,7 @@ fun AnalyticsScreen(
                         Icon(
                             imageVector = Icons.Rounded.CalendarMonth,
                             contentDescription = stringResource(R.string.cd_pick_date_range),
-                            tint = if (dateRangeActive) {
-                                colors.primary
-                            } else {
-                                colors.onSurfaceVariant
-                            },
+                            tint = if (dateRangeActive) colors.primary else colors.onSurfaceVariant,
                             modifier = Modifier.size(Dimens.IconSizeM),
                         )
                     }
@@ -368,10 +334,7 @@ fun AnalyticsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(
-                            horizontal = Dimens.SpacingL,
-                            vertical = Dimens.SpacingXs,
-                        ),
+                        .padding(horizontal = Dimens.SpacingL, vertical = Dimens.SpacingXs),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     PeriodTabRow(
@@ -382,9 +345,7 @@ fun AnalyticsScreen(
                             .weight(1f)
                             .alpha(if (dateRangeActive) 0.38f else 1f),
                     )
-
                     Spacer(Modifier.width(Dimens.SpacingS))
-
                     AnimatedVisibility(visible = !dateRangeActive) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IconButton(
@@ -413,11 +374,7 @@ fun AnalyticsScreen(
                                 Icon(
                                     imageVector = Icons.Rounded.ChevronRight,
                                     contentDescription = stringResource(R.string.cd_next_period),
-                                    tint = if (state.canNavigateForward) {
-                                        colors.onSurfaceVariant
-                                    } else {
-                                        colors.outlineVariant
-                                    },
+                                    tint = if (state.canNavigateForward) colors.onSurfaceVariant else colors.outlineVariant,
                                     modifier = Modifier.size(Dimens.IconSizeM),
                                 )
                             }
@@ -425,17 +382,14 @@ fun AnalyticsScreen(
                     }
                 }
 
+                // Custom range chip
                 AnimatedVisibility(
                     visible = dateRangeActive,
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut(),
                 ) {
-                    val startLabel = state.customStartMillis?.let {
-                        formatEpochMillis(it, "d MMM")
-                    }.orEmpty()
-                    val endLabel = state.customEndMillis?.let {
-                        formatEpochMillis(it, "d MMM yyyy")
-                    }.orEmpty()
+                    val startLabel = state.customStartMillis?.let { formatEpochMillis(it, "d MMM") }.orEmpty()
+                    val endLabel = state.customEndMillis?.let { formatEpochMillis(it, "d MMM yyyy") }.orEmpty()
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -443,10 +397,7 @@ fun AnalyticsScreen(
                             .padding(bottom = Dimens.SpacingXs)
                             .clip(RoundedCornerShape(Dimens.RadiusM))
                             .background(colors.primary.copy(alpha = 0.08f))
-                            .padding(
-                                horizontal = Dimens.SpacingM,
-                                vertical = Dimens.SpacingXs,
-                            ),
+                            .padding(horizontal = Dimens.SpacingM, vertical = Dimens.SpacingXs),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
@@ -456,16 +407,10 @@ fun AnalyticsScreen(
                             modifier = Modifier.size(Dimens.IconSizeS),
                         )
                         Text(
-                            text = stringResource(
-                                R.string.date_range_label,
-                                startLabel,
-                                endLabel,
-                            ),
+                            text = stringResource(R.string.date_range_label, startLabel, endLabel),
                             style = typography.bodySmall,
                             color = colors.primary,
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(horizontal = Dimens.SpacingXs),
+                            modifier = Modifier.weight(1f).padding(horizontal = Dimens.SpacingXs),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -486,14 +431,17 @@ fun AnalyticsScreen(
                 HorizontalDivider(color = colors.surfaceVariant)
             }
 
+            // ── Scrollable content ─────────────────────────
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     top = Dimens.SpacingM,
-                    bottom = Dimens.SpacingM,
+                    bottom = Dimens.SpacingXxl,
                 ),
                 verticalArrangement = Arrangement.spacedBy(Dimens.SpacingL),
             ) {
+
+                // 1. Summary card
                 item {
                     SummaryCard(
                         netTotal = netTotal,
@@ -505,8 +453,8 @@ fun AnalyticsScreen(
                     )
                 }
 
+                // 2. Accounts section
                 item {
-                    Spacer(Modifier.height(16.dp))
                     AccountsAnalyticsSection(
                         accounts = state.accountAnalytics,
                         currencyCode = state.currencyCode,
@@ -515,6 +463,7 @@ fun AnalyticsScreen(
                     )
                 }
 
+                // 3. Expenses by day chart
                 item {
                     SectionLabel(
                         text = stringResource(R.string.expenses_by_day),
@@ -529,6 +478,7 @@ fun AnalyticsScreen(
                     }
                 }
 
+                // 4. Expenses by category
                 item {
                     SectionLabel(
                         text = stringResource(R.string.expenses_by_category),
@@ -540,12 +490,18 @@ fun AnalyticsScreen(
                             .padding(horizontal = Dimens.SpacingL),
                     ) {
                         if (state.expenseCategories.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.no_data),
-                                style = typography.bodyMedium,
-                                color = colors.onSurfaceVariant,
-                                modifier = Modifier.padding(Dimens.SpacingL),
-                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(80.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.no_data),
+                                    style = typography.bodyMedium,
+                                    color = colors.onSurfaceVariant,
+                                )
+                            }
                         } else {
                             Column(
                                 modifier = Modifier.padding(Dimens.SpacingM),
@@ -553,17 +509,15 @@ fun AnalyticsScreen(
                             ) {
                                 CategoryDonutChart(
                                     segments = expenseSegments,
-                                    modifier = Modifier.size(140.dp),
+                                    modifier = Modifier.padding(vertical = Dimens.SpacingS),
                                 )
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(top = Dimens.SpacingM),
+                                        .padding(top = Dimens.SpacingS),
                                 ) {
                                     state.expenseCategories.forEachIndexed { index, item ->
-                                        val segmentColor = expenseSegments
-                                            .getOrNull(index)
-                                            ?.color
+                                        val segmentColor = expenseSegments.getOrNull(index)?.color
                                             ?: item.category.colorArgb?.let { Color(it.toInt()) }
                                             ?: colors.error
                                         CategoryLegendRow(
@@ -575,6 +529,12 @@ fun AnalyticsScreen(
                                                 item.sharePercent.roundToInt(),
                                             ),
                                         )
+                                        if (index < state.expenseCategories.lastIndex) {
+                                            HorizontalDivider(
+                                                color = colors.surfaceVariant,
+                                                modifier = Modifier.padding(vertical = 2.dp),
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -582,6 +542,7 @@ fun AnalyticsScreen(
                     }
                 }
 
+                // 5. Balance trend
                 item {
                     SectionLabel(
                         text = stringResource(R.string.balance_trend),
@@ -600,18 +561,8 @@ fun AnalyticsScreen(
     }
 }
 
-private fun startOfDayOffset(field: Int, amount: Int): Long {
-    val calendar = Calendar.getInstance()
-    calendar.set(Calendar.HOUR_OF_DAY, 0)
-    calendar.set(Calendar.MINUTE, 0)
-    calendar.set(Calendar.SECOND, 0)
-    calendar.set(Calendar.MILLISECOND, 0)
-    calendar.add(field, amount)
-    return calendar.timeInMillis
-}
-
-private fun formatEpochMillis(millis: Long, pattern: String): String =
-    SimpleDateFormat(pattern, Locale("ru")).format(Date(millis))
+// ── Period tab row ────────────────────────────────────────────────────────────
+// Unchanged — already looks good
 
 @Composable
 private fun PeriodTabRow(
@@ -633,22 +584,17 @@ private fun PeriodTabRow(
         Row(modifier = Modifier.fillMaxSize()) {
             periodTabs.forEach { period ->
                 val selected = period == selectedPeriod
-
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(Dimens.RadiusPill))
-                        .background(
-                            if (selected) colors.primary else Color.Transparent,
-                        )
+                        .background(if (selected) colors.primary else Color.Transparent)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                             enabled = enabled,
-                        ) {
-                            if (enabled) onSelect(period)
-                        },
+                        ) { if (enabled) onSelect(period) },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -673,6 +619,9 @@ private fun StatsPeriod.labelRes(): Int = when (this) {
     StatsPeriod.CUSTOM -> R.string.period_custom
 }
 
+// ── SummaryCard ───────────────────────────────────────────────────────────────
+// Redesigned: compact stat row on top, ring centred, cleaner spacing
+
 @Composable
 private fun SummaryCard(
     netTotal: Long,
@@ -693,25 +642,15 @@ private fun SummaryCard(
     ) {
         Column(
             modifier = Modifier.padding(Dimens.SpacingL),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
         ) {
+            // Net balance — smaller than before, with colour
             Text(
                 text = when {
-                    netTotal > 0L -> MoneyFormat.formatWithSignPrefix(
-                        context,
-                        netTotal,
-                        currencyCode,
-                        isPositive = true,
-                    )
-                    netTotal < 0L -> MoneyFormat.formatWithSignPrefix(
-                        context,
-                        -netTotal,
-                        currencyCode,
-                        isPositive = false,
-                    )
+                    netTotal > 0L -> MoneyFormat.formatWithSignPrefix(context, netTotal, currencyCode, isPositive = true)
+                    netTotal < 0L -> MoneyFormat.formatWithSignPrefix(context, -netTotal, currencyCode, isPositive = false)
                     else -> MoneyFormat.format(0L, currencyCode)
                 },
-                style = typography.displayMedium,
+                style = typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = when {
                     netTotal > 0L -> colors.secondary
@@ -721,82 +660,120 @@ private fun SummaryCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            HorizontalDivider(
-                color = colors.surfaceVariant,
-                thickness = 1.dp,
-            )
+
+            Spacer(Modifier.height(Dimens.SpacingS))
+
+            // Income / Expense row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingL),
             ) {
-                AnalyticsFinanceStat(
+                StatPill(
                     icon = Icons.Rounded.ArrowUpward,
-                    tint = colors.secondary,
+                    iconTint = colors.secondary,
                     label = stringResource(R.string.income),
-                    value = MoneyFormat.formatWithSignPrefix(
-                        context,
-                        incomeTotal,
-                        currencyCode,
-                        isPositive = true,
-                    ),
+                    value = MoneyFormat.formatWithSignPrefix(context, incomeTotal, currencyCode, isPositive = true),
+                    valueColor = colors.secondary,
+                    modifier = Modifier.weight(1f),
                 )
-                AnalyticsFinanceStat(
+                StatPill(
                     icon = Icons.Rounded.ArrowDownward,
-                    tint = colors.error,
+                    iconTint = colors.error,
                     label = stringResource(R.string.expenses),
                     value = MoneyFormat.format(expenseTotal, currencyCode),
+                    valueColor = colors.error,
+                    modifier = Modifier.weight(1f),
                 )
             }
-            SavingsRateRing(
-                savingsPercent = savingsPercent,
-                savingsRate = savingsRate,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-            Row(
+
+            Spacer(Modifier.height(Dimens.SpacingM))
+            HorizontalDivider(color = colors.surfaceVariant)
+            Spacer(Modifier.height(Dimens.SpacingM))
+
+            // Savings ring — centred
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                LegendItem(color = colors.secondary, label = stringResource(R.string.income))
-                Spacer(Modifier.size(Dimens.SpacingM))
-                LegendItem(color = colors.error, label = stringResource(R.string.expenses))
+                SavingsRateRing(
+                    savingsPercent = savingsPercent,
+                    savingsRate = savingsRate,
+                )
+                Spacer(Modifier.height(Dimens.SpacingS))
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    LegendItem(color = colors.secondary, label = stringResource(R.string.income))
+                    Spacer(Modifier.size(Dimens.SpacingM))
+                    LegendItem(color = colors.error, label = stringResource(R.string.expenses))
+                }
             }
         }
     }
 }
 
+// ── StatPill ──────────────────────────────────────────────────────────────────
+// Replaces AnalyticsFinanceStat — pill-shaped background, cleaner look
+
 @Composable
-private fun AnalyticsFinanceStat(
+private fun StatPill(
     icon: ImageVector,
-    tint: Color,
+    iconTint: Color,
     label: String,
     value: String,
+    valueColor: Color,
+    modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
 
-    Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs)) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(Dimens.RadiusM))
+            .background(iconTint.copy(alpha = 0.07f))
+            .padding(horizontal = Dimens.SpacingM, vertical = Dimens.SpacingS),
+        verticalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = tint,
-                modifier = Modifier.size(Dimens.IconSizeS),
+                tint = iconTint,
+                modifier = Modifier.size(14.dp),
             )
             Text(
-                text = value,
-                style = typography.bodyMedium,
-                color = tint,
-                fontWeight = FontWeight.SemiBold,
+                text = label,
+                style = typography.labelSmall,
+                color = colors.onSurfaceVariant,
+                fontSize = 11.sp,
             )
         }
         Text(
-            text = label,
-            style = typography.labelSmall,
-            color = colors.onSurfaceVariant,
+            text = value,
+            style = typography.bodyMedium,
+            color = valueColor,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+private fun startOfDayOffset(field: Int, amount: Int): Long {
+    val calendar = Calendar.getInstance()
+    calendar.set(Calendar.HOUR_OF_DAY, 0)
+    calendar.set(Calendar.MINUTE, 0)
+    calendar.set(Calendar.SECOND, 0)
+    calendar.set(Calendar.MILLISECOND, 0)
+    calendar.add(field, amount)
+    return calendar.timeInMillis
+}
+
+private fun formatEpochMillis(millis: Long, pattern: String): String =
+    SimpleDateFormat(pattern, Locale("ru")).format(Date(millis))
