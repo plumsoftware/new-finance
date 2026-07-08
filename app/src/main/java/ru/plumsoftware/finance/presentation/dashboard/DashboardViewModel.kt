@@ -37,6 +37,7 @@ import ru.plumsoftware.finance.domain.repository.TransactionRepository
 import ru.plumsoftware.finance.data.util.endOfDayMillis
 import ru.plumsoftware.finance.data.util.startOfDayMillis
 import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.domain.model.Account
 
 data class DashboardUiState(
     val totalBalanceMinor: Long = 0L,
@@ -53,6 +54,8 @@ data class DashboardUiState(
     val unlockedAchievementsCount: Int = 0,
     val isLoading: Boolean = true,
     val snackbarMessage: String? = null,
+    val accountsData: List<AccountDashboardData> = emptyList(),
+    val totalGoalSavingsMinor: Long = 0L
 )
 
 class DashboardViewModel(
@@ -82,6 +85,7 @@ class DashboardViewModel(
         settingsRepository.settings,
         streakRepository.observe(),
         achievementUnlockDao.observeAll(),
+        goalRepository.observeGoals(),
         _snackbar,
         _warningDismissed,
     ) { values ->
@@ -94,17 +98,52 @@ class DashboardViewModel(
         val budgetSpending = values[6] as List<CategoryBudgetSpending>
         val settings = values[7] as ru.plumsoftware.finance.domain.model.AppSettings
         val streak = values[8] as StreakData
+
         @Suppress("UNCHECKED_CAST")
         val achievementUnlocks = values[9] as List<AchievementUnlockEntity>
-        val snackbar = values[10] as String?
-        val warningDismissed = values[11] as Boolean
+
+        @Suppress("UNCHECKED_CAST")
+        val allGoals = values[10] as List<Goal> // Извлечение всех целей
+
+        val snackbar = values[11] as String?
+        val warningDismissed = values[12] as Boolean
+
+        val monthRange = currentMonthRange()
+        val previousRange = previousMonthRange()
+
+        // Генерация данных для каждого счета по отдельности (для карусели)
+        val accountsData = accountBalances.map { accWithBalance ->
+            val acc = accWithBalance.account
+            val accTx = transactions.filter { it.accountId == acc.id }
+            val accMonthTx = accTx.filter { it.dateMillis in monthRange.first..monthRange.second }
+
+            val inc =
+                accMonthTx.filter { it.type == TransactionType.INCOME }.sumOf { it.amountMinor }
+            val exp =
+                accMonthTx.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amountMinor }
+
+            AccountDashboardData(
+                accountId = acc.id,
+                name = acc.name,
+                balanceMinor = accWithBalance.calculatedBalanceMinor,
+                currencyCode = acc.currencyCode,
+                monthIncomeMinor = inc,
+                monthExpenseMinor = exp,
+                isSavings = isSavingsAccount(acc)
+            )
+        }
+
+        val totalGoalSavings = allGoals.sumOf { it.savedAmountMinor }
+
         val selectedAccount = accountBalances.find { it.account.id == settings.selectedAccountId }
             ?: accountBalances.firstOrNull()
         val accountTransactions = transactions.filter { it.accountId == settings.selectedAccountId }
-        val monthRange = currentMonthRange()
-        val previousRange = previousMonthRange()
-        val monthTx = accountTransactions.filter { it.dateMillis in monthRange.first..monthRange.second }
-        val previousMonthTx = accountTransactions.filter { it.dateMillis in previousRange.first..previousRange.second }
+
+        val monthTx =
+            accountTransactions.filter { it.dateMillis in monthRange.first..monthRange.second }
+        val previousMonthTx =
+            accountTransactions.filter { it.dateMillis in previousRange.first..previousRange.second }
+
         val todayStart = startOfDayMillis(System.currentTimeMillis())
         val todayEnd = endOfDayMillis(System.currentTimeMillis())
         val todayOperationsCount = accountTransactions.count { tx ->
@@ -116,11 +155,14 @@ class DashboardViewModel(
             val limit = item.limitMinor
             limit != null && limit > 0L && item.percentage >= 0.8f
         }
+
         DashboardUiState(
             totalBalanceMinor = totalBalance,
             currencyCode = selectedAccount?.account?.currencyCode ?: settings.defaultCurrencyCode,
-            monthIncomeMinor = monthTx.filter { it.type == TransactionType.INCOME }.sumOf { it.amountMinor },
-            monthExpenseMinor = monthTx.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amountMinor },
+            monthIncomeMinor = monthTx.filter { it.type == TransactionType.INCOME }
+                .sumOf { it.amountMinor },
+            monthExpenseMinor = monthTx.filter { it.type == TransactionType.EXPENSE }
+                .sumOf { it.amountMinor },
             todayOperationsCount = todayOperationsCount,
             categoryMap = (expenseCategories + incomeCategories).associateBy { it.id },
             smartAssets = assets,
@@ -131,6 +173,8 @@ class DashboardViewModel(
             unlockedAchievementsCount = achievementUnlocks.size,
             isLoading = false,
             snackbarMessage = snackbar,
+            accountsData = accountsData,
+            totalGoalSavingsMinor = totalGoalSavings
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
@@ -140,6 +184,51 @@ class DashboardViewModel(
                 streakRepository.calculateAndSave()
             }
         }
+    }
+
+    // Безопасное определение накопительного счета с помощью рефлексии
+    private fun isSavingsAccount(account: Account): Boolean {
+        // Использование стандартной Java Reflection (всегда доступно в Android без дополнительных зависимостей)
+        try {
+            val methods = account.javaClass.methods
+
+            // 1. Попытка найти булевы геттеры свойств "isSavings" или "isSavingsAccount"
+            val savingsMethod = methods.find { method ->
+                method.name == "isSavings" ||
+                        method.name == "isSavingsAccount" ||
+                        method.name == "getIsSavings" ||
+                        method.name == "getIsSavingsAccount"
+            }
+            if (savingsMethod != null) {
+                val res = savingsMethod.invoke(account)
+                if (res is Boolean) return res
+            }
+        } catch (e: Exception) {
+            // Игнорируем исключения при попытке доступа
+        }
+
+        try {
+            val methods = account.javaClass.methods
+
+            // 2. Попытка проверить тип аккаунта (например, свойство "type" или "accountType")
+            val typeMethod = methods.find { method ->
+                method.name == "getType" ||
+                        method.name == "getAccountType" ||
+                        method.name == "type"
+            }
+            if (typeMethod != null) {
+                val res = typeMethod.invoke(account)?.toString()?.uppercase()
+                if (res != null && (res.contains("SAVING") || res.contains("SAVINGS"))) {
+                    return true
+                }
+            }
+        } catch (e: Exception) {
+            // Игнорируем исключения при попытке доступа
+        }
+
+        // 3. Резервный поиск по названию счета (свойство "name" гарантированно доступно при компиляции)
+        val nameLower = account.name.lowercase()
+        return nameLower.contains("накоп") || nameLower.contains("сберег") || nameLower.contains("saving")
     }
 
     fun recordSmartUsage(assetId: Long) {

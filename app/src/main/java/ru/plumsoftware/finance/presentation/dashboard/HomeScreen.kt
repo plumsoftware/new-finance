@@ -120,11 +120,15 @@ import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.sp
 import ru.plumsoftware.finance.data.util.startOfDayMillis
 import ru.plumsoftware.finance.domain.model.*
 import ru.plumsoftware.finance.presentation.export.ExportViewModel
@@ -156,7 +160,7 @@ fun HomeScreen(
     val settings by settingsRepository.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val unreadCount by notificationsViewModel.unreadCount.collectAsStateWithLifecycle()
-    val exportState by exportViewModel.exportState.collectAsStateWithLifecycle() // Стейт экспорта
+    val exportState by exportViewModel.exportState.collectAsStateWithLifecycle()
 
     val snackbarHost = remember { SnackbarHostState() }
     var showPermissionsSheet by remember { mutableStateOf(false) }
@@ -166,13 +170,21 @@ fun HomeScreen(
     var editBalanceDigits by remember { mutableStateOf("") }
     var isSavingInitialBalance by remember { mutableStateOf(false) }
     var isSavingEditBalance by remember { mutableStateOf(false) }
-    var initialBalanceOffered by rememberSaveable { mutableStateOf(false) }
     var settingsLoaded by remember { mutableStateOf(false) }
     var permissionResumeTick by remember { mutableIntStateOf(0) }
 
+    // Переменные для переключения накоплений и выбора счетов
+    var includeSavings by rememberSaveable { mutableStateOf(true) }
+    var targetAccountIdForEdit by remember { mutableStateOf<Long?>(null) }
+
+    val pagerState = rememberPagerState(
+        initialPage = 0,
+        pageCount = { state.accountsData.size + 1 }
+    )
+
     // Переменные для Share Bottom Sheet
     var showShareSheet by rememberSaveable { mutableStateOf(false) }
-    var selectedFormat by rememberSaveable { mutableStateOf(ExportFormat.PDF) } // По умолчанию PDF
+    var selectedFormat by rememberSaveable { mutableStateOf(ExportFormat.PDF) }
     var selectedPeriod by rememberSaveable { mutableStateOf(ExportPeriod.THIS_MONTH) }
     var customStartMillis by rememberSaveable { mutableStateOf<Long?>(null) }
     var customEndMillis by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -181,7 +193,6 @@ fun HomeScreen(
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
 
-    // Слушатель состояния экспорта
     LaunchedEffect(exportState) {
         when (val expState = exportState) {
             is ExportState.Success -> {
@@ -199,7 +210,7 @@ fun HomeScreen(
                         ),
                     )
                     exportViewModel.resetState()
-                    showShareSheet = false // Закрываем шторку при успешном шаре
+                    showShareSheet = false
                 }
             }
             is ExportState.Error -> {
@@ -240,22 +251,28 @@ fun HomeScreen(
         settingsLoaded = true
     }
 
+    // Исправленная логика инициализации баланса (предотвращает мгновенное закрытие диалога)
     LaunchedEffect(
         settings.initialBalancePromptCompleted,
         settingsLoaded,
         state.isLoading,
-        state.totalBalanceMinor,
         showPermissionsSheet,
-        initialBalanceOffered,
     ) {
         if (!settingsLoaded || state.isLoading) {
             showInitialBalanceDialog = false
             return@LaunchedEffect
         }
-        if (settings.initialBalancePromptCompleted || initialBalanceOffered) {
+        if (settings.initialBalancePromptCompleted) {
             showInitialBalanceDialog = false
             return@LaunchedEffect
         }
+
+        val permissionsReady = !hasPendingPermissions(context) && !showPermissionsSheet
+        if (!permissionsReady) {
+            showInitialBalanceDialog = false
+            return@LaunchedEffect
+        }
+
         val account = accountRepository.getDefault() ?: return@LaunchedEffect
         val alreadyConfigured = account.initialBalanceMinor != 0L || state.totalBalanceMinor != 0L
         if (alreadyConfigured) {
@@ -263,11 +280,8 @@ fun HomeScreen(
             showInitialBalanceDialog = false
             return@LaunchedEffect
         }
-        val permissionsReady = !hasPendingPermissions(context) && !showPermissionsSheet
-        if (permissionsReady) {
-            initialBalanceOffered = true
-            showInitialBalanceDialog = true
-        }
+
+        showInitialBalanceDialog = true
     }
 
     if (showInitialBalanceDialog) {
@@ -338,10 +352,12 @@ fun HomeScreen(
                         editBalanceDigits.ifBlank { "0" },
                         state.currencyCode,
                     )
-                    val account = accountRepository.getById(settings.selectedAccountId)
+                    val accountId = targetAccountIdForEdit ?: settings.selectedAccountId
+                    val account = accountRepository.getById(accountId)
                         ?: accountRepository.getDefault()
                     if (account != null) {
-                        val transactionsDelta = state.totalBalanceMinor - account.initialBalanceMinor
+                        val currentBalance = state.accountsData.find { it.accountId == account.id }?.balanceMinor ?: 0L
+                        val transactionsDelta = currentBalance - account.initialBalanceMinor
                         val newInitialBalance = (enteredMinor - transactionsDelta).coerceAtLeast(0L)
                         accountRepository.upsert(
                             account.copy(initialBalanceMinor = newInitialBalance),
@@ -372,7 +388,6 @@ fun HomeScreen(
         )
     }
 
-    // Модальное окно выбора дат для кастомного периода
     val dateRangePickerState = rememberDateRangePickerState(
         initialSelectedStartDateMillis = customStartMillis,
         initialSelectedEndDateMillis = customEndMillis,
@@ -533,7 +548,6 @@ fun HomeScreen(
         }
     }
 
-    // Основная шторка Share Bottom Sheet (стиль iOS, без JSON)
     if (showShareSheet) {
         ModalBottomSheet(
             onDismissRequest = { showShareSheet = false },
@@ -576,7 +590,6 @@ fun HomeScreen(
                     }
                 }
 
-                // Выбор формата (кроме JSON)
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs)) {
                     SectionLabel(text = stringResource(R.string.export_section_format), withBottomSpacing = false)
                     AppCard(modifier = Modifier.fillMaxWidth()) {
@@ -597,7 +610,6 @@ fun HomeScreen(
                     }
                 }
 
-                // Выбор периода
                 Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs)) {
                     SectionLabel(text = stringResource(R.string.export_section_period), withBottomSpacing = false)
                     AppCard(modifier = Modifier.fillMaxWidth()) {
@@ -671,7 +683,6 @@ fun HomeScreen(
                     }
                 }
 
-                // Кнопка экспорта и отправки
                 val isExporting = exportState is ExportState.Loading
                 Button(
                     onClick = {
@@ -742,28 +753,48 @@ fun HomeScreen(
                 GreetingHeader(
                     unreadCount = unreadCount,
                     onNotificationsClick = onOpenNotificationsClick,
-                    onShareClick = { showShareSheet = true }, // Клик по шару открывает шторку
+                    onShareClick = { showShareSheet = true },
                 )
             }
             item {
-                BalanceCard(
-                    balanceMinor = state.totalBalanceMinor,
-                    monthIncomeMinor = state.monthIncomeMinor,
-                    monthExpenseMinor = state.monthExpenseMinor,
-                    currencyCode = state.currencyCode,
-                    onMonthClick = onOpenAnalyticsClick,
-                    onBalanceClick = {
-                        editBalanceDigits = MoneyFormat.minorToMajorDigits(
-                            amountMinor = state.totalBalanceMinor,
-                            currencyCode = state.currencyCode,
-                        ).takeIf { it != "0" }.orEmpty()
-                        showEditBalanceDialog = true
-                    },
-                )
-            }
-            if (!NativeAdSession.dismissed) {
-                item {
-                    NativeAdContainer(adUnitId = AppConfig.nativeHome)
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(Dimens.SpacingL)
+                ) {
+                    AccountsCarousel(
+                        accountsData = state.accountsData,
+                        totalGoalSavingsMinor = state.totalGoalSavingsMinor,
+                        defaultCurrencyCode = state.currencyCode,
+                        includeSavings = includeSavings,
+                        onIncludeSavingsChange = { includeSavings = it },
+                        pagerState = pagerState,
+                        onMonthClick = onOpenAnalyticsClick,
+                        onBalanceClick = { cardData ->
+                            if (cardData != null) {
+                                targetAccountIdForEdit = cardData.accountId
+                                editBalanceDigits = MoneyFormat.minorToMajorDigits(
+                                    amountMinor = cardData.balanceMinor,
+                                    currencyCode = cardData.currencyCode,
+                                ).takeIf { it != "0" }.orEmpty()
+                                showEditBalanceDialog = true
+                            } else {
+                                scope.launch {
+                                    val errorMsg = try {
+                                        context.getString(R.string.edit_balance_combined_error)
+                                    } catch (e: Exception) {
+                                        "Выберите конкретный счет для изменения баланса"
+                                    }
+                                    snackbarHost.showSnackbar(errorMsg)
+                                }
+                            }
+                        },
+                    )
+
+                    // Реклама выводится внутри общего контейнера. Если она скрыта или
+                    // имеет нулевую высоту, LazyColumn не будет дублировать SpacingL.
+                    if (!NativeAdSession.dismissed) {
+                        NativeAdContainer(adUnitId = AppConfig.nativeHome)
+                    }
                 }
             }
             item {
@@ -843,6 +874,224 @@ fun HomeScreen(
 }
 
 @Composable
+private fun AccountsCarousel(
+    accountsData: List<AccountDashboardData>,
+    totalGoalSavingsMinor: Long, // <-- Принимаем накопления по целям
+    defaultCurrencyCode: String,
+    includeSavings: Boolean,
+    onIncludeSavingsChange: (Boolean) -> Unit,
+    pagerState: PagerState,
+    onMonthClick: () -> Unit,
+    onBalanceClick: (AccountDashboardData?) -> Unit,
+) {
+    val colors = MaterialTheme.colorScheme
+    val typography = MaterialTheme.typography
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS)
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = Dimens.SpacingL),
+            pageSpacing = Dimens.SpacingS,
+        ) { page ->
+            val cardData = if (page == 0) {
+                val activeAccounts = if (includeSavings) {
+                    accountsData
+                } else {
+                    accountsData.filter { !it.isSavings }
+                }
+                // Накопления с целей прибавляются к общему балансу только если includeSavings == true
+                val goalSavings = if (includeSavings) totalGoalSavingsMinor else 0L
+
+                AccountDashboardData(
+                    accountId = null,
+                    name = stringResource(R.string.total_budget),
+                    balanceMinor = activeAccounts.sumOf { it.balanceMinor } + goalSavings, // <-- Суммируем счета и цели
+                    currencyCode = defaultCurrencyCode,
+                    monthIncomeMinor = activeAccounts.sumOf { it.monthIncomeMinor },
+                    monthExpenseMinor = activeAccounts.sumOf { it.monthExpenseMinor },
+                    isSavings = false
+                )
+            } else {
+                accountsData.getOrNull(page - 1)
+            }
+
+            if (cardData != null) {
+                val context = LocalContext.current
+                val animatedBalance by animateFloatAsState(
+                    targetValue = cardData.balanceMinor.toFloat(),
+                    animationSpec = tween(durationMillis = 400),
+                    label = "home_balance_${page}",
+                )
+                val savingsRate = if (cardData.monthIncomeMinor > 0) {
+                    ((cardData.monthIncomeMinor - cardData.monthExpenseMinor).coerceAtLeast(0L).toFloat() / cardData.monthIncomeMinor)
+                        .coerceIn(0f, 1f)
+                } else {
+                    0f
+                }
+                val savingsPercent = (savingsRate * 100).roundToInt()
+                val monthLabel = SimpleDateFormat("LLLL yyyy", Locale.getDefault())
+                    .format(Date())
+                    .replaceFirstChar { it.uppercase() }
+
+                val balanceCardScale = 0.855f
+                val balancePadding = Dimens.SpacingL * balanceCardScale
+
+                AppCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onBalanceClick(if (page == 0) null else cardData) },
+                ) {
+                    Column(
+                        modifier = Modifier.padding(balancePadding),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS * balanceCardScale),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs)
+                            ) {
+                                Text(
+                                    text = cardData.name,
+                                    style = typography.labelSmall,
+                                    color = colors.onSurfaceVariant,
+                                )
+                                if (cardData.isSavings) {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(
+                                                colors.secondary.copy(alpha = 0.15f),
+                                                RoundedCornerShape(Dimens.RadiusPill)
+                                            )
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.savings_label),
+                                            style = typography.labelSmall.copy(fontSize = 9.sp),
+                                            color = colors.secondary,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (page == 0) {
+                                Row(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(Dimens.RadiusPill))
+                                        .background(colors.surfaceVariant.copy(alpha = 0.5f))
+                                        .clickable { onIncludeSavingsChange(!includeSavings) }
+                                        .padding(horizontal = Dimens.SpacingS, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = if (includeSavings) Icons.Rounded.CheckCircle else Icons.Rounded.Circle,
+                                        contentDescription = null,
+                                        tint = if (includeSavings) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.4f),
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                    Text(
+                                        text = if (includeSavings) stringResource(R.string.with_savings) else stringResource(R.string.without_savings),
+                                        style = typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                                        color = colors.primary,
+                                    )
+                                }
+                            } else {
+                                MonthSelector(
+                                    monthLabel = monthLabel,
+                                    onClick = onMonthClick,
+                                )
+                            }
+                        }
+                        Text(
+                            text = MoneyFormat.format(animatedBalance.roundToInt().toLong(), cardData.currencyCode),
+                            style = typography.displayMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        HorizontalDivider(
+                            color = colors.surfaceVariant,
+                            thickness = 1.dp,
+                            modifier = Modifier.padding(vertical = Dimens.SpacingS * balanceCardScale),
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            FinanceStat(
+                                icon = Icons.Rounded.ArrowUpward,
+                                tint = colors.secondary,
+                                label = stringResource(R.string.income),
+                                value = MoneyFormat.formatWithSignPrefix(
+                                    context,
+                                    cardData.monthIncomeMinor,
+                                    cardData.currencyCode,
+                                    isPositive = true,
+                                ),
+                            )
+                            FinanceStat(
+                                icon = Icons.Rounded.ArrowDownward,
+                                tint = colors.error,
+                                label = stringResource(R.string.expenses),
+                                value = MoneyFormat.format(cardData.monthExpenseMinor, cardData.currencyCode),
+                            )
+                        }
+                        if (savingsRate > 0f) {
+                            LinearProgressIndicator(
+                                progress = { savingsRate },
+                                color = colors.secondary,
+                                trackColor = colors.surfaceVariant,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(4.dp)
+                                    .clip(RoundedCornerShape(Dimens.RadiusPill)),
+                            )
+                            Text(
+                                text = stringResource(R.string.savings_rate_saved, savingsPercent),
+                                style = typography.labelSmall,
+                                color = colors.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        val pageCount = accountsData.size + 1
+        if (pageCount > 1) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                repeat(pageCount) { index ->
+                    val isSelected = pagerState.currentPage == index
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                            .size(if (isSelected) 8.dp else 6.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isSelected) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.3f)
+                            )
+                    )
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
 fun DashboardScreen(
     onOpenSmartSavingsClick: () -> Unit = {},
     onOpenGoalsClick: () -> Unit = {},
@@ -855,7 +1104,7 @@ fun DashboardScreen(
     onCreateGoalClick: () -> Unit = {},
     onGoalClick: (Long) -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel(),
-    exportViewModel: ExportViewModel = koinViewModel(), // Передан в DashboardScreen
+    exportViewModel: ExportViewModel = koinViewModel(),
 ) {
     HomeScreen(
         onOpenSmartSavingsClick = onOpenSmartSavingsClick,
@@ -869,7 +1118,7 @@ fun DashboardScreen(
         onCreateGoalClick = onCreateGoalClick,
         onGoalClick = onGoalClick,
         viewModel = viewModel,
-        exportViewModel = exportViewModel, // Передаем далее
+        exportViewModel = exportViewModel,
     )
 }
 
@@ -877,7 +1126,7 @@ fun DashboardScreen(
 private fun GreetingHeader(
     unreadCount: Int,
     onNotificationsClick: () -> Unit,
-    onShareClick: () -> Unit, // Параметр обработки клика «Поделиться»
+    onShareClick: () -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
@@ -903,7 +1152,6 @@ private fun GreetingHeader(
             )
         }
 
-        // Кнопки управления (Share и Notifications в одну линию)
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
@@ -946,7 +1194,6 @@ private fun GreetingHeader(
     }
 }
 
-// Элемент списка выбора параметров в стиле iOS (с галочкой справа)
 @Composable
 private fun ShareSelectionRow(
     label: String,
@@ -1026,116 +1273,6 @@ private fun greetingWithTime(): String {
         hour in 5..11 -> stringResource(R.string.greeting_morning)
         hour in 12..17 -> stringResource(R.string.greeting_afternoon)
         else -> stringResource(R.string.greeting_evening)
-    }
-}
-
-@Composable
-private fun BalanceCard(
-    balanceMinor: Long,
-    monthIncomeMinor: Long,
-    monthExpenseMinor: Long,
-    currencyCode: String,
-    onMonthClick: () -> Unit,
-    onBalanceClick: () -> Unit,
-) {
-    val context = LocalContext.current
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val animatedBalance by animateFloatAsState(
-        targetValue = balanceMinor.toFloat(),
-        animationSpec = tween(durationMillis = 400),
-        label = "home_balance",
-    )
-    val savingsRate = if (monthIncomeMinor > 0) {
-        ((monthIncomeMinor - monthExpenseMinor).coerceAtLeast(0L).toFloat() / monthIncomeMinor)
-            .coerceIn(0f, 1f)
-    } else {
-        0f
-    }
-    val savingsPercent = (savingsRate * 100).roundToInt()
-    val monthLabel = SimpleDateFormat("LLLL yyyy", Locale.getDefault()) // Использует локаль устройства вместо жесткого "ru"
-        .format(Date())
-        .replaceFirstChar { it.uppercase() }
-
-    val balanceCardScale = 0.855f
-    val balancePadding = Dimens.SpacingL * balanceCardScale
-    AppCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Dimens.SpacingL),
-        onClick = onBalanceClick,
-    ) {
-        Column(
-            modifier = Modifier.padding(balancePadding),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS * balanceCardScale),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.balance_label),
-                    style = typography.labelSmall,
-                    color = colors.onSurfaceVariant,
-                )
-                MonthSelector(
-                    monthLabel = monthLabel,
-                    onClick = onMonthClick,
-                )
-            }
-            Text(
-                text = MoneyFormat.format(animatedBalance.roundToInt().toLong(), currencyCode),
-                style = typography.displayMedium,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            HorizontalDivider(
-                color = colors.surfaceVariant,
-                thickness = 1.dp,
-                modifier = Modifier.padding(vertical = Dimens.SpacingS * balanceCardScale),
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                FinanceStat(
-                    icon = Icons.Rounded.ArrowUpward,
-                    tint = colors.secondary,
-                    label = stringResource(R.string.income),
-                    value = MoneyFormat.formatWithSignPrefix(
-                        context,
-                        monthIncomeMinor,
-                        currencyCode,
-                        isPositive = true,
-                    ),
-                )
-                FinanceStat(
-                    icon = Icons.Rounded.ArrowDownward,
-                    tint = colors.error,
-                    label = stringResource(R.string.expenses),
-                    value = MoneyFormat.format(monthExpenseMinor, currencyCode),
-                )
-            }
-            if (savingsRate > 0f) {
-                LinearProgressIndicator(
-                    progress = { savingsRate },
-                    color = colors.secondary,
-                    trackColor = colors.surfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(Dimens.RadiusPill)),
-                )
-                Text(
-                    text = stringResource(R.string.savings_rate_saved, savingsPercent),
-                    style = typography.labelSmall,
-                    color = colors.onSurfaceVariant,
-                )
-            }
-        }
     }
 }
 
@@ -1775,88 +1912,3 @@ private fun startOfDayOffset(field: Int, amount: Int): Long {
 
 private fun formatEpochMillis(millis: Long, pattern: String): String =
     SimpleDateFormat(pattern, Locale.getDefault()).format(Date(millis))
-
-@Composable
-fun DashboardScreen(
-    onOpenSmartSavingsClick: () -> Unit = {},
-    onOpenGoalsClick: () -> Unit = {},
-    onOpenHistoryClick: () -> Unit = {},
-    onOpenAnalyticsClick: () -> Unit = {},
-    onOpenLimitsClick: () -> Unit = {},
-    onOpenAchievementsClick: () -> Unit = {},
-    onOpenNotificationsClick: () -> Unit = {},
-    onCreateAssetClick: () -> Unit = {},
-    onCreateGoalClick: () -> Unit = {},
-    onGoalClick: (Long) -> Unit = {},
-    viewModel: DashboardViewModel = koinViewModel(),
-) {
-    HomeScreen(
-        onOpenSmartSavingsClick = onOpenSmartSavingsClick,
-        onOpenGoalsClick = onOpenGoalsClick,
-        onOpenHistoryClick = onOpenHistoryClick,
-        onOpenAnalyticsClick = onOpenAnalyticsClick,
-        onOpenLimitsClick = onOpenLimitsClick,
-        onOpenAchievementsClick = onOpenAchievementsClick,
-        onOpenNotificationsClick = onOpenNotificationsClick,
-        onCreateAssetClick = onCreateAssetClick,
-        onCreateGoalClick = onCreateGoalClick,
-        onGoalClick = onGoalClick,
-        viewModel = viewModel,
-    )
-}
-
-@Composable
-private fun GreetingHeader(
-    unreadCount: Int,
-    onNotificationsClick: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Dimens.SpacingL),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column {
-            Text(
-                text = greetingWithTime(),
-                style = typography.bodyMedium,
-                color = colors.onSurfaceVariant,
-            )
-            Text(
-                text = stringResource(R.string.dashboard_title),
-                style = typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface,
-            )
-        }
-        BadgedBox(
-            badge = {
-                if (unreadCount > 0) {
-                    Badge {
-                        Text(
-                            text = if (unreadCount > 99) {
-                                stringResource(R.string.badge_count_overflow)
-                            } else {
-                                unreadCount.toString()
-                            },
-                            style = typography.labelSmall,
-                        )
-                    }
-                }
-            },
-        ) {
-            IconButton(onClick = onNotificationsClick) {
-                Icon(
-                    imageVector = Icons.Outlined.Notifications,
-                    contentDescription = stringResource(R.string.cd_notifications),
-                    tint = colors.onSurfaceVariant,
-                    modifier = Modifier.size(Dimens.IconSizeM),
-                )
-            }
-        }
-    }
-}

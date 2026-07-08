@@ -802,4 +802,10 @@
     <string name="currency_name_try">Турецкая лира</string>
     <string name="currency_name_uah">Украинская гривна</string>
     <string name="currency_name_uzs">Узбекский сум</string>
+
+    <string name="total_budget">Общий бюджет</string>
+    <string name="with_savings">С накоплениями</string>
+    <string name="without_savings">Без накоплений</string>
+    <string name="savings_label">Накопления</string>
+    <string name="edit_balance_combined_error">Выберите конкретный счет для изменения баланса.</string>
 </resources>

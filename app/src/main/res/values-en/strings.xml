@@ -801,4 +801,10 @@
     <string name="currency_name_try">Turkish lira</string>
     <string name="currency_name_uah">Ukrainian hryvnia</string>
     <string name="currency_name_uzs">Uzbekistani som</string>
+
+    <string name="total_budget">Total budget</string>
+    <string name="with_savings">With savings</string>
+    <string name="without_savings">Without savings</string>
+    <string name="savings_label">Savings</string>
+    <string name="edit_balance_combined_error">Select a specific account to change its balance.</string>
 </resources>
