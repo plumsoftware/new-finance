@@ -41,4 +41,11 @@ object NavDeepLinks {
     val recurring = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/settings/recurring" }
     val permissions = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/settings/permissions" }
     val importPicker = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/settings/import" }
+    val tools = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/tools" }
+    val creditCalc = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/calculator/credit" }
+    val depositCalc = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/calculator/deposit" }
+    val goalCalc = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/calculator/goal" }
+    val mortgageCalc = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/calculator/mortgage" }
+    val earlyRepayCalc = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/calculator/early_repay" }
+    val rentVsBuyCalc = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/calculator/rent_vs_buy" }
 }

@@ -53,6 +53,7 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.domain.model.AppSettings
 import ru.plumsoftware.finance.domain.model.ThemeMode
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.presentation.accounts.AccountEditorScreen
@@ -86,6 +87,13 @@ import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsSnackbar
 import ru.plumsoftware.finance.navigation.NavDeepLinks
 import ru.plumsoftware.finance.navigation.navigateAppDeepLink
 import ru.plumsoftware.finance.navigation.popBackStackOrHome
+import ru.plumsoftware.finance.presentation.tools.CreditCalculatorScreen
+import ru.plumsoftware.finance.presentation.tools.DepositCalculatorScreen
+import ru.plumsoftware.finance.presentation.tools.EarlyRepaymentCalculatorScreen
+import ru.plumsoftware.finance.presentation.tools.GoalCalculatorScreen
+import ru.plumsoftware.finance.presentation.tools.MortgageCalculatorScreen
+import ru.plumsoftware.finance.presentation.tools.RentVsBuyScreen
+import ru.plumsoftware.finance.presentation.tools.ToolsScreen
 import ru.plumsoftware.finance.ui.AppRoute
 import ru.plumsoftware.finance.ui.nav.BottomNavItems
 import ru.plumsoftware.finance.ui.theme.Dimens
@@ -102,7 +110,7 @@ fun FinanceApp(
     onPendingDeepLinkConsumed: () -> Unit = {},
 ) {
     val settings by settingsRepository.settings.collectAsStateWithLifecycle(
-        initialValue = ru.plumsoftware.finance.domain.model.AppSettings(),
+        initialValue = AppSettings(),
     )
     val darkTheme = when (settings.themeMode) {
         ThemeMode.LIGHT -> false
@@ -191,11 +199,11 @@ fun FinanceApp(
                             windowInsets = NavigationBarDefaults.windowInsets,
                         ) {
                             val homeItem = BottomNavItems[0]
-                            val goalsItem = BottomNavItems[1]
+                            val toolsItem = BottomNavItems[1]
                             val analyticsItem = BottomNavItems[2]
                             val settingsItem = BottomNavItems[3]
 
-                            listOf(homeItem, goalsItem).forEach { item ->
+                            listOf(homeItem, toolsItem).forEach { item ->
                                 val isSelected =
                                     navBackStackEntry?.destination?.hierarchy?.any { it.route == item.route } == true
                                 NavigationBarItem(
@@ -287,10 +295,7 @@ fun FinanceApp(
                         .fillMaxSize()
                         .padding(bottom = if (showBottomBar) innerPadding.calculateBottomPadding() else 0.dp),
                 ) {
-                    composable(
-                        route = AppRoute.Onboarding.route,
-                        deepLinks = listOf(NavDeepLinks.onboarding),
-                    ) {
+                    composable(route = AppRoute.Onboarding.route) {
                         OnboardingScreen(
                             onComplete = {
                                 navController.navigate(AppRoute.Home.route) {
@@ -299,10 +304,7 @@ fun FinanceApp(
                             },
                         )
                     }
-                    composable(
-                        route = AppRoute.Home.route,
-                        deepLinks = listOf(NavDeepLinks.home),
-                    ) {
+                    composable(route = AppRoute.Home.route) {
                         HomeScreen(
                             onOpenSmartSavingsClick = { navController.navigate(AppRoute.SmartSavings.route) },
                             onOpenGoalsClick = { navController.navigate(AppRoute.Goals.route) },
@@ -317,31 +319,69 @@ fun FinanceApp(
                         )
                     }
                     composable(
-                        route = AppRoute.History.route,
-                        deepLinks = listOf(NavDeepLinks.history),
+                        route = AppRoute.Tools.route,
+                        deepLinks = listOf(NavDeepLinks.tools)
                     ) {
+                        ToolsScreen(
+                            onCreditCalcClick = { navController.navigate(AppRoute.CreditCalculator.route) },
+                            onDepositCalcClick = { navController.navigate(AppRoute.DepositCalculator.route) },
+                            onGoalCalcClick = { navController.navigate(AppRoute.GoalCalculator.route) },
+                            onMortgageCalcClick = { navController.navigate(AppRoute.MortgageCalculator.route) },
+                            onEarlyRepayClick = { navController.navigate(AppRoute.EarlyRepayCalculator.route) },
+                            onRentVsBuyClick = { navController.navigate(AppRoute.RentVsBuyCalculator.route) },
+                        )
+                    }
+                    composable(
+                        route = AppRoute.CreditCalculator.route,
+                        deepLinks = listOf(NavDeepLinks.creditCalc)
+                    ) {
+                        CreditCalculatorScreen(onBack = { navController.popBackStackOrHome() })
+                    }
+                    composable(
+                        route = AppRoute.DepositCalculator.route,
+                        deepLinks = listOf(NavDeepLinks.depositCalc)
+                    ) {
+                        DepositCalculatorScreen(onBack = { navController.popBackStackOrHome() })
+                    }
+                    composable(
+                        route = AppRoute.GoalCalculator.route,
+                        deepLinks = listOf(NavDeepLinks.goalCalc)
+                    ) {
+                        GoalCalculatorScreen(onBack = { navController.popBackStackOrHome() })
+                    }
+                    composable(
+                        route = AppRoute.MortgageCalculator.route,
+                        deepLinks = listOf(NavDeepLinks.mortgageCalc)
+                    ) {
+                        MortgageCalculatorScreen(onBack = { navController.popBackStackOrHome() })
+                    }
+                    composable(
+                        route = AppRoute.EarlyRepayCalculator.route,
+                        deepLinks = listOf(NavDeepLinks.earlyRepayCalc)
+                    ) {
+                        EarlyRepaymentCalculatorScreen(onBack = { navController.popBackStackOrHome() })
+                    }
+                    composable(
+                        route = AppRoute.RentVsBuyCalculator.route,
+                        deepLinks = listOf(NavDeepLinks.rentVsBuyCalc)
+                    ) {
+                        RentVsBuyScreen(onBack = { navController.popBackStackOrHome() })
+                    }
+                    composable(route = AppRoute.History.route) {
                         HistoryScreen(
                             onBack = { navController.popBackStackOrHome() },
                             onNavigateToAdd = { navController.navigate(AppRoute.AddTransaction.route) },
                         )
                     }
-                    composable(
-                        route = AppRoute.SmartSavings.route,
-                        deepLinks = listOf(NavDeepLinks.smartSavings),
-                    ) { backStackEntry ->
+                    composable(route = AppRoute.SmartSavings.route) { backStackEntry ->
                         val snackbarMessage by backStackEntry.savedStateHandle
                             .getStateFlow<String?>(SmartSavingsSnackbar.KEY, null)
                             .collectAsStateWithLifecycle()
                         SmartSavingsScreen(
                             onBack = { navController.popBackStackOrHome() },
-                            onCreateClick = {
-                                // ИЗМЕНЕНО: Используем новую функцию-помощник
-                                navController.navigate(AppRoute.smartCreate(null))
-                            },
+                            onCreateClick = { navController.navigate(AppRoute.smartCreate(null)) },
                             onOpenGoalsClick = { navController.navigate(AppRoute.Goals.route) },
-                            onAssetClick = { id ->
-                                navController.navigate(AppRoute.smartDetail(id))
-                            },
+                            onAssetClick = { id -> navController.navigate(AppRoute.smartDetail(id)) },
                             snackbarMessage = snackbarMessage,
                             onSnackbarShown = {
                                 backStackEntry.savedStateHandle.remove<String>(SmartSavingsSnackbar.KEY)
@@ -350,48 +390,21 @@ fun FinanceApp(
                     }
                     composable(
                         route = AppRoute.SMART_CREATE_WITH_ARGS,
-                        deepLinks = listOf(NavDeepLinks.smartSavingsCreate, NavDeepLinks.smartSavingsCreateNew),
                         arguments = listOf(navArgument("assetId") {
                             type = NavType.StringType
                             nullable = true
                             defaultValue = null
                         }),
-                        enterTransition = {
-                            slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn(
-                                tween(280)
-                            )
-                        },
-                        exitTransition = {
-                            slideOutHorizontally(animationSpec = tween(240)) { it } + fadeOut(
-                                tween(200)
-                            )
-                        },
-                        popEnterTransition = {
-                            slideInHorizontally(animationSpec = tween(280)) { -it } + fadeIn(
-                                tween(280)
-                            )
-                        },
-                        popExitTransition = {
-                            slideOutHorizontally(animationSpec = tween(240)) { -it } + fadeOut(
-                                tween(200)
-                            )
-                        },
                     ) { createEntry ->
-                        // Достаем ID (если он есть, значит это Редактирование, если нет - Создание)
                         val assetIdStr = createEntry.arguments?.getString("assetId")
                         val assetId = assetIdStr?.toLongOrNull()
-
-                        // Динамическое сообщение для снэкбара
                         val successMessage =
                             if (assetId != null) stringResource(R.string.smart_updated_success)
                             else stringResource(R.string.smart_created_success)
 
                         CreateSmartSavingsScreen(
-
                             viewModel = koinViewModel(viewModelStoreOwner = createEntry) {
-                                parametersOf(
-                                    assetId
-                                )
+                                parametersOf(assetId)
                             },
                             onBack = { navController.popBackStackOrHome() },
                             onCreated = {
@@ -404,21 +417,14 @@ fun FinanceApp(
                     }
                     composable(
                         route = AppRoute.SMART_DETAIL,
-                        deepLinks = listOf(NavDeepLinks.smartSavingsDetail),
                         arguments = listOf(navArgument("assetId") { type = NavType.LongType }),
-                        enterTransition = { slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn(tween(280)) },
-                        exitTransition = { slideOutHorizontally(animationSpec = tween(240)) { it } + fadeOut(tween(200)) },
-                        popEnterTransition = { slideInHorizontally(animationSpec = tween(280)) { -it } + fadeIn(tween(280)) },
-                        popExitTransition = { slideOutHorizontally(animationSpec = tween(240)) { -it } + fadeOut(tween(200)) },
                     ) { entry ->
                         val assetId = entry.arguments?.getLong("assetId") ?: 0L
                         val deletedMsg = stringResource(R.string.smart_deleted_success)
                         SmartSavingsDetailScreen(
                             assetId = assetId,
                             onBack = { navController.popBackStackOrHome() },
-                            onEdit = { id ->
-                                navController.navigate(AppRoute.smartCreate(id))
-                            },
+                            onEdit = { id -> navController.navigate(AppRoute.smartCreate(id)) },
                             onDeleteSuccess = {
                                 navController.previousBackStackEntry
                                     ?.savedStateHandle
@@ -427,19 +433,13 @@ fun FinanceApp(
                             },
                         )
                     }
-                    composable(
-                        route = AppRoute.Goals.route,
-                        deepLinks = listOf(NavDeepLinks.goals),
-                    ) {
+                    composable(route = AppRoute.Goals.route) {
                         GoalsScreen(
                             onCreateClick = { navController.navigate(AppRoute.goalCreate()) },
                             onGoalClick = { id -> navController.navigate(AppRoute.goalDetail(id)) },
                         )
                     }
-                    composable(
-                        route = AppRoute.Achievements.route,
-                        deepLinks = listOf(NavDeepLinks.achievements),
-                    ) {
+                    composable(route = AppRoute.Achievements.route) {
                         AchievementsScreen(
                             onBack = { navController.popBackStackOrHome() },
                             viewModel = achievementsViewModel,
@@ -447,7 +447,6 @@ fun FinanceApp(
                     }
                     composable(
                         route = AppRoute.GOAL_CREATE_WITH_ARGS,
-                        deepLinks = listOf(NavDeepLinks.goalsCreate, NavDeepLinks.goalsCreateNew),
                         arguments = listOf(
                             navArgument("goalId") {
                                 type = NavType.StringType
@@ -473,28 +472,16 @@ fun FinanceApp(
                             onDeleted = { navController.popBackStackOrHome() },
                         )
                     }
-                    composable(
-                        route = AppRoute.Analytics.route,
-                        deepLinks = listOf(NavDeepLinks.analytics),
-                    ) {
+                    composable(route = AppRoute.Analytics.route) {
                         AnalyticsScreen()
                     }
-                    composable(
-                        route = AppRoute.Limits.route,
-                        deepLinks = listOf(NavDeepLinks.limits),
-                    ) {
+                    composable(route = AppRoute.Limits.route) {
                         LimitsScreen(navController = navController)
                     }
-                    composable(
-                        route = AppRoute.Notifications.route,
-                        deepLinks = listOf(NavDeepLinks.notifications),
-                    ) {
+                    composable(route = AppRoute.Notifications.route) {
                         NotificationsScreen(navController = navController)
                     }
-                    composable(
-                        route = AppRoute.Settings.route,
-                        deepLinks = listOf(NavDeepLinks.settings),
-                    ) {
+                    composable(route = AppRoute.Settings.route) {
                         SettingsScreen(
                             navController = navController,
                             onOpenAccounts = { navController.navigate(AppRoute.Accounts.route) },
@@ -513,16 +500,10 @@ fun FinanceApp(
                             onBack = { navController.popBackStackOrHome() },
                         )
                     }
-                    composable(
-                        route = AppRoute.Permissions.route,
-                        deepLinks = listOf(NavDeepLinks.permissions),
-                    ) {
+                    composable(route = AppRoute.Permissions.route) {
                         PermissionsScreen(navController = navController)
                     }
-                    composable(
-                        route = AppRoute.Export.route,
-                        deepLinks = listOf(NavDeepLinks.export),
-                    ) {
+                    composable(route = AppRoute.Export.route) {
                         ExportScreen(navController = navController)
                     }
                     composable(
@@ -537,16 +518,10 @@ fun FinanceApp(
                             navController = navController,
                         )
                     }
-                    composable(
-                        route = AppRoute.ImportPicker.route,
-                        deepLinks = listOf(NavDeepLinks.importPicker),
-                    ) {
+                    composable(route = AppRoute.ImportPicker.route) {
                         ImportPickerDeepLinkScreen(navController = navController)
                     }
-                    composable(
-                        route = AppRoute.Recurring.route,
-                        deepLinks = listOf(NavDeepLinks.recurring),
-                    ) {
+                    composable(route = AppRoute.Recurring.route) {
                         RecurringScreen(navController = navController)
                     }
                     composable(route = AppRoute.Accounts.route) {
@@ -572,10 +547,7 @@ fun FinanceApp(
                             onSaved = { navController.popBackStackOrHome() },
                         )
                     }
-                    composable(
-                        route = AppRoute.Categories.route,
-                        deepLinks = listOf(NavDeepLinks.categories),
-                    ) {
+                    composable(route = AppRoute.Categories.route) {
                         CategoriesScreen(
                             onBack = { navController.popBackStackOrHome() },
                             onAdd = { type ->
@@ -588,7 +560,6 @@ fun FinanceApp(
                     }
                     composable(
                         route = AppRoute.CATEGORY_EDIT,
-                        deepLinks = listOf(NavDeepLinks.categoryEdit),
                         arguments = listOf(
                             navArgument("categoryId") {
                                 type = NavType.StringType
@@ -606,45 +577,7 @@ fun FinanceApp(
                             onBack = { navController.popBackStackOrHome() },
                         )
                     }
-                    composable(
-                        route = AppRoute.ADD_TRANSACTION_WITH_ARGS,
-                        deepLinks = listOf(NavDeepLinks.addTransaction, NavDeepLinks.addTransactionWithQuickCategory),
-                        arguments = listOf(
-                            navArgument("quickCategory") {
-                                type = NavType.StringType
-                                nullable = true
-                                defaultValue = null
-                            },
-                        ),
-                        enterTransition = {
-                            slideInHorizontally(animationSpec = tween(280)) { it } + fadeIn(
-                                tween(
-                                    280
-                                )
-                            )
-                        },
-                        exitTransition = {
-                            slideOutHorizontally(animationSpec = tween(240)) { it } + fadeOut(
-                                tween(
-                                    200
-                                )
-                            )
-                        },
-                        popEnterTransition = {
-                            slideInHorizontally(animationSpec = tween(280)) { -it } + fadeIn(
-                                tween(
-                                    280
-                                )
-                            )
-                        },
-                        popExitTransition = {
-                            slideOutHorizontally(animationSpec = tween(240)) { -it } + fadeOut(
-                                tween(
-                                    200
-                                )
-                            )
-                        },
-                    ) {
+                    composable(route = AppRoute.ADD_TRANSACTION_WITH_ARGS) {
                         AddTransactionScreen(
                             onBack = { navController.popBackStackOrHome() },
                         )

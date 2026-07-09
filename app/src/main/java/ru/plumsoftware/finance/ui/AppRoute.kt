@@ -21,6 +21,13 @@ sealed class AppRoute(val route: String) {
     object Permissions : AppRoute("settings/permissions")
     object ImportPicker : AppRoute("settings/import")
     object About : AppRoute("settings/about")
+    object Tools : AppRoute("tools")
+    object CreditCalculator : AppRoute("calculator/credit")
+    object DepositCalculator : AppRoute("calculator/deposit")
+    object GoalCalculator : AppRoute("calculator/goal")
+    object MortgageCalculator : AppRoute("calculator/mortgage")
+    object EarlyRepayCalculator : AppRoute("calculator/early_repay")
+    object RentVsBuyCalculator : AppRoute("calculator/rent_vs_buy")
 
     object ImportPreview : AppRoute("import_preview/{encodedPath}") {
         fun route(encodedPath: String) =

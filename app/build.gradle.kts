@@ -15,7 +15,7 @@ if (isFirebaseEnabled) {
 android {
     namespace = "ru.plumsoftware.finance"
     compileSdk {
-        version = release(36) {
+        version = release(37) {
             minorApiLevel = 1
         }
     }
@@ -23,9 +23,9 @@ android {
     defaultConfig {
         applicationId = "ru.plumsoftware.finance"
         minSdk = 26
-        targetSdk = 36
-        versionCode = 10
-        versionName = "1.1.0"
+        targetSdk = 37
+        versionCode = 11
+        versionName = "1.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

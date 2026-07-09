@@ -27,9 +27,20 @@ finance://app/{path}?{query}
 | Экран | URI | Маршрут |
 |-------|-----|---------|
 | Главная | `finance://app/home` | `home` |
-| История | `finance://app/history` | `history` |
+| Инструменты | `finance://app/tools` | `tools` |
 | Аналитика | `finance://app/analytics` | `analytics` |
 | Настройки | `finance://app/settings` | `settings` |
+
+### Калькуляторы (вкладка «Инструменты»)
+
+| Экран | URI | Маршрут |
+|-------|-----|---------|
+| Кредитный калькулятор | `finance://app/calculator/credit` | `calculator/credit` |
+| Калькулятор вклада | `finance://app/calculator/deposit` | `calculator/deposit` |
+| Калькулятор цели | `finance://app/calculator/goal` | `calculator/goal` |
+| Ипотечный калькулятор | `finance://app/calculator/mortgage` | `calculator/mortgage` |
+| Досрочное погашение | `finance://app/calculator/early_repay` | `calculator/early_repay` |
+| Аренда или ипотека | `finance://app/calculator/rent_vs_buy` | `calculator/rent_vs_buy` |
 
 ### Операции и уведомления
 
@@ -39,6 +50,7 @@ finance://app/{path}?{query}
 | Уведомления | `finance://app/notifications` | `notifications` |
 | Лимиты | `finance://app/limits` | `limits` |
 | Достижения | `finance://app/achievements` | `achievements` |
+| История операций | `finance://app/history` | `history` |
 
 ### Умная экономия
 
@@ -48,12 +60,6 @@ finance://app/{path}?{query}
 | Создать экопокупку | `finance://app/smart_savings/create` | `smart_savings/create?assetId=` |
 | Редактировать экопокупку | `finance://app/smart_savings/create?assetId=42` | `smart_savings/create?assetId=42` |
 | Детали экопокупки | `finance://app/smart_savings/detail/42` | `smart_savings/detail/42` |
-
-### Достижения и геймификация
-
-| Экран | URI | Маршрут |
-|-------|-----|---------|
-| Достижения | `finance://app/achievements` | `achievements` |
 
 ### Цели
 
@@ -81,26 +87,22 @@ finance://app/{path}?{query}
 |-------|-----|---------|
 | Онбординг | `finance://app/onboarding` | `onboarding` |
 
-> **Примечание:** если онбординг уже пройден, deep link на `onboarding` всё равно откроет экран онбординга (можно использовать для тестов).
+> **Примечание:** если онбординг уже пройден, deep link на `onboarding` всё равно откроет экран онбординга.
 
 ---
 
 ## Параметры
 
 ### `type` (редактор категории)
-
 Допустимые значения: `EXPENSE`, `INCOME` (имя enum `CategoryType`).
 
 ### `categoryId` (редактор категории)
-
 Long — ID существующей категории. Если не указан, открывается создание новой категории.
 
 ### `assetId` (умная экономия)
-
 Long — ID экопокупки для деталей или редактирования.
 
 ### `goalId` (цели)
-
 Long — ID цели для редактирования.
 
 ---
@@ -111,23 +113,32 @@ Long — ID цели для редактирования.
 # Главная
 adb shell am start -a android.intent.action.VIEW -d "finance://app/home" ru.plumsoftware.finance
 
-# Лимиты
-adb shell am start -a android.intent.action.VIEW -d "finance://app/limits" ru.plumsoftware.finance
+# Инструменты (экран калькуляторов)
+adb shell am start -a android.intent.action.VIEW -d "finance://app/tools" ru.plumsoftware.finance
 
-# Достижения
-adb shell am start -a android.intent.action.VIEW -d "finance://app/achievements" ru.plumsoftware.finance
+# Кредитный калькулятор
+adb shell am start -a android.intent.action.VIEW -d "finance://app/calculator/credit" ru.plumsoftware.finance
+
+# Калькулятор вклада
+adb shell am start -a android.intent.action.VIEW -d "finance://app/calculator/deposit" ru.plumsoftware.finance
+
+# Калькулятор цели
+adb shell am start -a android.intent.action.VIEW -d "finance://app/calculator/goal" ru.plumsoftware.finance
+
+# Ипотечный калькулятор
+adb shell am start -a android.intent.action.VIEW -d "finance://app/calculator/mortgage" ru.plumsoftware.finance
+
+# Досрочное погашение
+adb shell am start -a android.intent.action.VIEW -d "finance://app/calculator/early_repay" ru.plumsoftware.finance
+
+# Аренда или ипотека
+adb shell am start -a android.intent.action.VIEW -d "finance://app/calculator/rent_vs_buy" ru.plumsoftware.finance
 
 # Детали экопокупки (id=1)
 adb shell am start -a android.intent.action.VIEW -d "finance://app/smart_savings/detail/1" ru.plumsoftware.finance
 
 # Создать цель
 adb shell am start -a android.intent.action.VIEW -d "finance://app/goals/create" ru.plumsoftware.finance
-
-# Импорт
-adb shell am start -a android.intent.action.VIEW -d "finance://app/settings/import" ru.plumsoftware.finance
-
-# Новая категория расходов
-adb shell am start -a android.intent.action.VIEW -d "finance://app/settings/categories/edit?type=EXPENSE" ru.plumsoftware.finance
 ```
 
 ---
@@ -147,8 +158,7 @@ Intent (finance://…)
 
 | Файл | Назначение |
 |------|------------|
-| `navigation/AppDeepLinks.kt` | Константы scheme/host, фабрики URI, проверка deep link |
-| `navigation/NavDeepLinks.kt` | `navDeepLink` patterns для NavHost |
+| `navigation/AppDeepLinks.kt` | Константы scheme/host, фабрики URI, проверка deep link, `NavDeepLinks` |
 | `AndroidManifest.xml` | `<intent-filter>` для `finance://app` |
 | `MainActivity.kt` | Разделение deep link и import intent |
 | `FinanceApp.kt` | `deepLinks` на каждом `composable`, обработка pending intent |
@@ -175,51 +185,11 @@ Deep links и import **не пересекаются**: scheme `finance` обр�
 |-----|----------------|-------------|
 | `title` | Текст заголовка | нет* |
 | `body` | Текст сообщения | нет* |
-| `deep_link` | `finance://app/achievements` | **нет** |
+| `deep_link` | `finance://app/calculator/credit` | **нет** |
 
 \*Для сохранения в историю при закрытом приложении удобнее передать `title` и `body` в Custom data.
 
-Опционально в **Android Notification Channel** укажите `finance_push` (как в приложении).
-
-**Иконка в шторке:** при закрытом приложении пуш с блоком *Notification* в консоли показывает **система FCM** — иконка задаётся в `AndroidManifest.xml` (`default_notification_icon` → `ic_notification`, колокольчик). Data-only пуши рисует приложение через `NotificationDisplayHelper` с той же иконкой.
-
-Шаг **Notification** (заголовок и текст) заполняйте как обычно. Поле `deep_link` в Custom data **не обязательно**: без него пуш сохраняется и открывается как обычное уведомление (главный экран / история), кнопка **«Перейти»** в шторке и в списке **не показывается**.
-
-Если `deep_link` задан и URI валидный (`finance://app/…`), при тапе откроется нужный экран; в шторке и в истории появится **«Перейти»**.
-
-### Сохранение в историю при закрытом приложении
-
-`FinanceMessagingService` запускает `PushNotificationPersistService`, который пишет пуш в Room и показывает локальное уведомление.
-
-**Важно:** если в консоли Firebase заполнен только блок **Notification** (без data), Android в фоне показывает системный пуш **без** вызова `onMessageReceived` — запись в БД появится после **тапа** (через `MainActivity`). Чтобы сохранять сразу при доставке, отправляйте **data** (в Custom data достаточно `title` и `body`; `deep_link` — только если нужен переход на экран).
-
-Также включите **Работа в фоне** (исключение из оптимизации батареи) в Настройки → Разрешения.
-
-### REST API / data-only
-
-В payload FCM можно передавать поле `deep_link`:
-
-```json
-{
-  "data": {
-    "deep_link": "finance://app/limits",
-    "title": "Лимит",
-    "body": "Проверьте траты по категории"
-  }
-}
-```
-
-```json
-{
-  "data": {
-    "deep_link": "finance://app/achievements",
-    "title": "Новое достижение!",
-    "body": "Откройте экран достижений"
-  }
-}
-```
-
-`MainActivity` → `FinanceApp` вызывает `NavController.navigateAppDeepLink(intent)` (не `handleDeepLink`). В истории уведомлений — `navigateNotificationDeepLink`. Кнопка «Назад» везде использует `popBackStackOrHome()` (если стек пуст — переход на главную).
+Опционально в **Android Notification Channel** укажите `finance_push`.
 
 ---
 
@@ -230,7 +200,7 @@ Deep links и import **не пересекаются**: scheme `finance` обр�
 | Ярлык | URI |
 |-------|-----|
 | Новая операция | `finance://app/add_transaction` |
-| История операций | `finance://app/history` |
+| Калькуляторы | `finance://app/tools` |
 | Лимиты на месяц | `finance://app/limits` |
 | Аналитика расходов | `finance://app/analytics` |
 
@@ -246,6 +216,13 @@ import ru.plumsoftware.finance.navigation.AppDeepLinks
 AppDeepLinks.home()
 AppDeepLinks.limits()
 AppDeepLinks.achievements()
+AppDeepLinks.tools()                 // Направление на экран инструментов
+AppDeepLinks.creditCalc()             // Кредитный калькулятор
+AppDeepLinks.depositCalc()            // Калькулятор вклада
+AppDeepLinks.goalCalc()               // Калькулятор цели
+AppDeepLinks.mortgageCalc()           // Ипотечный калькулятор
+AppDeepLinks.earlyRepayCalc()         // Досрочное погашение
+AppDeepLinks.rentVsBuyCalc()          // Аренда или ипотека
 AppDeepLinks.smartSavingsDetail(assetId = 42L)
 AppDeepLinks.goals()
 AppDeepLinks.goalsCreate(goalId = 7L)

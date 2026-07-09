@@ -47,6 +47,13 @@ object AppDeepLinks {
     fun recurring(): Uri = uri("settings/recurring")
     fun permissions(): Uri = uri("settings/permissions")
     fun importPicker(): Uri = uri("settings/import")
+    fun tools(): Uri = uri("tools")
+    fun creditCalc(): Uri = uri("calculator/credit")
+    fun depositCalc(): Uri = uri("calculator/deposit")
+    fun goalCalc(): Uri = uri("calculator/goal")
+    fun mortgageCalc(): Uri = uri("calculator/mortgage")
+    fun earlyRepayCalc(): Uri = uri("calculator/early_repay")
+    fun rentVsBuyCalc(): Uri = uri("calculator/rent_vs_buy")
 
     fun isAppDeepLink(uri: Uri?): Boolean =
         uri?.scheme == SCHEME && uri.host == HOST

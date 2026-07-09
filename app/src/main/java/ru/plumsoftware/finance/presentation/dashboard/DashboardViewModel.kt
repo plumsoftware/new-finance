@@ -55,7 +55,8 @@ data class DashboardUiState(
     val isLoading: Boolean = true,
     val snackbarMessage: String? = null,
     val accountsData: List<AccountDashboardData> = emptyList(),
-    val totalGoalSavingsMinor: Long = 0L
+    val totalGoalSavingsMinor: Long = 0L,
+    val activeGoalsCount: Int = 0
 )
 
 class DashboardViewModel(
@@ -156,6 +157,8 @@ class DashboardViewModel(
             limit != null && limit > 0L && item.percentage >= 0.8f
         }
 
+        val activeGoalsCount = allGoals.count { !it.isCompleted }
+
         DashboardUiState(
             totalBalanceMinor = totalBalance,
             currencyCode = selectedAccount?.account?.currencyCode ?: settings.defaultCurrencyCode,
@@ -174,7 +177,8 @@ class DashboardViewModel(
             isLoading = false,
             snackbarMessage = snackbar,
             accountsData = accountsData,
-            totalGoalSavingsMinor = totalGoalSavings
+            totalGoalSavingsMinor = totalGoalSavings,
+            activeGoalsCount = activeGoalsCount
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 

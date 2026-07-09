@@ -254,6 +254,30 @@
     <string name="nav_goals">Goals</string>
     <string name="nav_analytics">Analytics</string>
     <string name="nav_settings">Settings</string>
+    <string name="nav_tools">Tools</string>
+
+    <!-- Tools screen sections -->
+    <string name="tools_section_calculators">CALCULATORS</string>
+    <string name="tools_section_advanced">ADVANCED</string>
+
+    <!-- Tool cards — level 1 -->
+    <string name="tool_credit_title">Credit Calculator</string>
+    <string name="tool_credit_subtitle">Payment, overpayment, total cost</string>
+    <string name="tool_deposit_title">Deposit Calculator</string>
+    <string name="tool_deposit_subtitle">Compound interest, capitalization, growth</string>
+    <string name="tool_goal_calc_title">Goal Calculator</string>
+    <string name="tool_goal_calc_subtitle">How much to save to reach your goal</string>
+
+    <!-- Tool cards — level 3 -->
+    <string name="tool_mortgage_title">Mortgage Calculator</string>
+    <string name="tool_mortgage_subtitle">With family rates and down payment</string>
+    <string name="tool_early_repay_title">Early Repayment</string>
+    <string name="tool_early_repay_subtitle">Interest savings on early pay-offs</string>
+    <string name="tool_rent_vs_buy_title">Rent vs Buy</string>
+    <string name="tool_rent_vs_buy_subtitle">Which is better over 10–30 years</string>
+
+    <!-- Home quick actions -->
+    <string name="home_goals_count">%1$d active goals</string>
 
     <string name="dashboard_greeting">Good afternoon 👋</string>
     <string name="greeting_morning">Good morning ☀️</string>
@@ -806,4 +830,6 @@
     <string name="without_savings">Without savings</string>
     <string name="savings_label">Savings</string>
     <string name="edit_balance_combined_error">Select a specific account to change its balance.</string>
+
+
 </resources>

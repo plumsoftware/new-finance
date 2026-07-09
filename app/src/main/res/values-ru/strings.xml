@@ -261,6 +261,30 @@
     <string name="nav_goals">Цели</string>
     <string name="nav_analytics">Аналитика</string>
     <string name="nav_settings">Настройки</string>
+    <string name="nav_tools">Инструменты</string>
+
+    <!-- Tools screen sections -->
+    <string name="tools_section_calculators">КАЛЬКУЛЯТОРЫ</string>
+    <string name="tools_section_advanced">ПРОДВИНУТЫЕ</string>
+
+    <!-- Tool cards — level 1 -->
+    <string name="tool_credit_title">Кредитный калькулятор</string>
+    <string name="tool_credit_subtitle">Платёж, переплата, полная стоимость</string>
+    <string name="tool_deposit_title">Калькулятор вклада</string>
+    <string name="tool_deposit_subtitle">Сложный процент, капитализация, рост</string>
+    <string name="tool_goal_calc_title">Калькулятор цели</string>
+    <string name="tool_goal_calc_subtitle">Сколько откладывать для достижения цели</string>
+
+    <!-- Tool cards — level 3 -->
+    <string name="tool_mortgage_title">Ипотечный калькулятор</string>
+    <string name="tool_mortgage_subtitle">С семейной ипотекой и первоначальным взносом</string>
+    <string name="tool_early_repay_title">Досрочное погашение</string>
+    <string name="tool_early_repay_subtitle">Экономия на процентах при досрочной выплате</string>
+    <string name="tool_rent_vs_buy_title">Аренда или ипотека</string>
+    <string name="tool_rent_vs_buy_subtitle">Что выгоднее за 10–30 лет</string>
+
+    <!-- Home quick actions -->
+    <string name="home_goals_count">%1$d активных целей</string>
 
     <string name="dashboard_greeting">Добрый день 👋</string>
     <string name="greeting_morning">Доброе утро ☀️</string>

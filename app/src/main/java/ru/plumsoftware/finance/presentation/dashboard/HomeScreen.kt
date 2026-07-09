@@ -173,7 +173,6 @@ fun HomeScreen(
     var settingsLoaded by remember { mutableStateOf(false) }
     var permissionResumeTick by remember { mutableIntStateOf(0) }
 
-    // Переменные для переключения накоплений и выбора счетов
     var includeSavings by rememberSaveable { mutableStateOf(true) }
     var targetAccountIdForEdit by remember { mutableStateOf<Long?>(null) }
 
@@ -182,7 +181,6 @@ fun HomeScreen(
         pageCount = { state.accountsData.size + 1 }
     )
 
-    // Переменные для Share Bottom Sheet
     var showShareSheet by rememberSaveable { mutableStateOf(false) }
     var selectedFormat by rememberSaveable { mutableStateOf(ExportFormat.PDF) }
     var selectedPeriod by rememberSaveable { mutableStateOf(ExportPeriod.THIS_MONTH) }
@@ -251,7 +249,6 @@ fun HomeScreen(
         settingsLoaded = true
     }
 
-    // Исправленная логика инициализации баланса (предотвращает мгновенное закрытие диалога)
     LaunchedEffect(
         settings.initialBalancePromptCompleted,
         settingsLoaded,
@@ -790,8 +787,6 @@ fun HomeScreen(
                         },
                     )
 
-                    // Реклама выводится внутри общего контейнера. Если она скрыта или
-                    // имеет нулевую высоту, LazyColumn не будет дублировать SpacingL.
                     if (!NativeAdSession.dismissed) {
                         NativeAdContainer(adUnitId = AppConfig.nativeHome)
                     }
@@ -802,9 +797,11 @@ fun HomeScreen(
                     onLimitsClick = onOpenLimitsClick,
                     onOperationsClick = onOpenHistoryClick,
                     onAchievementsClick = onOpenAchievementsClick,
+                    onGoalsClick = onOpenGoalsClick,
                     hasBudgetWarnings = state.hasBudgetWarnings,
                     operationCount = state.todayOperationsCount,
                     unlockedAchievementsCount = state.unlockedAchievementsCount,
+                    goalsCount = state.activeGoalsCount,
                     streak = state.streak,
                 )
             }
@@ -876,7 +873,7 @@ fun HomeScreen(
 @Composable
 private fun AccountsCarousel(
     accountsData: List<AccountDashboardData>,
-    totalGoalSavingsMinor: Long, // <-- Принимаем накопления по целям
+    totalGoalSavingsMinor: Long,
     defaultCurrencyCode: String,
     includeSavings: Boolean,
     onIncludeSavingsChange: (Boolean) -> Unit,
@@ -903,13 +900,12 @@ private fun AccountsCarousel(
                 } else {
                     accountsData.filter { !it.isSavings }
                 }
-                // Накопления с целей прибавляются к общему балансу только если includeSavings == true
                 val goalSavings = if (includeSavings) totalGoalSavingsMinor else 0L
 
                 AccountDashboardData(
                     accountId = null,
                     name = stringResource(R.string.total_budget),
-                    balanceMinor = activeAccounts.sumOf { it.balanceMinor } + goalSavings, // <-- Суммируем счета и цели
+                    balanceMinor = activeAccounts.sumOf { it.balanceMinor } + goalSavings,
                     currencyCode = defaultCurrencyCode,
                     monthIncomeMinor = activeAccounts.sumOf { it.monthIncomeMinor },
                     monthExpenseMinor = activeAccounts.sumOf { it.monthExpenseMinor },
@@ -1092,7 +1088,7 @@ private fun AccountsCarousel(
 
 
 @Composable
-fun DashboardScreen(
+private fun DashboardScreen(
     onOpenSmartSavingsClick: () -> Unit = {},
     onOpenGoalsClick: () -> Unit = {},
     onOpenHistoryClick: () -> Unit = {},
@@ -1104,7 +1100,6 @@ fun DashboardScreen(
     onCreateGoalClick: () -> Unit = {},
     onGoalClick: (Long) -> Unit = {},
     viewModel: DashboardViewModel = koinViewModel(),
-    exportViewModel: ExportViewModel = koinViewModel(),
 ) {
     HomeScreen(
         onOpenSmartSavingsClick = onOpenSmartSavingsClick,
@@ -1118,7 +1113,6 @@ fun DashboardScreen(
         onCreateGoalClick = onCreateGoalClick,
         onGoalClick = onGoalClick,
         viewModel = viewModel,
-        exportViewModel = exportViewModel,
     )
 }
 
@@ -1281,39 +1275,64 @@ private fun HomeQuickActionsRow(
     onLimitsClick: () -> Unit,
     onOperationsClick: () -> Unit,
     onAchievementsClick: () -> Unit,
+    onGoalsClick: () -> Unit,
     hasBudgetWarnings: Boolean,
     operationCount: Int,
     unlockedAchievementsCount: Int,
+    goalsCount: Int,
     streak: StreakData,
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Max)
             .padding(horizontal = Dimens.SpacingL),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS)
     ) {
-        HomeAchievementsQuickCard(
-            streak = streak,
-            unlockedCount = unlockedAchievementsCount,
-            onClick = onAchievementsClick,
+        Row(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-        )
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+                .fillMaxWidth()
+                .height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS)
         ) {
+            HomeAchievementsQuickCard(
+                streak = streak,
+                unlockedCount = unlockedAchievementsCount,
+                onClick = onAchievementsClick,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+            )
             HomeQuickActionCard(
                 title = stringResource(R.string.home_all_operations),
                 subtitle = stringResource(R.string.home_operations_count, operationCount),
                 icon = Icons.Outlined.History,
                 onClick = onOperationsClick,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
             )
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS)
+        ) {
             HomeLimitsQuickCard(
                 hasBudgetWarnings = hasBudgetWarnings,
                 onClick = onLimitsClick,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+            )
+            HomeQuickActionCard(
+                title = stringResource(R.string.goals_home_section),
+                subtitle = stringResource(R.string.home_goals_count, goalsCount),
+                icon = Icons.Outlined.Flag,
+                onClick = onGoalsClick,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
             )
         }
     }
@@ -1346,7 +1365,7 @@ private fun HomeLimitsQuickCard(
                     text = stringResource(R.string.limits),
                     style = typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
@@ -1357,7 +1376,7 @@ private fun HomeLimitsQuickCard(
                     },
                     style = typography.bodySmall,
                     color = if (hasBudgetWarnings) colors.error else colors.onSurfaceVariant,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -1384,22 +1403,21 @@ private fun HomeAchievementsQuickCard(
         modifier = modifier,
         onClick = onClick,
     ) {
-        Column(
+        Column (
             modifier = Modifier
-                .fillMaxHeight()
                 .clip(RoundedCornerShape(Dimens.RadiusL))
                 .background(streakBackground)
-                .padding(Dimens.SpacingM),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween,
+                .padding(Dimens.SpacingM)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
         ) {
             MascotImage(
                 emotion = MascotEmotion.HAPPY,
-                modifier = Modifier.size(MascotSize.Medium),
+                modifier = Modifier.size(48.dp),
             )
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs)
             ) {
                 Text(
                     text = stringResource(R.string.achievements_title),
@@ -1415,7 +1433,7 @@ private fun HomeAchievementsQuickCard(
                         text = stringResource(
                             R.string.home_achievements_count,
                             unlockedCount,
-                            AchievementKeys.TOTAL_COUNT,
+                            12,
                         ),
                         style = typography.bodySmall,
                         color = colors.onSurfaceVariant,
@@ -1463,7 +1481,7 @@ private fun HomeQuickActionCard(
                 text = subtitle,
                 style = typography.bodySmall,
                 color = colors.onSurfaceVariant,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
