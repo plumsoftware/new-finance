@@ -30,6 +30,7 @@ fun ToolsScreen(
     onCreditCalcClick: () -> Unit,
     onDepositCalcClick: () -> Unit,
     onGoalCalcClick: () -> Unit,
+    onSavingsAccountCalcClick: () -> Unit,
     onMortgageCalcClick: () -> Unit,
     onEarlyRepayClick: () -> Unit,
     onRentVsBuyClick: () -> Unit,
@@ -97,6 +98,12 @@ fun ToolsScreen(
                                     title = stringResource(R.string.tool_goal_calc_title),
                                     subtitle = stringResource(R.string.tool_goal_calc_subtitle),
                                     onClick = onGoalCalcClick,
+                                )
+                                ToolCard(
+                                    emoji = "🏦",
+                                    title = stringResource(R.string.tool_savings_account_title),
+                                    subtitle = stringResource(R.string.tool_savings_account_subtitle),
+                                    onClick = onSavingsAccountCalcClick,
                                 )
                             }
                         }

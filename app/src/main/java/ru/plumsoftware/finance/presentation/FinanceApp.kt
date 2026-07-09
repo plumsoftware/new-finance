@@ -93,6 +93,7 @@ import ru.plumsoftware.finance.presentation.tools.EarlyRepaymentCalculatorScreen
 import ru.plumsoftware.finance.presentation.tools.GoalCalculatorScreen
 import ru.plumsoftware.finance.presentation.tools.MortgageCalculatorScreen
 import ru.plumsoftware.finance.presentation.tools.RentVsBuyScreen
+import ru.plumsoftware.finance.presentation.tools.SavingsAccountCalculatorScreen
 import ru.plumsoftware.finance.presentation.tools.ToolsScreen
 import ru.plumsoftware.finance.ui.AppRoute
 import ru.plumsoftware.finance.ui.nav.BottomNavItems
@@ -326,6 +327,7 @@ fun FinanceApp(
                             onCreditCalcClick = { navController.navigate(AppRoute.CreditCalculator.route) },
                             onDepositCalcClick = { navController.navigate(AppRoute.DepositCalculator.route) },
                             onGoalCalcClick = { navController.navigate(AppRoute.GoalCalculator.route) },
+                            onSavingsAccountCalcClick = { navController.navigate(AppRoute.SavingsAccountCalculator.route) },
                             onMortgageCalcClick = { navController.navigate(AppRoute.MortgageCalculator.route) },
                             onEarlyRepayClick = { navController.navigate(AppRoute.EarlyRepayCalculator.route) },
                             onRentVsBuyClick = { navController.navigate(AppRoute.RentVsBuyCalculator.route) },
@@ -336,6 +338,12 @@ fun FinanceApp(
                         deepLinks = listOf(NavDeepLinks.creditCalc)
                     ) {
                         CreditCalculatorScreen(onBack = { navController.popBackStackOrHome() })
+                    }
+                    composable(
+                        route = AppRoute.SavingsAccountCalculator.route,
+                        deepLinks = listOf(NavDeepLinks.savingsAccountCalc)
+                    ) {
+                        SavingsAccountCalculatorScreen(onBack = { navController.popBackStackOrHome() })
                     }
                     composable(
                         route = AppRoute.DepositCalculator.route,

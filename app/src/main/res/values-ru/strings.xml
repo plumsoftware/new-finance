@@ -266,6 +266,8 @@
     <!-- Tools screen sections -->
     <string name="tools_section_calculators">КАЛЬКУЛЯТОРЫ</string>
     <string name="tools_section_advanced">ПРОДВИНУТЫЕ</string>
+    <string name="tool_savings_account_title">Накопительный счёт</string>
+    <string name="tool_savings_account_subtitle">Начисление на ежедневный или минимальный остаток, снятия</string>
 
     <!-- Tool cards — level 1 -->
     <string name="tool_credit_title">Кредитный калькулятор</string>

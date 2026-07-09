@@ -28,6 +28,7 @@ sealed class AppRoute(val route: String) {
     object MortgageCalculator : AppRoute("calculator/mortgage")
     object EarlyRepayCalculator : AppRoute("calculator/early_repay")
     object RentVsBuyCalculator : AppRoute("calculator/rent_vs_buy")
+    object SavingsAccountCalculator : AppRoute("calculator/savings_account")
 
     object ImportPreview : AppRoute("import_preview/{encodedPath}") {
         fun route(encodedPath: String) =

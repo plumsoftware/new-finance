@@ -259,6 +259,8 @@
     <!-- Tools screen sections -->
     <string name="tools_section_calculators">CALCULATORS</string>
     <string name="tools_section_advanced">ADVANCED</string>
+    <string name="tool_savings_account_title">Savings Account</string>
+    <string name="tool_savings_account_subtitle">Daily or minimum balance simulation, withdrawals</string>
 
     <!-- Tool cards — level 1 -->
     <string name="tool_credit_title">Credit Calculator</string>

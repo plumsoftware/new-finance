@@ -54,6 +54,7 @@ object AppDeepLinks {
     fun mortgageCalc(): Uri = uri("calculator/mortgage")
     fun earlyRepayCalc(): Uri = uri("calculator/early_repay")
     fun rentVsBuyCalc(): Uri = uri("calculator/rent_vs_buy")
+    fun savingsAccountCalc(): Uri = uri("calculator/savings_account")
 
     fun isAppDeepLink(uri: Uri?): Boolean =
         uri?.scheme == SCHEME && uri.host == HOST

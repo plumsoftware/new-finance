@@ -48,4 +48,5 @@ object NavDeepLinks {
     val mortgageCalc = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/calculator/mortgage" }
     val earlyRepayCalc = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/calculator/early_repay" }
     val rentVsBuyCalc = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/calculator/rent_vs_buy" }
+    val savingsAccountCalc = navDeepLink { uriPattern = "${AppDeepLinks.BASE}/calculator/savings_account" }
 }
