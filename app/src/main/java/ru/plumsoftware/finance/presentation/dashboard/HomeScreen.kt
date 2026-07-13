@@ -1125,63 +1125,70 @@ private fun GreetingHeader(
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Dimens.SpacingL),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+            .background(colors.background)
+            .padding(top = Dimens.SpacingXxl),
     ) {
-        Column {
-            Text(
-                text = greetingWithTime(),
-                style = typography.bodyMedium,
-                color = colors.onSurfaceVariant,
-            )
-            Text(
-                text = stringResource(R.string.dashboard_title),
-                style = typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface,
-            )
-        }
-
         Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
         ) {
-            IconButton(onClick = onShareClick) {
-                Icon(
-                    imageVector = Icons.Outlined.Share,
-                    contentDescription = stringResource(R.string.export_share),
-                    tint = colors.onSurfaceVariant,
-                    modifier = Modifier.size(Dimens.IconSizeM),
+            Column {
+                Text(
+                    text = greetingWithTime(),
+                    style = typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
+                )
+                Text(
+                    text = stringResource(R.string.dashboard_title),
+                    style = typography.titleLarge.copy(fontSize = 28.sp),
+                    fontWeight = FontWeight.Black,
+                    color = colors.onSurface,
                 )
             }
 
-            BadgedBox(
-                badge = {
-                    if (unreadCount > 0) {
-                        Badge {
-                            Text(
-                                text = if (unreadCount > 99) {
-                                    stringResource(R.string.badge_count_overflow)
-                                } else {
-                                    unreadCount.toString()
-                                },
-                                style = typography.labelSmall,
-                            )
-                        }
-                    }
-                },
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
             ) {
-                IconButton(onClick = onNotificationsClick) {
+                IconButton(onClick = onShareClick) {
                     Icon(
-                        imageVector = Icons.Outlined.Notifications,
-                        contentDescription = stringResource(R.string.cd_notifications),
+                        imageVector = Icons.Outlined.Share,
+                        contentDescription = stringResource(R.string.export_share),
                         tint = colors.onSurfaceVariant,
                         modifier = Modifier.size(Dimens.IconSizeM),
                     )
+                }
+
+                BadgedBox(
+                    badge = {
+                        if (unreadCount > 0) {
+                            Badge {
+                                Text(
+                                    text = if (unreadCount > 99) {
+                                        stringResource(R.string.badge_count_overflow)
+                                    } else {
+                                        unreadCount.toString()
+                                    },
+                                    style = typography.labelSmall,
+                                )
+                            }
+                        }
+                    },
+                ) {
+                    IconButton(onClick = onNotificationsClick) {
+                        Icon(
+                            imageVector = Icons.Outlined.Notifications,
+                            contentDescription = stringResource(R.string.cd_notifications),
+                            tint = colors.onSurfaceVariant,
+                            modifier = Modifier.size(Dimens.IconSizeM),
+                        )
+                    }
                 }
             }
         }

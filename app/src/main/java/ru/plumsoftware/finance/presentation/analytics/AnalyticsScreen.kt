@@ -225,9 +225,7 @@ fun AnalyticsScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
-    ) { _ ->
-        Column(modifier = Modifier.fillMaxSize()) {
-
+        topBar = {
             // ── Шапка экрана (iOS-стиль) ───────────────────
             Column(
                 modifier = Modifier
@@ -361,7 +359,9 @@ fun AnalyticsScreen(
                 Spacer(Modifier.height(8.dp))
                 HorizontalDivider(color = colors.onSurface.copy(alpha = 0.06f))
             }
-
+        }
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             // ── Контент экрана ─────────────────────────────
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),

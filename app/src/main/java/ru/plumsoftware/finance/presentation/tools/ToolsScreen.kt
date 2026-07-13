@@ -41,31 +41,35 @@ fun ToolsScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
-    ) { _ ->
-        Column(modifier = Modifier.fillMaxSize()) {
+        topBar = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(colors.background)
-                    .padding(top = Dimens.statusBarInset),
+                    .padding(top = Dimens.SpacingXxl),
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(
-                            start = Dimens.SpacingL,
-                            end = Dimens.SpacingM,
-                            bottom = Dimens.SpacingXs
-                        ),
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = stringResource(R.string.nav_tools),
-                        style = typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
+                        style = typography.titleLarge.copy(fontSize = 28.sp),
+                        fontWeight = FontWeight.Black,
                         modifier = Modifier.weight(1f),
                     )
                 }
+            }
+        }
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.background),
+            ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(

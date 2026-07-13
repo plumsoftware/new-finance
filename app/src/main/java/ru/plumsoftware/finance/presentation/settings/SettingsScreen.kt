@@ -1,7 +1,6 @@
 package ru.plumsoftware.finance.presentation.settings
 
 
-
 import android.annotation.SuppressLint
 
 import androidx.compose.animation.AnimatedVisibility
@@ -100,6 +99,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
@@ -145,7 +145,6 @@ import ru.plumsoftware.finance.ui.theme.IosPurple
 import ru.plumsoftware.finance.ui.theme.TextPrimaryL
 
 
-
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -153,29 +152,17 @@ import ru.plumsoftware.finance.ui.theme.TextPrimaryL
 @Composable
 
 fun SettingsScreen(
-
     navController: NavController,
-
     onOpenCategories: () -> Unit = {},
-
     onOpenAccounts: () -> Unit = {},
-
     onOpenLimits: () -> Unit = {},
-
     onOpenGoals: () -> Unit = {},
-
     onOpenAchievements: () -> Unit = {},
-
     onOpenRecurring: () -> Unit = {},
-
     onOpenExport: () -> Unit = {},
-
     onOpenPermissions: () -> Unit = {},
-
     onOpenAbout: () -> Unit = {},
-
     viewModel: SettingsViewModel = koinViewModel(),
-
 ) {
 
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -248,10 +235,9 @@ fun SettingsScreen(
 
             },
 
-        )
+            )
 
     }
-
 
 
     val openStore = { openStoreListing(context) }
@@ -264,23 +250,36 @@ fun SettingsScreen(
 
         containerColor = colors.background,
 
-    ) {
+        topBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(colors.background)
+                    .padding(top = Dimens.SpacingXxl),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings),
+                        style = typography.titleLarge.copy(fontSize = 28.sp),
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+
+    ) { padding ->
 
         LazyColumn(
-
-            modifier = Modifier.fillMaxSize(),
-
-            contentPadding = PaddingValues(
-
-                top = Dimens.statusBarInset,
-
-                bottom = Dimens.SpacingL,
-
-            ),
-
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
-
-        ) {
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 48.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
 
             item {
 
@@ -296,7 +295,7 @@ fun SettingsScreen(
 
                     modifier = Modifier.padding(horizontal = Dimens.SpacingL),
 
-                )
+                    )
 
             }
 
@@ -314,7 +313,7 @@ fun SettingsScreen(
 
                         .padding(horizontal = Dimens.SpacingL),
 
-                ) {
+                    ) {
 
                     SettingsRow(
 
@@ -324,7 +323,7 @@ fun SettingsScreen(
 
                         title = stringResource(R.string.theme),
 
-                    )
+                        )
 
                     ThemeToggle(
 
@@ -340,9 +339,9 @@ fun SettingsScreen(
 
                             bottom = Dimens.SpacingM,
 
-                        ),
+                            ),
 
-                    )
+                        )
 
                     SettingsRowDivider()
 
@@ -364,11 +363,11 @@ fun SettingsScreen(
 
                                 color = colors.primary,
 
-                            )
+                                )
 
                         },
 
-                    )
+                        )
 
                 }
 
@@ -388,7 +387,7 @@ fun SettingsScreen(
 
                         .padding(horizontal = Dimens.SpacingL),
 
-                ) {
+                    ) {
 
                     SettingsNavRow(
 
@@ -400,7 +399,7 @@ fun SettingsScreen(
 
                         onClick = onOpenAccounts,
 
-                    )
+                        )
 
                     SettingsRowDivider()
 
@@ -414,7 +413,7 @@ fun SettingsScreen(
 
                         onClick = onOpenCategories,
 
-                    )
+                        )
 
                     SettingsRowDivider()
 
@@ -428,7 +427,7 @@ fun SettingsScreen(
 
                         onClick = onOpenLimits,
 
-                    )
+                        )
 
                     SettingsRowDivider()
 
@@ -442,7 +441,7 @@ fun SettingsScreen(
 
                         onClick = onOpenGoals,
 
-                    )
+                        )
 
                     SettingsRowDivider()
 
@@ -456,7 +455,7 @@ fun SettingsScreen(
 
                         onClick = onOpenAchievements,
 
-                    )
+                        )
 
                     SettingsRowDivider()
 
@@ -470,7 +469,7 @@ fun SettingsScreen(
 
                         onClick = onOpenRecurring,
 
-                    )
+                        )
 
                     SettingsRowDivider()
 
@@ -484,7 +483,7 @@ fun SettingsScreen(
 
                         onClick = onOpenExport,
 
-                    )
+                        )
 
                     SettingsRowDivider()
 
@@ -498,7 +497,7 @@ fun SettingsScreen(
 
                         onClick = { showImportSheet = true },
 
-                    )
+                        )
 
                 }
 
@@ -518,7 +517,7 @@ fun SettingsScreen(
 
                         .padding(horizontal = Dimens.SpacingL),
 
-                ) {
+                    ) {
 
                     SettingsNavRow(
 
@@ -550,7 +549,7 @@ fun SettingsScreen(
 
                                         contentAlignment = Alignment.Center,
 
-                                    ) {
+                                        ) {
 
                                         Text(
 
@@ -562,7 +561,7 @@ fun SettingsScreen(
 
                                             fontWeight = FontWeight.Bold,
 
-                                        )
+                                            )
 
                                     }
 
@@ -578,13 +577,13 @@ fun SettingsScreen(
 
                                     modifier = Modifier.size(Dimens.IconSizeS),
 
-                                )
+                                    )
 
                             }
 
                         },
 
-                    )
+                        )
 
                     SettingsRowDivider()
 
@@ -616,7 +615,7 @@ fun SettingsScreen(
 
                                         onError = { /* ignore */ },
 
-                                    )
+                                        )
 
                                 } else {
 
@@ -632,7 +631,7 @@ fun SettingsScreen(
 
                                     onError = { /* ignore cancel */ },
 
-                                )
+                                    )
 
                             }
 
@@ -640,7 +639,7 @@ fun SettingsScreen(
 
                         enabled = biometricHelper?.isAvailable() != false,
 
-                    )
+                        )
 
                 }
 
@@ -660,7 +659,7 @@ fun SettingsScreen(
 
                         .padding(horizontal = Dimens.SpacingL),
 
-                ) {
+                    ) {
 
                     if (BuildConfig.PLATFORM != 3) {
                         SettingsNavRow(
@@ -673,7 +672,7 @@ fun SettingsScreen(
 
                             onClick = { openStore() },
 
-                        )
+                            )
 
                         SettingsRowDivider()
                     }
@@ -688,7 +687,7 @@ fun SettingsScreen(
 
                         onClick = onOpenAbout,
 
-                    )
+                        )
 
                 }
 
@@ -710,7 +709,7 @@ fun SettingsScreen(
 
                     verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
 
-                ) {
+                    ) {
 
                     Text(
 
@@ -722,11 +721,14 @@ fun SettingsScreen(
 
                         textAlign = TextAlign.Center,
 
-                    )
+                        )
 
                     Text(
 
-                        text = stringResource(R.string.settings_version_label, BuildConfig.VERSION_NAME),
+                        text = stringResource(
+                            R.string.settings_version_label,
+                            BuildConfig.VERSION_NAME
+                        ),
 
                         style = typography.labelSmall,
 
@@ -734,7 +736,7 @@ fun SettingsScreen(
 
                         textAlign = TextAlign.Center,
 
-                    )
+                        )
 
                 }
 
@@ -745,7 +747,6 @@ fun SettingsScreen(
     }
 
 }
-
 
 
 private fun currencyDisplayLabel(currencyCode: String): String = when (currencyCode.uppercase()) {

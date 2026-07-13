@@ -26,22 +26,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.Goal
 import ru.plumsoftware.finance.domain.model.daysLeft
 import ru.plumsoftware.finance.domain.model.isOverdue
 import ru.plumsoftware.finance.domain.model.progress
+import ru.plumsoftware.finance.navigation.popBackStackOrHome
+import ru.plumsoftware.finance.navigation.previousRouteBackLabelRes
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.ui.components.IosCard
 import ru.plumsoftware.finance.ui.components.IosPrimaryButton
 import ru.plumsoftware.finance.ui.components.MascotEmptyState
+import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.IosBlue
@@ -52,47 +58,39 @@ import ru.plumsoftware.finance.ui.theme.MascotAssets
 fun GoalsScreen(
     onCreateClick: () -> Unit,
     onGoalClick: (Long) -> Unit,
+    navController: NavController,
     viewModel: GoalsViewModel = koinViewModel(),
 ) {
     val state = viewModel.uiState.collectAsStateWithLifecycle().value
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
+
+    val backLabelRes = remember(navController.currentBackStackEntry) {
+        navController.previousRouteBackLabelRes()
+    }
+
     Scaffold(
         containerColor = colors.background,
+        topBar = {
+            IosEditorTopBar(
+                title = stringResource(R.string.limits),
+                backLabel = stringResource(backLabelRes),
+                onBack = navController::popBackStackOrHome,
+                actionLabel = stringResource(R.string.goal_add_action),
+                onAction = onCreateClick
+            )
+        },
     ) { padding ->
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .padding(padding),
             contentPadding = PaddingValues(
-                start = Dimens.paddingMedium,
-                end = Dimens.paddingMedium,
-                top = Dimens.statusBarInset,
-                bottom = Dimens.spacingRow,
+                horizontal = Dimens.SpacingL,
+                vertical = Dimens.SpacingXs,
             ),
-            verticalArrangement = Arrangement.spacedBy(Dimens.spacingList),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
         ) {
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = androidx.compose.ui.res.stringResource(R.string.goals_title),
-                        style = typography.headlineLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = colors.onSurface,
-                    )
-                    IosTextButton(
-                        text = androidx.compose.ui.res.stringResource(R.string.goal_add_action),
-                        onClick = onCreateClick,
-                        color = IosBlue,
-                        style = typography.bodyLarge,
-                        textAlign = TextAlign.End,
-                    )
-                }
-            }
             item {
                 IosCard {
                     Row(

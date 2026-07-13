@@ -445,6 +445,7 @@ fun FinanceApp(
                         GoalsScreen(
                             onCreateClick = { navController.navigate(AppRoute.goalCreate()) },
                             onGoalClick = { id -> navController.navigate(AppRoute.goalDetail(id)) },
+                            navController = navController
                         )
                     }
                     composable(route = AppRoute.Achievements.route) {
