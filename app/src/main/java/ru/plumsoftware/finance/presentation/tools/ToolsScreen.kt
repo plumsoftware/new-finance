@@ -18,7 +18,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import ru.plumsoftware.finance.AppConfig
 import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.ui.ads.NativeAdContainer
+import ru.plumsoftware.finance.ui.ads.NativeAdSession
 import ru.plumsoftware.finance.ui.components.AppCard
 import ru.plumsoftware.finance.ui.components.SectionLabel
 import ru.plumsoftware.finance.ui.theme.Dimens
@@ -77,18 +80,25 @@ fun ToolsScreen(
                         modifier = Modifier.padding(horizontal = Dimens.SpacingL),
                         verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
                     ) {
+
                         ToolCard(
                             emoji = "💳",
                             title = stringResource(R.string.tool_credit_title),
                             subtitle = stringResource(R.string.tool_credit_subtitle),
                             onClick = onCreditCalcClick,
                         )
+
                         ToolCard(
                             emoji = "📈",
                             title = stringResource(R.string.tool_deposit_title),
                             subtitle = stringResource(R.string.tool_deposit_subtitle),
                             onClick = onDepositCalcClick,
                         )
+
+                        if (!NativeAdSession.isDismissed(AppConfig.nativeTools)) {
+                            NativeAdContainer(adUnitId = AppConfig.nativeTools)
+                        }
+
                         ToolCard(
                             emoji = "🎯",
                             title = stringResource(R.string.tool_goal_calc_title),

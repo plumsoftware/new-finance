@@ -53,10 +53,13 @@ import com.patrykandpatrick.vico.compose.cartesian.layer.*
 import com.patrykandpatrick.vico.compose.common.Fill
 import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
 import org.koin.compose.koinInject
+import ru.plumsoftware.finance.AppConfig
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.*
 import ru.plumsoftware.finance.presentation.common.MoneyFormat
 import ru.plumsoftware.finance.presentation.common.StatsPeriod
+import ru.plumsoftware.finance.ui.ads.NativeAdContainer
+import ru.plumsoftware.finance.ui.ads.NativeAdSession
 import ru.plumsoftware.finance.ui.theme.Dimens
 import java.text.SimpleDateFormat
 import java.util.*
@@ -390,6 +393,12 @@ fun AnalyticsScreen(
                     incomeTotal = incomeTotal,
                     savingsPercent = savingsPercent,
                 )
+            }
+
+            if (!NativeAdSession.isDismissed(AppConfig.nativeAnalytics)) {
+                item {
+                    NativeAdContainer(adUnitId = AppConfig.nativeAnalytics)
+                }
             }
 
             // Сводный баланс за период

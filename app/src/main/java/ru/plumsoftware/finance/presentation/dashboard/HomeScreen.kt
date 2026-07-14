@@ -783,7 +783,7 @@ fun HomeScreen(
                         },
                     )
 
-                    if (!NativeAdSession.dismissed) {
+                    if (!NativeAdSession.isDismissed(AppConfig.nativeHome)) {
                         NativeAdContainer(adUnitId = AppConfig.nativeHome)
                     }
                 }

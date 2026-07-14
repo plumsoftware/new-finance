@@ -43,6 +43,8 @@ object AppConfig {
         const val INTERSTITIAL_GOAL = "R-M-19374501-6"
         const val INTERSTITIAL_SMART_SAVINGS = "R-M-19374501-7"
         const val NATIVE_HOME = "R-M-19374501-8"
+        const val NATIVE_TOOLS = "R-M-19374501-9"
+        const val NATIVE_ANALYTICS = "R-M-19374501-10"
     }
 
     private object GooglePlay {
@@ -60,6 +62,8 @@ object AppConfig {
         const val INTERSTITIAL_GOAL = "R-M-19390613-2"
         const val INTERSTITIAL_SMART_SAVINGS = "R-M-19390613-1"
         const val NATIVE_HOME = "R-M-19390613-8"
+        const val NATIVE_TOOLS = "R-M-19390613-9"
+        const val NATIVE_ANALYTICS = "R-M-19390613-10"
     }
 
     val interstitialAfterCreateTransaction: String = adUnit(
@@ -108,6 +112,18 @@ object AppConfig {
         rustoreId = RuStore.NATIVE_HOME,
         huaweiId = HuaweiAppStore.NATIVE_HOME,
         demoId = Demo.NATIVE,
+    )
+
+    val nativeTools: String = adUnit(
+        rustoreId = RuStore.NATIVE_TOOLS,
+        huaweiId = HuaweiAppStore.NATIVE_TOOLS,
+        demoId = Demo.NATIVE
+    )
+
+    val nativeAnalytics: String = adUnit(
+        rustoreId = RuStore.NATIVE_ANALYTICS,
+        huaweiId = HuaweiAppStore.NATIVE_ANALYTICS,
+        demoId = Demo.NATIVE
     )
 
     private fun adUnit(rustoreId: String, huaweiId: String, demoId: String): String =
