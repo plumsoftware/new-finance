@@ -160,7 +160,9 @@ fun AnalyticsScreen(
                         todayContentColor = IosBlue,
                         todayDateBorderColor = IosBlue,
                     ),
-                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                 )
 
                 Row(
@@ -174,7 +176,9 @@ fun AnalyticsScreen(
                             showDateRangePicker = false
                             viewModel.dismissDateRangePicker()
                         },
-                        modifier = Modifier.weight(1f).height(48.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
                         shape = RoundedCornerShape(12.dp),
                         border = BorderStroke(1.dp, colors.outlineVariant),
                     ) {
@@ -191,7 +195,9 @@ fun AnalyticsScreen(
                         },
                         enabled = dateRangePickerState.selectedStartDateMillis != null &&
                                 dateRangePickerState.selectedEndDateMillis != null,
-                        modifier = Modifier.weight(1f).height(48.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = IosBlue,
@@ -225,253 +231,267 @@ fun AnalyticsScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
-        topBar = {
-            // ── Шапка экрана (iOS-стиль) ───────────────────
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(colors.background)
-                    .padding(top = Dimens.SpacingXxl),
-            ) {
-                Row(
+    ) { _ ->
+        // ── Контент экрана ─────────────────────────────
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = Dimens.SpacingXs),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingL),
+        ) {
+            item {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                        .background(colors.background)
+                        .padding(top = Dimens.SpacingXxl),
                 ) {
-                    Text(
-                        text = stringResource(R.string.analytics),
-                        style = typography.titleLarge.copy(fontSize = 28.sp),
-                        fontWeight = FontWeight.Black,
-                        modifier = Modifier.weight(1f),
-                    )
-                    IconButton(onClick = { showDateRangePicker = true }) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.analytics),
+                            style = typography.titleLarge.copy(fontSize = 28.sp),
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.weight(1f),
+                        )
                         Icon(
                             imageVector = Icons.Rounded.CalendarMonth,
                             contentDescription = null,
                             tint = if (dateRangeActive) IosBlue else colors.onSurfaceVariant,
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clickable { showDateRangePicker = true },
                         )
                     }
-                }
 
-                // Переключатель периодов без обрезки текста
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    PeriodTabRow(
-                        selectedPeriod = state.period,
-                        onSelect = { viewModel.selectPeriod(it) },
-                        enabled = !dateRangeActive,
-                        modifier = Modifier
-                            .weight(1.3f)
-                            .alpha(if (dateRangeActive) 0.38f else 1f),
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    AnimatedVisibility(visible = !dateRangeActive) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.End,
-                        ) {
-                            IconButton(
-                                onClick = viewModel::navigatePeriodBack,
-                                modifier = Modifier.size(32.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.ChevronLeft,
-                                    contentDescription = null,
-                                    tint = colors.onSurfaceVariant,
-                                )
-                            }
-                            Text(
-                                text = state.periodLabel.orEmpty(),
-                                style = typography.labelMedium,
-                                color = colors.onSurfaceVariant,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.widthIn(max = 90.dp),
-                            )
-                            IconButton(
-                                onClick = viewModel::navigatePeriodForward,
-                                enabled = state.canNavigateForward,
-                                modifier = Modifier.size(32.dp),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.ChevronRight,
-                                    contentDescription = null,
-                                    tint = if (state.canNavigateForward) colors.onSurfaceVariant else colors.outlineVariant,
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Чип для выбранного кастомного диапазона
-                AnimatedVisibility(
-                    visible = dateRangeActive,
-                    enter = expandVertically() + fadeIn(),
-                    exit = shrinkVertically() + fadeOut(),
-                ) {
-                    val startLabel = state.customStartMillis?.let { formatEpochMillis(it, "d MMM") }.orEmpty()
-                    val endLabel = state.customEndMillis?.let { formatEpochMillis(it, "d MMM yyyy") }.orEmpty()
+                    // Переключатель периодов без обрезки текста
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 8.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(IosBlue.copy(alpha = 0.08f))
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(
-                            imageVector = Icons.Rounded.DateRange,
-                            contentDescription = null,
-                            tint = IosBlue,
-                            modifier = Modifier.size(16.dp),
+                        PeriodTabRow(
+                            selectedPeriod = state.period,
+                            onSelect = { viewModel.selectPeriod(it) },
+                            enabled = !dateRangeActive,
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .alpha(if (dateRangeActive) 0.38f else 1f),
                         )
-                        Text(
-                            text = stringResource(R.string.date_range_label, startLabel, endLabel),
-                            style = typography.bodySmall,
-                            color = IosBlue,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        IconButton(
-                            onClick = { viewModel.selectPeriod(StatsPeriod.MONTH) },
-                            modifier = Modifier.size(20.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Close,
-                                contentDescription = null,
-                                tint = IosBlue,
-                                modifier = Modifier.size(14.dp),
-                            )
+                        Spacer(Modifier.width(12.dp))
+                        AnimatedVisibility(visible = !dateRangeActive) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.End,
+                            ) {
+                                IconButton(
+                                    onClick = viewModel::navigatePeriodBack,
+                                    modifier = Modifier.size(32.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.ChevronLeft,
+                                        contentDescription = null,
+                                        tint = colors.onSurfaceVariant,
+                                    )
+                                }
+                                Text(
+                                    text = state.periodLabel.orEmpty(),
+                                    style = typography.labelMedium,
+                                    color = colors.onSurfaceVariant,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.widthIn(max = 90.dp),
+                                )
+                                IconButton(
+                                    onClick = viewModel::navigatePeriodForward,
+                                    enabled = state.canNavigateForward,
+                                    modifier = Modifier.size(32.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Rounded.ChevronRight,
+                                        contentDescription = null,
+                                        tint = if (state.canNavigateForward) colors.onSurfaceVariant else colors.outlineVariant,
+                                    )
+                                }
+                            }
                         }
                     }
-                }
 
-                Spacer(Modifier.height(8.dp))
-                HorizontalDivider(color = colors.onSurface.copy(alpha = 0.06f))
-            }
-        }
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            // ── Контент экрана ─────────────────────────────
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(top = 16.dp, bottom = 48.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-            ) {
-
-                // Интеллектуальный совет от Коппи
-                item {
-                    AnalyticsInsightCard(
-                        expenseTotal = expenseTotal,
-                        incomeTotal = incomeTotal,
-                        savingsPercent = savingsPercent,
-                    )
-                }
-
-                // Сводный баланс за период
-                item {
-                    SummaryCard(
-                        netTotal = netTotal,
-                        incomeTotal = incomeTotal,
-                        expenseTotal = expenseTotal,
-                        savingsPercent = savingsPercent,
-                        savingsRate = savingsRate,
-                        currencyCode = state.currencyCode,
-                    )
-                }
-
-                // Аналитика по счетам
-                item {
-                    AccountsAnalyticsSection(
-                        accounts = state.accountAnalytics,
-                        currencyCode = state.currencyCode,
-                        isExpanded = state.isAccountsSectionExpanded,
-                        onToggleExpand = viewModel::toggleAccountsSection,
-                    )
-                }
-
-                // Расходы по дням (График)
-                item {
-                    SectionHeader(text = stringResource(R.string.expenses_by_day))
-                    AppCard {
-                        ExpenseColumnChart(dailyBars = state.dailyBars)
-                    }
-                }
-
-                // Расходы по категориям
-                item {
-                    SectionHeader(text = stringResource(R.string.expenses_by_category))
-                    AppCard {
-                        if (state.expenseCategories.isEmpty()) {
-                            Box(
+                    // Чип для выбранного кастомного диапазона
+                    AnimatedVisibility(
+                        visible = dateRangeActive,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut(),
+                    ) {
+                        val startLabel =
+                            state.customStartMillis?.let { formatEpochMillis(it, "d MMM") }
+                                .orEmpty()
+                        val endLabel =
+                            state.customEndMillis?.let { formatEpochMillis(it, "d MMM yyyy") }
+                                .orEmpty()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 8.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(IosBlue.copy(alpha = 0.08f))
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Rounded.DateRange,
+                                contentDescription = null,
+                                tint = IosBlue,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Text(
+                                text = stringResource(
+                                    R.string.date_range_label,
+                                    startLabel,
+                                    endLabel
+                                ),
+                                style = typography.bodySmall,
+                                color = IosBlue,
+                                fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(100.dp),
-                                contentAlignment = Alignment.Center,
+                                    .weight(1f)
+                                    .padding(horizontal = 8.dp),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            IconButton(
+                                onClick = { viewModel.selectPeriod(StatsPeriod.MONTH) },
+                                modifier = Modifier.size(20.dp),
                             ) {
-                                Text(
-                                    text = stringResource(R.string.no_data),
-                                    style = typography.bodyMedium,
-                                    color = colors.onSurfaceVariant,
+                                Icon(
+                                    imageVector = Icons.Rounded.Close,
+                                    contentDescription = null,
+                                    tint = IosBlue,
+                                    modifier = Modifier.size(14.dp),
                                 )
                             }
-                        } else {
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    HorizontalDivider(color = colors.onSurface.copy(alpha = 0.06f))
+                }
+            }
+            // Интеллектуальный совет от Коппи
+            item {
+                AnalyticsInsightCard(
+                    expenseTotal = expenseTotal,
+                    incomeTotal = incomeTotal,
+                    savingsPercent = savingsPercent,
+                )
+            }
+
+            // Сводный баланс за период
+            item {
+                SummaryCard(
+                    netTotal = netTotal,
+                    incomeTotal = incomeTotal,
+                    expenseTotal = expenseTotal,
+                    savingsPercent = savingsPercent,
+                    savingsRate = savingsRate,
+                    currencyCode = state.currencyCode,
+                )
+            }
+
+            // Аналитика по счетам
+            item {
+                AccountsAnalyticsSection(
+                    accounts = state.accountAnalytics,
+                    currencyCode = state.currencyCode,
+                    isExpanded = state.isAccountsSectionExpanded,
+                    onToggleExpand = viewModel::toggleAccountsSection,
+                )
+            }
+
+            // Расходы по дням (График)
+            item {
+                SectionHeader(text = stringResource(R.string.expenses_by_day))
+                AppCard {
+                    ExpenseColumnChart(dailyBars = state.dailyBars)
+                }
+            }
+
+            // Расходы по категориям
+            item {
+                SectionHeader(text = stringResource(R.string.expenses_by_category))
+                AppCard {
+                    if (state.expenseCategories.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = stringResource(R.string.no_data),
+                                style = typography.bodyMedium,
+                                color = colors.onSurfaceVariant,
+                            )
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            CategoryDonutChart(
+                                segments = expenseSegments,
+                                modifier = Modifier.padding(vertical = 12.dp),
+                            )
                             Column(
-                                modifier = Modifier.padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
                             ) {
-                                CategoryDonutChart(
-                                    segments = expenseSegments,
-                                    modifier = Modifier.padding(vertical = 12.dp),
-                                )
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp),
-                                ) {
-                                    state.expenseCategories.forEachIndexed { index, item ->
-                                        val segmentColor = expenseSegments.getOrNull(index)?.color
-                                            ?: item.category.colorArgb?.let { Color(it.toInt()) }
-                                            ?: IosRed
-                                        CategoryLegendRow(
-                                            color = segmentColor,
-                                            name = item.category.name,
-                                            amount = MoneyFormat.format(item.amountMinor, state.currencyCode),
-                                            percent = stringResource(
-                                                R.string.percent_short,
-                                                item.sharePercent.roundToInt(),
-                                            ),
+                                state.expenseCategories.forEachIndexed { index, item ->
+                                    val segmentColor = expenseSegments.getOrNull(index)?.color
+                                        ?: item.category.colorArgb?.let { Color(it.toInt()) }
+                                        ?: IosRed
+                                    CategoryLegendRow(
+                                        color = segmentColor,
+                                        name = item.category.name,
+                                        amount = MoneyFormat.format(
+                                            item.amountMinor,
+                                            state.currencyCode
+                                        ),
+                                        percent = stringResource(
+                                            R.string.percent_short,
+                                            item.sharePercent.roundToInt(),
+                                        ),
+                                    )
+                                    if (index < state.expenseCategories.lastIndex) {
+                                        HorizontalDivider(
+                                            color = colors.onSurface.copy(alpha = 0.05f),
+                                            modifier = Modifier.padding(vertical = 2.dp),
                                         )
-                                        if (index < state.expenseCategories.lastIndex) {
-                                            HorizontalDivider(
-                                                color = colors.onSurface.copy(alpha = 0.05f),
-                                                modifier = Modifier.padding(vertical = 2.dp),
-                                            )
-                                        }
                                     }
                                 }
                             }
                         }
                     }
                 }
+            }
 
-                // Тренд изменения баланса (Линейный график)
-                item {
-                    SectionHeader(text = stringResource(R.string.balance_trend))
-                    AppCard {
-                        BalanceTrendLineChart(dailyBars = state.dailyBars)
-                    }
+            // Тренд изменения баланса (Линейный график)
+            item {
+                SectionHeader(text = stringResource(R.string.balance_trend))
+                AppCard {
+                    BalanceTrendLineChart(dailyBars = state.dailyBars)
                 }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(Dimens.SpacingXl))
             }
         }
     }
@@ -492,12 +512,15 @@ fun AnalyticsInsightCard(
             expenseTotal > incomeTotal && incomeTotal > 0 -> {
                 "Упс, в этом периоде вы тратите больше, чем зарабатываете. Коппи советует проверить лимиты категорий!"
             }
+
             savingsPercent >= 20 -> {
                 "Отличный результат! Вы сохранили $savingsPercent% бюджета. Коппи хвалит вас за разумную экономию."
             }
+
             savingsPercent in 1..19 -> {
                 "Вы накопили $savingsPercent% от доходов. Небольшой шаг вперед — это тоже отличный шаг к цели!"
             }
+
             else -> {
                 "Ведите учет регулярно. Коппи готов помочь вам отследить каждую деталь бюджета!"
             }
@@ -630,8 +653,20 @@ private fun SummaryCard(
             Spacer(Modifier.height(4.dp))
             Text(
                 text = when {
-                    netTotal > 0L -> MoneyFormat.formatWithSignPrefix(context, netTotal, currencyCode, isPositive = true)
-                    netTotal < 0L -> MoneyFormat.formatWithSignPrefix(context, -netTotal, currencyCode, isPositive = false)
+                    netTotal > 0L -> MoneyFormat.formatWithSignPrefix(
+                        context,
+                        netTotal,
+                        currencyCode,
+                        isPositive = true
+                    )
+
+                    netTotal < 0L -> MoneyFormat.formatWithSignPrefix(
+                        context,
+                        -netTotal,
+                        currencyCode,
+                        isPositive = false
+                    )
+
                     else -> MoneyFormat.format(0L, currencyCode)
                 },
                 style = typography.headlineMedium.copy(fontSize = 24.sp),
@@ -655,7 +690,12 @@ private fun SummaryCard(
                     icon = Icons.Rounded.ArrowUpward,
                     iconTint = IosGreen,
                     label = stringResource(R.string.income),
-                    value = MoneyFormat.formatWithSignPrefix(context, incomeTotal, currencyCode, isPositive = true),
+                    value = MoneyFormat.formatWithSignPrefix(
+                        context,
+                        incomeTotal,
+                        currencyCode,
+                        isPositive = true
+                    ),
                     valueColor = IosGreen,
                     modifier = Modifier.weight(1f),
                 )
@@ -886,7 +926,10 @@ fun AccountAnalyticsRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = stringResource(R.string.analytics_accounts_tx_count, item.transactionCount),
+                    text = stringResource(
+                        R.string.analytics_accounts_tx_count,
+                        item.transactionCount
+                    ),
                     style = typography.labelSmall,
                     color = colors.onSurface.copy(alpha = 0.4f),
                 )
@@ -1021,13 +1064,23 @@ fun AccountAnalyticsTotalRow(
         )
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Text(
-                text = MoneyFormat.formatWithSignPrefix(context, totalIncome, currencyCode, isPositive = true),
+                text = MoneyFormat.formatWithSignPrefix(
+                    context,
+                    totalIncome,
+                    currencyCode,
+                    isPositive = true
+                ),
                 style = typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 color = IosGreen,
             )
             Text(
-                text = MoneyFormat.formatWithSignPrefix(context, totalExpense, currencyCode, isPositive = false),
+                text = MoneyFormat.formatWithSignPrefix(
+                    context,
+                    totalExpense,
+                    currencyCode,
+                    isPositive = false
+                ),
                 style = typography.labelSmall,
                 fontWeight = FontWeight.Bold,
                 color = IosRed,

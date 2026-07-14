@@ -15,10 +15,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 
 import androidx.compose.foundation.layout.fillMaxSize
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 
 import androidx.compose.foundation.layout.padding
 
@@ -245,61 +247,37 @@ fun SettingsScreen(
 
 
     Scaffold(
-
         modifier = Modifier.fillMaxSize(),
-
         containerColor = colors.background,
-
-        topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(colors.background)
-                    .padding(top = Dimens.SpacingXxl),
-            ) {
-                Row(
+    ) { _ ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = Dimens.SpacingXs),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            item {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                        .background(colors.background)
+                        .padding(top = Dimens.SpacingXxl),
                 ) {
-                    Text(
-                        text = stringResource(R.string.settings),
-                        style = typography.titleLarge.copy(fontSize = 28.sp),
-                        fontWeight = FontWeight.Black,
-                        modifier = Modifier.weight(1f),
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.settings),
+                            style = typography.titleLarge.copy(fontSize = 28.sp),
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
-        }
-
-    ) { padding ->
-
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(top = 16.dp, bottom = 48.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-            ) {
-
-            item {
-
-                Text(
-
-                    text = stringResource(R.string.settings),
-
-                    style = typography.headlineLarge,
-
-                    fontWeight = FontWeight.Bold,
-
-                    color = colors.onSurface,
-
-                    modifier = Modifier.padding(horizontal = Dimens.SpacingL),
-
-                    )
-
-            }
-
-
 
             item {
 
@@ -742,6 +720,9 @@ fun SettingsScreen(
 
             }
 
+            item {
+                Spacer(modifier = Modifier.height(Dimens.SpacingXl))
+            }
         }
 
     }

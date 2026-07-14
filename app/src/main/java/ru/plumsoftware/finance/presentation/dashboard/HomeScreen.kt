@@ -739,11 +739,7 @@ fun HomeScreen(
     ) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                top = Dimens.statusBarInset,
-                bottom = Dimens.SpacingM,
-            ),
+            modifier = Modifier.fillMaxSize().padding(top = Dimens.SpacingXs),
             verticalArrangement = Arrangement.spacedBy(Dimens.SpacingL),
         ) {
             item {
@@ -865,6 +861,9 @@ fun HomeScreen(
                         }
                     }
                 }
+            }
+            item {
+                Spacer(modifier = Modifier.height(Dimens.SpacingXl))
             }
         }
     }

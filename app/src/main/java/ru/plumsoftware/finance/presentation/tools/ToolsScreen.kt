@@ -41,107 +41,101 @@ fun ToolsScreen(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = colors.background,
-        topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(colors.background)
-                    .padding(top = Dimens.SpacingXxl),
-            ) {
-                Row(
+    ) { _ ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = Dimens.SpacingXs),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingL),
+        ) {
+            item {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                        .background(colors.background)
+                        .padding(top = Dimens.SpacingXxl),
                 ) {
-                    Text(
-                        text = stringResource(R.string.nav_tools),
-                        style = typography.titleLarge.copy(fontSize = 28.sp),
-                        fontWeight = FontWeight.Black,
-                        modifier = Modifier.weight(1f),
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.nav_tools),
+                            style = typography.titleLarge.copy(fontSize = 28.sp),
+                            fontWeight = FontWeight.Black,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
-        }
-    ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(colors.background),
-            ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        top = Dimens.SpacingM,
-                        bottom = Dimens.SpacingXxl,
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.SpacingL),
-                ) {
-                    item {
-                        Column {
-                            SectionLabel(text = stringResource(R.string.tools_section_calculators))
-                            Column(
-                                modifier = Modifier.padding(horizontal = Dimens.SpacingL),
-                                verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
-                            ) {
-                                ToolCard(
-                                    emoji = "💳",
-                                    title = stringResource(R.string.tool_credit_title),
-                                    subtitle = stringResource(R.string.tool_credit_subtitle),
-                                    onClick = onCreditCalcClick,
-                                )
-                                ToolCard(
-                                    emoji = "📈",
-                                    title = stringResource(R.string.tool_deposit_title),
-                                    subtitle = stringResource(R.string.tool_deposit_subtitle),
-                                    onClick = onDepositCalcClick,
-                                )
-                                ToolCard(
-                                    emoji = "🎯",
-                                    title = stringResource(R.string.tool_goal_calc_title),
-                                    subtitle = stringResource(R.string.tool_goal_calc_subtitle),
-                                    onClick = onGoalCalcClick,
-                                )
-                                ToolCard(
-                                    emoji = "🏦",
-                                    title = stringResource(R.string.tool_savings_account_title),
-                                    subtitle = stringResource(R.string.tool_savings_account_subtitle),
-                                    onClick = onSavingsAccountCalcClick,
-                                )
-                            }
-                        }
-                    }
-
-                    item {
-                        Column {
-                            SectionLabel(text = stringResource(R.string.tools_section_advanced))
-                            Column(
-                                modifier = Modifier.padding(horizontal = Dimens.SpacingL),
-                                verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
-                            ) {
-                                ToolCard(
-                                    emoji = "🏠",
-                                    title = stringResource(R.string.tool_mortgage_title),
-                                    subtitle = stringResource(R.string.tool_mortgage_subtitle),
-                                    onClick = onMortgageCalcClick,
-                                )
-                                ToolCard(
-                                    emoji = "📉",
-                                    title = stringResource(R.string.tool_early_repay_title),
-                                    subtitle = stringResource(R.string.tool_early_repay_subtitle),
-                                    onClick = onEarlyRepayClick,
-                                )
-                                ToolCard(
-                                    emoji = "⚖️",
-                                    title = stringResource(R.string.tool_rent_vs_buy_title),
-                                    subtitle = stringResource(R.string.tool_rent_vs_buy_subtitle),
-                                    onClick = onRentVsBuyClick,
-                                )
-                            }
-                        }
+            item {
+                Column {
+                    SectionLabel(text = stringResource(R.string.tools_section_calculators))
+                    Column(
+                        modifier = Modifier.padding(horizontal = Dimens.SpacingL),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+                    ) {
+                        ToolCard(
+                            emoji = "💳",
+                            title = stringResource(R.string.tool_credit_title),
+                            subtitle = stringResource(R.string.tool_credit_subtitle),
+                            onClick = onCreditCalcClick,
+                        )
+                        ToolCard(
+                            emoji = "📈",
+                            title = stringResource(R.string.tool_deposit_title),
+                            subtitle = stringResource(R.string.tool_deposit_subtitle),
+                            onClick = onDepositCalcClick,
+                        )
+                        ToolCard(
+                            emoji = "🎯",
+                            title = stringResource(R.string.tool_goal_calc_title),
+                            subtitle = stringResource(R.string.tool_goal_calc_subtitle),
+                            onClick = onGoalCalcClick,
+                        )
+                        ToolCard(
+                            emoji = "🏦",
+                            title = stringResource(R.string.tool_savings_account_title),
+                            subtitle = stringResource(R.string.tool_savings_account_subtitle),
+                            onClick = onSavingsAccountCalcClick,
+                        )
                     }
                 }
+            }
+
+            item {
+                Column {
+                    SectionLabel(text = stringResource(R.string.tools_section_advanced))
+                    Column(
+                        modifier = Modifier.padding(horizontal = Dimens.SpacingL),
+                        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+                    ) {
+                        ToolCard(
+                            emoji = "🏠",
+                            title = stringResource(R.string.tool_mortgage_title),
+                            subtitle = stringResource(R.string.tool_mortgage_subtitle),
+                            onClick = onMortgageCalcClick,
+                        )
+                        ToolCard(
+                            emoji = "📉",
+                            title = stringResource(R.string.tool_early_repay_title),
+                            subtitle = stringResource(R.string.tool_early_repay_subtitle),
+                            onClick = onEarlyRepayClick,
+                        )
+                        ToolCard(
+                            emoji = "⚖️",
+                            title = stringResource(R.string.tool_rent_vs_buy_title),
+                            subtitle = stringResource(R.string.tool_rent_vs_buy_subtitle),
+                            onClick = onRentVsBuyClick,
+                        )
+                    }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(Dimens.SpacingXl))
             }
         }
     }
