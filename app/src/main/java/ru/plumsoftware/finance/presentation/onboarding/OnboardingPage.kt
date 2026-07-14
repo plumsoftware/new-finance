@@ -9,6 +9,7 @@ enum class OnboardingIllustrationType {
     SMART_SAVINGS,
     GOALS,
     ACHIEVEMENTS,
+    TOOLS,
     WELCOME,
 }
 

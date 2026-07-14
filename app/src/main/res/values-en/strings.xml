@@ -278,6 +278,11 @@
     <string name="tool_rent_vs_buy_title">Rent vs Buy</string>
     <string name="tool_rent_vs_buy_subtitle">Which is better over 10–30 years</string>
 
+    <string name="onboarding_tools_title">Financial Calculators</string>
+    <string name="onboarding_tools_subtitle">Calculate loans, savings, or deposits right in the app — no need for extra websites</string>
+    <string name="onboarding_demo_tools_label">TOOLS</string>
+    <string name="onboarding_demo_tools_arrow">›</string>
+
     <!-- Home quick actions -->
     <string name="home_goals_count">%1$d active goals</string>
 

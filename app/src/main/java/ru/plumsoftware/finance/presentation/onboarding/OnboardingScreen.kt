@@ -42,6 +42,7 @@ import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingInco
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingMascot
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingPageIndicator
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingSmartSavingsIllustration
+import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingToolsIllustration
 import ru.plumsoftware.finance.presentation.onboarding.components.OnboardingWelcomeIllustration
 import ru.plumsoftware.finance.ui.components.PrimaryButton
 import ru.plumsoftware.finance.ui.components.ios.IosTextButton
@@ -77,6 +78,12 @@ private val onboardingPages = listOf(
         subtitleRes = R.string.onboarding_achievements_subtitle,
         mascotRes = R.drawable.mascot_trophy,
         illustrationType = OnboardingIllustrationType.ACHIEVEMENTS,
+    ),
+    OnboardingPage(
+        titleRes = R.string.onboarding_tools_title,
+        subtitleRes = R.string.onboarding_tools_subtitle,
+        mascotRes = R.drawable.mascot_calculator,
+        illustrationType = OnboardingIllustrationType.TOOLS,
     ),
     OnboardingPage(
         titleRes = R.string.onboarding_page4_title,
@@ -266,6 +273,14 @@ private fun OnboardingPageContent(
                     illustration = { OnboardingAchievementsIllustration() },
                     mascotRes = page.mascotRes,
                     mascotAlignment = Alignment.BottomEnd,
+                )
+            }
+
+            OnboardingIllustrationType.TOOLS -> {
+                OnboardingIllustrationWithMascot(
+                    illustration = { OnboardingToolsIllustration() },
+                    mascotRes = page.mascotRes,
+                    mascotAlignment = Alignment.BottomStart,
                 )
             }
 

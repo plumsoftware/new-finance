@@ -269,6 +269,11 @@
     <string name="tool_savings_account_title">Накопительный счёт</string>
     <string name="tool_savings_account_subtitle">Начисление на ежедневный или минимальный остаток, снятия</string>
 
+    <string name="onboarding_tools_title">Финансовые калькуляторы</string>
+    <string name="onboarding_tools_subtitle">Рассчитай кредит, вклад или накопления — прямо в приложении, без лишних сайтов</string>
+    <string name="onboarding_demo_tools_label">ИНСТРУМЕНТЫ</string>
+    <string name="onboarding_demo_tools_arrow">›</string>
+
     <!-- Tool cards — level 1 -->
     <string name="tool_credit_title">Кредитный калькулятор</string>
     <string name="tool_credit_subtitle">Платёж, переплата, полная стоимость</string>
