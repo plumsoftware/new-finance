@@ -1,34 +1,26 @@
 package ru.plumsoftware.finance.presentation.recurring
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Repeat
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,36 +29,57 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import ru.plumsoftware.finance.AppConfig
-import ru.plumsoftware.finance.navigation.popBackStackOrHome
-import ru.plumsoftware.finance.ui.ads.AdBannerBottomBar
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
+import ru.plumsoftware.finance.AppConfig
 import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.domain.budget.Upcoming
 import ru.plumsoftware.finance.domain.model.AppSettings
 import ru.plumsoftware.finance.domain.model.Category
+import ru.plumsoftware.finance.domain.model.RecurringFrequency
 import ru.plumsoftware.finance.domain.model.RecurringTransaction
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
-import ru.plumsoftware.finance.presentation.common.MoneyFormat
-import ru.plumsoftware.finance.ui.components.AppCard
-import ru.plumsoftware.finance.ui.components.PrimaryButton
-import ru.plumsoftware.finance.ui.components.SectionLabel
-import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
-import ru.plumsoftware.finance.ui.theme.Dimens
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import ru.plumsoftware.finance.navigation.popBackStackOrHome
+import ru.plumsoftware.finance.presentation.common.CategoryColors
+import ru.plumsoftware.finance.presentation.common.DateFmt
+import ru.plumsoftware.finance.presentation.common.Money
+import ru.plumsoftware.finance.ui.ads.AdBannerBottomBar
+import ru.plumsoftware.finance.ui.ds.CardDivider
+import ru.plumsoftware.finance.ui.ds.EmojiBadge
+import ru.plumsoftware.finance.ui.ds.EmptyState
+import ru.plumsoftware.finance.ui.ds.FSwitch
+import ru.plumsoftware.finance.ui.ds.HSpace
+import ru.plumsoftware.finance.ui.ds.IconButton44
+import ru.plumsoftware.finance.ui.ds.InkCard
+import ru.plumsoftware.finance.ui.ds.Kopi
+import ru.plumsoftware.finance.ui.ds.SectionHeader
+import ru.plumsoftware.finance.ui.ds.SubScreenAppBar
+import ru.plumsoftware.finance.ui.ds.SwipeHint
+import ru.plumsoftware.finance.ui.ds.SwipeHintButton
+import ru.plumsoftware.finance.ui.ds.rememberSwipeHint
+import ru.plumsoftware.finance.ui.ds.VSpace
+import ru.plumsoftware.finance.ui.ds.masked
+import ru.plumsoftware.finance.ui.theme.FinanceTheme
+import ru.plumsoftware.finance.ui.theme.FinanceType
+import java.time.LocalDate
+import kotlin.math.roundToLong
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Месячный эквивалент суммы по периодичности. */
+private fun RecurringTransaction.monthlyMinor(): Long = when (frequency) {
+    RecurringFrequency.DAILY -> (amountMinor * 30.4).roundToLong()
+    RecurringFrequency.WEEKLY -> (amountMinor * 52 / 12.0).roundToLong()
+    RecurringFrequency.MONTHLY -> amountMinor
+    RecurringFrequency.YEARLY -> amountMinor / 12
+}
+
+/** Повторяющиеся операции: сводка «в месяц», активные и на паузе, пауза переключателем, удаление свайпом. */
 @Composable
 fun RecurringScreen(
     navController: NavController,
@@ -75,263 +88,200 @@ fun RecurringScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val settingsRepository: SettingsRepository = koinInject()
     val settings by settingsRepository.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
-    val currencyCode = settings.defaultCurrencyCode
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
+    val cur = settings.defaultCurrencyCode
+    val c = FinanceTheme.colors
+    var showAdd by remember { mutableStateOf(false) }
+    var toDelete by remember { mutableStateOf<RecurringTransaction?>(null) }
+    val showSwipeHint = rememberSwipeHint(SwipeHint.RECURRING, hasItems = state.items.isNotEmpty())
+    val (active, paused) = remember(state.items) { state.items.partition { it.isActive } }
+    val today = LocalDate.now()
+    val nextDates = remember(state.items, today) {
+        Upcoming.occurrences(state.items, today, 400, DateFmt::toLocalDate, includeIncome = true)
+            .groupBy { it.recurringId }.mapValues { it.value.first().date }
+    }
 
-    var showAddSheet by remember { mutableStateOf(false) }
-
-    if (showAddSheet) {
+    if (showAdd) {
         AddRecurringSheet(
             categories = state.categories,
-            currencyCode = currencyCode,
-            onDismiss = { showAddSheet = false },
-            onSave = { transaction ->
-                viewModel.add(transaction)
-                showAddSheet = false
+            currencyCode = cur,
+            onDismiss = { showAdd = false },
+            onSave = {
+                viewModel.add(it)
+                showAdd = false
             },
         )
     }
-
-    val (activeItems, pausedItems) = remember(state.items) {
-        state.items.partition { it.isActive }
+    toDelete?.let { item ->
+        AlertDialog(
+            onDismissRequest = { toDelete = null },
+            containerColor = c.surface,
+            title = { Text(stringResource(R.string.recurring_delete_title, item.title), style = FinanceType.titleLarge, color = c.textPrimary) },
+            text = { Text(stringResource(R.string.recurring_delete_text), style = FinanceType.bodySmall, color = c.textSecondary) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.delete(item.id)
+                    toDelete = null
+                }) { Text(stringResource(R.string.delete), color = c.dangerText) }
+            },
+            dismissButton = { TextButton(onClick = { toDelete = null }) { Text(stringResource(R.string.cancel), color = c.textSecondary) } },
+        )
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = colors.background,
-        bottomBar = {
-            AdBannerBottomBar(adUnitId = AppConfig.bannerRecurring)
-        },
+        containerColor = c.bg,
         topBar = {
-            IosEditorTopBar(
-                title = stringResource(R.string.recurring_transactions),
-                backLabel = stringResource(R.string.categories_back_settings),
-                onBack = navController::popBackStackOrHome,
-                actionLabel = stringResource(R.string.categories_add),
-                onAction = { showAddSheet = true },
+            SubScreenAppBar(
+                title = stringResource(R.string.settings_recurring),
+                onBack = { navController.popBackStackOrHome() },
+                actions = {
+                    SwipeHintButton(showSwipeHint)
+                    IconButton44(R.drawable.ic_add, stringResource(R.string.add_recurring), { showAdd = true })
+                },
             )
         },
+        bottomBar = { AdBannerBottomBar(adUnitId = AppConfig.bannerRecurring) },
     ) { padding ->
         if (state.items.isEmpty()) {
-            RecurringEmptyState(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                onAddClick = { showAddSheet = true },
+            EmptyState(
+                title = stringResource(R.string.no_recurring),
+                text = stringResource(R.string.no_recurring_desc),
+                pose = Kopi.THINKING,
+                action = stringResource(R.string.add_recurring),
+                onAction = { showAdd = true },
+                modifier = Modifier.padding(padding).padding(top = 48.dp),
             )
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentPadding = PaddingValues(vertical = Dimens.SpacingXs),
-                verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
-            ) {
-                if (activeItems.isNotEmpty()) {
-                    item { SectionLabel(text = stringResource(R.string.recurring_active)) }
-                    items(activeItems, key = { it.id }) { item ->
-                        RecurringCard(
-                            item = item,
-                            category = state.categoryMap[item.categoryId],
-                            currencyCode = currencyCode,
-                            dimmed = false,
-                            onToggleActive = { active ->
-                                viewModel.toggleActive(item.id, active)
-                            },
-                            onDelete = { viewModel.delete(item.id) },
+            return@Scaffold
+        }
+        LazyColumn(
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+        ) {
+            item {
+                val expenses = active.filter { !it.isIncome }
+                val nearest = expenses.mapNotNull { r -> nextDates[r.id]?.let { r to it } }.minByOrNull { it.second }
+                InkCard(radius = 24.dp) {
+                    Text(stringResource(R.string.recurring_per_month), style = FinanceType.bodySmall, color = c.onInkSecondary)
+                    Text(masked(Money.formatRounded(expenses.sumOf { it.monthlyMinor() }, cur)), style = FinanceType.headlineLarge, color = Color.White)
+                    if (nearest != null) {
+                        Text(
+                            stringResource(
+                                R.string.recurring_nearest,
+                                nearest.first.title,
+                                DateFmt.dayMonth(nearest.second),
+                                masked(Money.formatRounded(nearest.first.amountMinor, cur)),
+                            ),
+                            style = FinanceType.caption,
+                            color = c.onInkSecondary,
                         )
                     }
                 }
-
-                if (pausedItems.isNotEmpty()) {
-                    item {
-                        SectionLabel(
-                            text = stringResource(R.string.recurring_paused),
-                            modifier = Modifier.padding(top = Dimens.SpacingM),
-                        )
-                    }
-                    items(pausedItems, key = { it.id }) { item ->
-                        RecurringCard(
-                            item = item,
-                            category = state.categoryMap[item.categoryId],
-                            currencyCode = currencyCode,
-                            dimmed = true,
-                            onToggleActive = { active ->
-                                viewModel.toggleActive(item.id, active)
-                            },
-                            onDelete = { viewModel.delete(item.id) },
-                        )
-                    }
-                }
+                VSpace(4.dp)
+            }
+            if (active.isNotEmpty()) {
+                item { SectionHeader(stringResource(R.string.recurring_active)) }
+                item { RecurringGroup(active, state.categoryMap, nextDates, cur, viewModel::toggleActive) { toDelete = it } }
+            }
+            if (paused.isNotEmpty()) {
+                item { SectionHeader(stringResource(R.string.recurring_paused)) }
+                item { RecurringGroup(paused, state.categoryMap, nextDates, cur, viewModel::toggleActive) { toDelete = it } }
+            }
+            item {
+                VSpace(10.dp)
+                Text(
+                    stringResource(R.string.recurring_hint),
+                    style = FinanceType.caption,
+                    color = c.textSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
         }
     }
 }
 
 @Composable
-private fun RecurringEmptyState(
-    onAddClick: () -> Unit,
-    modifier: Modifier = Modifier,
+private fun RecurringGroup(
+    items: List<RecurringTransaction>,
+    categories: Map<Long, Category>,
+    nextDates: Map<Long, LocalDate>,
+    cur: String,
+    onToggle: (Long, Boolean) -> Unit,
+    onDeleteRequest: (RecurringTransaction) -> Unit,
 ) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
     Column(
-        modifier = modifier.padding(horizontal = Dimens.SpacingL),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(FinanceTheme.colors.surface),
     ) {
-        Icon(
-            imageVector = Icons.Rounded.Repeat,
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = colors.onSurfaceVariant.copy(alpha = 0.4f),
-        )
-        Spacer(Modifier.height(Dimens.SpacingL))
-        Text(
-            text = stringResource(R.string.no_recurring),
-            style = typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(Dimens.SpacingXs))
-        Text(
-            text = stringResource(R.string.no_recurring_desc),
-            style = typography.bodyMedium,
-            color = colors.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(Dimens.SpacingXl))
-        PrimaryButton(
-            text = stringResource(R.string.add_recurring),
-            onClick = onAddClick,
-            modifier = Modifier.padding(horizontal = Dimens.SpacingXxl),
-        )
+        items.forEachIndexed { i, item ->
+            if (i > 0) CardDivider(Modifier.padding(start = 70.dp))
+            RecurringRow(item, categories[item.categoryId], nextDates[item.id], cur, { onToggle(item.id, it) }) { onDeleteRequest(item) }
+        }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RecurringCard(
+private fun RecurringRow(
     item: RecurringTransaction,
     category: Category?,
-    currencyCode: String,
-    dimmed: Boolean,
-    onToggleActive: (Boolean) -> Unit,
-    onDelete: () -> Unit,
+    next: LocalDate?,
+    cur: String,
+    onToggle: (Boolean) -> Unit,
+    onDeleteRequest: () -> Unit,
 ) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val categoryColor = category?.colorArgb?.let { Color(it.toInt()) } ?: colors.onSurfaceVariant
-    val amountColor = if (item.isIncome) colors.secondary else colors.error
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                onDelete()
-                true
-            } else {
-                false
-            }
-        },
-        positionalThreshold = { fullWidth -> fullWidth * 0.35f },
-    )
-
+    val c = FinanceTheme.colors
+    val swipe = rememberSwipeToDismissBoxState()
+    LaunchedEffect(swipe.currentValue) {
+        if (swipe.currentValue == SwipeToDismissBoxValue.EndToStart) {
+            onDeleteRequest()
+            swipe.reset()
+        }
+    }
     SwipeToDismissBox(
-        state = dismissState,
+        state = swipe,
         enableDismissFromStartToEnd = false,
-        modifier = Modifier
-            .padding(horizontal = Dimens.SpacingL)
-            .alpha(if (dimmed) 0.5f else 1f),
         backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(Dimens.RadiusL))
-                    .background(colors.error.copy(alpha = 0.1f))
-                    .padding(end = Dimens.SpacingL),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Delete,
-                    contentDescription = stringResource(R.string.cd_delete),
-                    tint = colors.error,
-                    modifier = Modifier.size(Dimens.IconSizeM),
-                )
+            Box(Modifier.fillMaxSize().background(c.danger).padding(horizontal = 20.dp), contentAlignment = Alignment.CenterEnd) {
+                Text(stringResource(R.string.delete), style = FinanceType.title, color = Color.White)
             }
         },
     ) {
-        AppCard(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.padding(Dimens.SpacingM),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(Dimens.RadiusM))
-                        .background(categoryColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = category?.icon ?: stringResource(R.string.default_bullet),
-                        fontSize = 22.sp,
-                    )
-                }
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = Dimens.SpacingM),
-                ) {
-                    Text(
-                        text = item.title,
-                        style = typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = stringResource(
-                            R.string.recurring_subtitle_format,
-                            stringResource(item.frequency.labelRes),
-                            stringResource(
-                                R.string.next_date,
-                                formatRecurringDate(item.nextDateMillis),
-                            ),
-                        ),
-                        style = typography.bodySmall,
-                        color = colors.onSurfaceVariant,
-                    )
-                }
-
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = MoneyFormat.formatWithSignPrefix(
-                            context,
-                            item.amountMinor,
-                            currencyCode,
-                            isPositive = item.isIncome,
-                        ),
-                        style = typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = amountColor,
-                    )
-                    Switch(
-                        checked = item.isActive,
-                        onCheckedChange = onToggleActive,
-                        modifier = Modifier.scale(0.75f),
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = colors.primary,
-                            uncheckedTrackColor = colors.surfaceVariant,
-                        ),
-                    )
-                }
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(c.surface)
+                .heightIn(min = 68.dp)
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            EmojiBadge(category?.icon ?: "🔁", CategoryColors.of(category), size = 42.dp, modifier = Modifier.alpha(if (item.isActive) 1f else 0.5f))
+            HSpace(12.dp)
+            Column(Modifier.weight(1f).alpha(if (item.isActive) 1f else 0.6f)) {
+                Text(item.title, style = FinanceType.bodyMedium, color = c.textPrimary, maxLines = 2)
+                Text(
+                    buildString {
+                        append(stringResource(item.frequency.labelRes))
+                        if (item.isActive && next != null) {
+                            append(" · ")
+                            append(stringResource(R.string.next_date, DateFmt.dayMonthShort(next)))
+                        }
+                    },
+                    style = FinanceType.caption,
+                    color = c.textSecondary,
+                )
+            }
+            HSpace(8.dp)
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    masked(Money.signed(item.amountMinor, item.isIncome, cur)),
+                    style = FinanceType.body.copy(fontWeight = FontWeight.SemiBold),
+                    color = if (item.isIncome) c.successText else c.textPrimary,
+                )
+                VSpace(4.dp)
+                FSwitch(item.isActive, onToggle)
             }
         }
     }
-}
-
-private fun formatRecurringDate(timestamp: Long): String {
-    return SimpleDateFormat("d MMM", Locale("ru")).format(Date(timestamp)).lowercase()
 }

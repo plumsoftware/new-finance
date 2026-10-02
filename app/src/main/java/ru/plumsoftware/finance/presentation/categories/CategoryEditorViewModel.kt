@@ -45,10 +45,14 @@ data class CategoryEditorUiState(
     val isSaving: Boolean = false,
     val saved: Boolean = false,
     val error: String? = null,
+    /** Стандартная категория: переименование отключено, иначе при запуске создаётся дубль. */
+    val isSystem: Boolean = false,
 ) {
     val canSave: Boolean get() = name.trim().isNotEmpty()
     val availableEmojis: List<String> get() = if (type == CategoryType.EXPENSE) expenseEmojis else incomeEmojis
 }
+
+private const val NEW_CATEGORY_COLOR = 0xFF007AFFL
 
 class CategoryEditorViewModel(
     savedStateHandle: SavedStateHandle,
@@ -65,7 +69,7 @@ class CategoryEditorViewModel(
             isEdit = categoryIdArg != null,
             type = if (typeArg == "INCOME") CategoryType.INCOME else CategoryType.EXPENSE,
             icon = if (typeArg == "INCOME") "💼" else "🛒",
-            colorArgb = CategoryUiDefaults.DEFAULT_COLOR_ARGB,
+            colorArgb = NEW_CATEGORY_COLOR,
         )
     )
     val uiState: StateFlow<CategoryEditorUiState> = _uiState.asStateFlow()
@@ -82,6 +86,7 @@ class CategoryEditorViewModel(
                             type = category.type,
                             icon = category.icon,
                             colorArgb = category.colorArgb ?: CategoryUiDefaults.DEFAULT_COLOR_ARGB,
+                            isSystem = category.isSystem,
                         )
                     }
                 }
@@ -90,6 +95,7 @@ class CategoryEditorViewModel(
     }
 
     fun setName(value: String) {
+        if (_uiState.value.isSystem) return
         _uiState.update { it.copy(name = value.take(30), error = null) }
     }
 
@@ -98,7 +104,6 @@ class CategoryEditorViewModel(
             it.copy(
                 type = type,
                 icon = if (type == CategoryType.INCOME) "💼" else "🛒",
-                colorArgb = CategoryUiDefaults.DEFAULT_COLOR_ARGB,
             )
         }
     }
@@ -131,23 +136,29 @@ class CategoryEditorViewModel(
                     error(context.getString(R.string.category_duplicate_name))
                 }
                 val currentList = categoryRepository.observeByType(state.type, includeHidden = true).first()
-                val nextSortOrder = if (state.isEdit) {
-                    currentList.firstOrNull { it.id == state.categoryId }?.sortOrder ?: currentList.size
-                } else {
-                    (currentList.minOfOrNull { it.sortOrder } ?: 0) - 1
-                }
-                categoryRepository.upsert(
-                    Category(
-                        id = state.categoryId ?: 0L,
-                        name = trimmedName,
-                        type = state.type,
-                        icon = state.icon,
-                        colorArgb = state.colorArgb,
-                        isHidden = false,
-                        isSystem = false,
-                        sortOrder = nextSortOrder,
+                val original = state.categoryId?.let { id -> currentList.firstOrNull { it.id == id } ?: categoryRepository.getById(id) }
+                if (original != null) {
+                    // Сохраняем лимит, видимость, порядок и признак стандартной категории.
+                    categoryRepository.upsert(
+                        original.copy(
+                            name = if (original.isSystem) original.name else trimmedName,
+                            icon = state.icon,
+                            colorArgb = state.colorArgb,
+                        ),
                     )
-                )
+                } else {
+                    categoryRepository.upsert(
+                        Category(
+                            name = trimmedName,
+                            type = state.type,
+                            icon = state.icon,
+                            colorArgb = state.colorArgb,
+                            isHidden = false,
+                            isSystem = false,
+                            sortOrder = (currentList.minOfOrNull { it.sortOrder } ?: 0) - 1,
+                        ),
+                    )
+                }
             }.onSuccess {
                 _uiState.update { it.copy(isSaving = false, saved = true) }
             }.onFailure { e ->

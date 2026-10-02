@@ -1,54 +1,32 @@
 package ru.plumsoftware.finance.presentation.dashboard
 
-import android.annotation.SuppressLint
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.WarningAmber
-import androidx.compose.material.icons.rounded.ArrowDownward
-import androidx.compose.material.icons.rounded.ArrowUpward
-import androidx.compose.material.icons.rounded.DonutSmall
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.Badge
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -57,24 +35,19 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -85,1595 +58,370 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
 import ru.plumsoftware.finance.AppConfig
 import ru.plumsoftware.finance.R
-import ru.plumsoftware.finance.ui.ads.NativeAdContainer
-import ru.plumsoftware.finance.ui.ads.NativeAdSession
+import ru.plumsoftware.finance.domain.achievements.AchievementId
+import ru.plumsoftware.finance.domain.budget.BudgetMath
+import ru.plumsoftware.finance.domain.budget.DailyBudget
 import ru.plumsoftware.finance.domain.model.AppSettings
 import ru.plumsoftware.finance.domain.model.Goal
-import ru.plumsoftware.finance.domain.model.SmartAsset
-import ru.plumsoftware.finance.domain.model.SmartAssetStatus
-import ru.plumsoftware.finance.domain.model.StreakData
-import ru.plumsoftware.finance.domain.model.daysLeft
-import ru.plumsoftware.finance.domain.model.isOverdue
 import ru.plumsoftware.finance.domain.model.progress
-import ru.plumsoftware.finance.presentation.achievements.AchievementKeys
-import ru.plumsoftware.finance.presentation.notifications.NotificationsViewModel
-import ru.plumsoftware.finance.presentation.common.MoneyFormat
-import ru.plumsoftware.finance.presentation.common.hasPendingPermissions
-import ru.plumsoftware.finance.presentation.permissions.PermissionsBottomSheet
-import ru.plumsoftware.finance.domain.model.Account
 import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
-import ru.plumsoftware.finance.ui.components.AppCard
-import ru.plumsoftware.finance.ui.components.MascotImage
-import ru.plumsoftware.finance.ui.components.SectionLabel
-import ru.plumsoftware.finance.ui.components.ios.IosTextButton
-import ru.plumsoftware.finance.ui.theme.Dimens
-import ru.plumsoftware.finance.ui.theme.IosGreen
-import ru.plumsoftware.finance.ui.theme.MascotEmotion
-import ru.plumsoftware.finance.ui.theme.MascotSize
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
-import kotlin.math.roundToInt
-import android.content.Intent
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.material.icons.rounded.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.unit.sp
-import ru.plumsoftware.finance.data.util.startOfDayMillis
-import ru.plumsoftware.finance.domain.model.*
-import ru.plumsoftware.finance.presentation.export.ExportViewModel
-import java.util.*
+import ru.plumsoftware.finance.presentation.common.DateFmt
+import ru.plumsoftware.finance.presentation.common.Money
+import ru.plumsoftware.finance.presentation.common.TxItem
+import ru.plumsoftware.finance.presentation.common.hasPendingPermissions
+import ru.plumsoftware.finance.presentation.permissions.PermissionsBottomSheet
+import ru.plumsoftware.finance.ui.ads.NativeAdContainer
+import ru.plumsoftware.finance.ui.ads.NativeAdSession
+import ru.plumsoftware.finance.ui.ds.BlockGap
+import ru.plumsoftware.finance.ui.ds.ButtonTonal
+import ru.plumsoftware.finance.ui.ds.CardDivider
+import ru.plumsoftware.finance.ui.ds.DashedCard
+import ru.plumsoftware.finance.ui.ds.DayState
+import ru.plumsoftware.finance.ui.ds.DayStrip
+import ru.plumsoftware.finance.ui.ds.EmojiBadge
+import ru.plumsoftware.finance.ui.ds.FCard
+import ru.plumsoftware.finance.ui.ds.FProgressBar
+import ru.plumsoftware.finance.ui.ds.FitText
+import ru.plumsoftware.finance.ui.ds.HSpace
+import ru.plumsoftware.finance.ui.ds.IconButton44
+import ru.plumsoftware.finance.ui.ds.InkCard
+import ru.plumsoftware.finance.ui.ds.Kopi
+import ru.plumsoftware.finance.ui.ds.KopiImage
+import ru.plumsoftware.finance.ui.ds.ListRow
+import ru.plumsoftware.finance.ui.ds.MascotTip
+import ru.plumsoftware.finance.ui.ds.ProgressRing
+import ru.plumsoftware.finance.ui.ds.RootBottomInset
+import ru.plumsoftware.finance.ui.ds.ScreenPadding
+import ru.plumsoftware.finance.ui.ds.SectionTitle
+import ru.plumsoftware.finance.ui.ds.VSpace
+import ru.plumsoftware.finance.ui.ds.masked
+import ru.plumsoftware.finance.ui.ds.LocalAmountVisibility
+import ru.plumsoftware.finance.ui.theme.FinanceTheme
+import ru.plumsoftware.finance.ui.theme.FinanceType
+import java.time.LocalTime
 
-@OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(
     onOpenSmartSavingsClick: () -> Unit = {},
     onOpenGoalsClick: () -> Unit = {},
     onOpenHistoryClick: () -> Unit = {},
-    onOpenAnalyticsClick: () -> Unit = {},
     onOpenLimitsClick: () -> Unit = {},
     onOpenAchievementsClick: () -> Unit = {},
     onOpenNotificationsClick: () -> Unit = {},
+    onOpenRecurringClick: () -> Unit = {},
+    onOpenAccountsClick: () -> Unit = {},
     onCreateAssetClick: () -> Unit = {},
     onCreateGoalClick: () -> Unit = {},
     onGoalClick: (Long) -> Unit = {},
-    viewModel: DashboardViewModel = koinViewModel(),
-    notificationsViewModel: NotificationsViewModel = koinViewModel(),
-    exportViewModel: ExportViewModel = koinViewModel(),
+    onAddTransaction: (scan: Boolean, recent: Boolean) -> Unit = { _, _ -> },
+    onEditTransaction: (Long) -> Unit = {},
+    viewModel: HomeViewModel = koinViewModel(),
     settingsRepository: SettingsRepository = koinInject(),
     accountRepository: AccountRepository = koinInject(),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val lifecycleOwner = androidx.compose.ui.platform.LocalLifecycleOwner.current
-    val settings by settingsRepository.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val unreadCount by notificationsViewModel.unreadCount.collectAsStateWithLifecycle()
-    val exportState by exportViewModel.exportState.collectAsStateWithLifecycle()
+    val settings by settingsRepository.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
+    val c = FinanceTheme.colors
 
-    val snackbarHost = remember { SnackbarHostState() }
+    // region Первый запуск: разрешения и начальный баланс (§6.14)
+    val lifecycleOwner = LocalLifecycleOwner.current
     var showPermissionsSheet by remember { mutableStateOf(false) }
-    var showInitialBalanceDialog by remember { mutableStateOf(false) }
-    var showEditBalanceDialog by remember { mutableStateOf(false) }
-    var initialBalanceDigits by remember { mutableStateOf("") }
-    var editBalanceDigits by remember { mutableStateOf("") }
-    var isSavingInitialBalance by remember { mutableStateOf(false) }
-    var isSavingEditBalance by remember { mutableStateOf(false) }
+    var showInitialBalance by remember { mutableStateOf(false) }
+    var resumeTick by remember { mutableIntStateOf(0) }
     var settingsLoaded by remember { mutableStateOf(false) }
-    var permissionResumeTick by remember { mutableIntStateOf(0) }
 
-    var includeSavings by rememberSaveable { mutableStateOf(true) }
-    var targetAccountIdForEdit by remember { mutableStateOf<Long?>(null) }
-
-    val pagerState = rememberPagerState(
-        initialPage = 0,
-        pageCount = { state.accountsData.size + 1 }
-    )
-
-    var showShareSheet by rememberSaveable { mutableStateOf(false) }
-    var selectedFormat by rememberSaveable { mutableStateOf(ExportFormat.PDF) }
-    var selectedPeriod by rememberSaveable { mutableStateOf(ExportPeriod.THIS_MONTH) }
-    var customStartMillis by rememberSaveable { mutableStateOf<Long?>(null) }
-    var customEndMillis by rememberSaveable { mutableStateOf<Long?>(null) }
-    var showDateRangePicker by rememberSaveable { mutableStateOf(false) }
-
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
-    LaunchedEffect(exportState) {
-        when (val expState = exportState) {
-            is ExportState.Success -> {
-                val uri = expState.shareUri
-                if (uri != null) {
-                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                        type = selectedFormat.mimeType
-                        putExtra(Intent.EXTRA_STREAM, uri)
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    context.startActivity(
-                        Intent.createChooser(
-                            shareIntent,
-                            context.getString(R.string.export_share_title),
-                        ),
-                    )
-                    exportViewModel.resetState()
-                    showShareSheet = false
-                }
-            }
-            is ExportState.Error -> {
-                val errorMsg = expState.message.ifBlank { context.getString(R.string.export_error_generic) }
-                snackbarHost.showSnackbar(errorMsg)
-                exportViewModel.resetState()
-            }
-            else -> Unit
-        }
-    }
-
-    DisposableEffect(lifecycleOwner, settings.permissionsPromptHidden) {
-        val observer = LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_START -> {
-                    if (!settings.permissionsPromptHidden && hasPendingPermissions(context)) {
-                        showPermissionsSheet = true
-                    }
-                }
-                Lifecycle.Event.ON_RESUME -> permissionResumeTick++
-                else -> Unit
-            }
-        }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) resumeTick++ }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
-
-    LaunchedEffect(settings.permissionsPromptHidden, permissionResumeTick) {
-        if (settings.permissionsPromptHidden || !hasPendingPermissions(context)) {
-            showPermissionsSheet = false
-        } else if (hasPendingPermissions(context)) {
-            showPermissionsSheet = true
-        }
-    }
-
     LaunchedEffect(Unit) {
         settingsRepository.settings.first()
         settingsLoaded = true
     }
-
-    LaunchedEffect(
-        settings.initialBalancePromptCompleted,
-        settingsLoaded,
-        state.isLoading,
-        showPermissionsSheet,
-    ) {
-        if (!settingsLoaded || state.isLoading) {
-            showInitialBalanceDialog = false
-            return@LaunchedEffect
-        }
-        if (settings.initialBalancePromptCompleted) {
-            showInitialBalanceDialog = false
-            return@LaunchedEffect
-        }
-
-        val permissionsReady = !hasPendingPermissions(context) && !showPermissionsSheet
-        if (!permissionsReady) {
-            showInitialBalanceDialog = false
-            return@LaunchedEffect
-        }
-
-        val account = accountRepository.getDefault() ?: return@LaunchedEffect
-        val alreadyConfigured = account.initialBalanceMinor != 0L || state.totalBalanceMinor != 0L
-        if (alreadyConfigured) {
-            settingsRepository.update { it.copy(initialBalancePromptCompleted = true) }
-            showInitialBalanceDialog = false
-            return@LaunchedEffect
-        }
-
-        showInitialBalanceDialog = true
+    LaunchedEffect(settingsLoaded, settings.permissionsPromptHidden, resumeTick) {
+        if (!settingsLoaded) return@LaunchedEffect
+        showPermissionsSheet = !settings.permissionsPromptHidden && hasPendingPermissions(context)
     }
-
-    if (showInitialBalanceDialog) {
-        InitialBalanceDialog(
+    LaunchedEffect(settingsLoaded, settings.initialBalancePromptCompleted, state.isLoading, showPermissionsSheet) {
+        if (!settingsLoaded || state.isLoading || settings.initialBalancePromptCompleted) {
+            showInitialBalance = false
+            return@LaunchedEffect
+        }
+        if (showPermissionsSheet || hasPendingPermissions(context) && !settings.permissionsPromptHidden) return@LaunchedEffect
+        val account = accountRepository.getDefault() ?: return@LaunchedEffect
+        if (account.initialBalanceMinor != 0L || state.totalBalanceMinor != 0L) {
+            settingsRepository.update { it.copy(initialBalancePromptCompleted = true) }
+            return@LaunchedEffect
+        }
+        showInitialBalance = true
+    }
+    if (showPermissionsSheet) {
+        PermissionsBottomSheet(onDismiss = { dontShowAgain ->
+            showPermissionsSheet = false
+            if (dontShowAgain) scope.launch { settingsRepository.update { it.copy(permissionsPromptHidden = true) } }
+        })
+    }
+    if (showInitialBalance) {
+        AmountEntrySheet(
             title = stringResource(R.string.initial_balance_prompt_title),
             message = stringResource(R.string.initial_balance_prompt_message),
-            currencyCode = state.currencyCode,
-            amountDigits = initialBalanceDigits,
-            isSaving = isSavingInitialBalance,
+            confirmLabel = stringResource(R.string.save),
             dismissLabel = stringResource(R.string.initial_balance_prompt_skip),
-            onDigit = { digit ->
-                initialBalanceDigits = normalizeBalanceDigits(initialBalanceDigits + digit)
-            },
-            onBackspace = {
-                initialBalanceDigits = initialBalanceDigits.dropLast(1)
-            },
-            onSave = {
-                scope.launch {
-                    isSavingInitialBalance = true
-                    val amountMinor = MoneyFormat.majorDigitsToMinor(
-                        initialBalanceDigits.ifBlank { "0" },
-                        state.currencyCode,
-                    )
-                    val account = accountRepository.getDefault()
-                    if (account != null && amountMinor > 0L) {
-                        accountRepository.upsert(
-                            account.copy(initialBalanceMinor = amountMinor),
-                        )
-                    }
-                    settingsRepository.update {
-                        it.copy(initialBalancePromptCompleted = true)
-                    }
-                    isSavingInitialBalance = false
-                    showInitialBalanceDialog = false
-                    initialBalanceDigits = ""
-                }
-            },
-            onDismiss = {
-                scope.launch {
-                    settingsRepository.update {
-                        it.copy(initialBalancePromptCompleted = true)
-                    }
-                    showInitialBalanceDialog = false
-                    initialBalanceDigits = ""
-                }
-            },
-        )
-    }
-
-    if (showEditBalanceDialog) {
-        InitialBalanceDialog(
-            title = stringResource(R.string.edit_balance_dialog_title),
-            message = stringResource(R.string.edit_balance_dialog_message),
             currencyCode = state.currencyCode,
-            amountDigits = editBalanceDigits,
-            isSaving = isSavingEditBalance,
-            dismissLabel = stringResource(R.string.cancel),
-            onDigit = { digit ->
-                editBalanceDigits = normalizeBalanceDigits(editBalanceDigits + digit)
-            },
-            onBackspace = {
-                editBalanceDigits = editBalanceDigits.dropLast(1)
-            },
-            onSave = {
+            onConfirm = { minor ->
                 scope.launch {
-                    isSavingEditBalance = true
-                    val enteredMinor = MoneyFormat.majorDigitsToMinor(
-                        editBalanceDigits.ifBlank { "0" },
-                        state.currencyCode,
-                    )
-                    val accountId = targetAccountIdForEdit ?: settings.selectedAccountId
-                    val account = accountRepository.getById(accountId)
-                        ?: accountRepository.getDefault()
-                    if (account != null) {
-                        val currentBalance = state.accountsData.find { it.accountId == account.id }?.balanceMinor ?: 0L
-                        val transactionsDelta = currentBalance - account.initialBalanceMinor
-                        val newInitialBalance = (enteredMinor - transactionsDelta).coerceAtLeast(0L)
-                        accountRepository.upsert(
-                            account.copy(initialBalanceMinor = newInitialBalance),
-                        )
-                    }
-                    isSavingEditBalance = false
-                    showEditBalanceDialog = false
-                    editBalanceDigits = ""
+                    accountRepository.getDefault()?.let { accountRepository.upsert(it.copy(initialBalanceMinor = minor)) }
+                    settingsRepository.update { it.copy(initialBalancePromptCompleted = true) }
+                    showInitialBalance = false
                 }
             },
             onDismiss = {
-                showEditBalanceDialog = false
-                editBalanceDigits = ""
-            },
-        )
-    }
-
-    if (showPermissionsSheet) {
-        PermissionsBottomSheet(
-            onDismiss = { dontShowAgain ->
-                showPermissionsSheet = false
-                if (dontShowAgain) {
-                    scope.launch {
-                        settingsRepository.update { it.copy(permissionsPromptHidden = true) }
-                    }
+                scope.launch {
+                    settingsRepository.update { it.copy(initialBalancePromptCompleted = true) }
+                    showInitialBalance = false
                 }
             },
         )
     }
+    // endregion
 
-    val dateRangePickerState = rememberDateRangePickerState(
-        initialSelectedStartDateMillis = customStartMillis,
-        initialSelectedEndDateMillis = customEndMillis,
-        initialDisplayMode = DisplayMode.Picker,
-    )
+    val shareText = stringResource(R.string.home_share_app_text, AppConfig.storeListingUrl)
+    val shareTitle = stringResource(R.string.home_share_app)
 
-    if (showDateRangePicker) {
-        ModalBottomSheet(
-            onDismissRequest = { showDateRangePicker = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            containerColor = colors.surface,
-            shape = RoundedCornerShape(topStart = Dimens.RadiusXl, topEnd = Dimens.RadiusXl),
-            dragHandle = {
-                Box(
-                    modifier = Modifier
-                        .padding(top = Dimens.SpacingS)
-                        .size(width = Dimens.bottomSheetHandleWidth, height = Dimens.bottomSheetHandleHeight)
-                        .clip(RoundedCornerShape(Dimens.RadiusPill))
-                        .background(colors.surfaceVariant),
-                )
-            },
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight()
-                    .heightIn(min = 580.dp)
-                    .navigationBarsPadding(),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = Dimens.SpacingL,
-                            end = Dimens.SpacingM,
-                            top = Dimens.SpacingM,
-                            bottom = Dimens.SpacingXs,
-                        ),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(R.string.pick_date_range),
-                        style = typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.weight(1f),
-                    )
-                    IconButton(onClick = { showDateRangePicker = false }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = stringResource(R.string.action_cancel),
-                            tint = colors.onSurfaceVariant,
-                        )
-                    }
-                }
-
-                DateRangePicker(
-                    state = dateRangePickerState,
-                    title = null,
-                    headline = null,
-                    showModeToggle = false,
-                    colors = DatePickerDefaults.colors(
-                        containerColor = colors.surface,
-                        titleContentColor = colors.onSurfaceVariant,
-                        headlineContentColor = colors.onSurface,
-                        weekdayContentColor = colors.onSurfaceVariant,
-                        selectedDayContainerColor = colors.primary,
-                        selectedDayContentColor = Color.White,
-                        dayInSelectionRangeContainerColor = colors.primary.copy(alpha = 0.12f),
-                        dayInSelectionRangeContentColor = colors.primary,
-                        todayContentColor = colors.primary,
-                        todayDateBorderColor = colors.primary,
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                )
-
-                val todayStart = startOfDayMillis(System.currentTimeMillis())
-                val presets = listOf(
-                    R.string.preset_week to (startOfDayOffset(Calendar.DAY_OF_YEAR, -7) to todayStart),
-                    R.string.preset_month to (startOfDayOffset(Calendar.MONTH, -1) to todayStart),
-                    R.string.preset_3m to (startOfDayOffset(Calendar.MONTH, -3) to todayStart),
-                    R.string.preset_year to (startOfDayOffset(Calendar.YEAR, -1) to todayStart),
-                )
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = Dimens.SpacingL),
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
-                    modifier = Modifier.padding(bottom = Dimens.SpacingS),
-                ) {
-                    items(presets, key = { it.first }) { (labelRes, range) ->
-                        FilterChip(
-                            selected = false,
-                            onClick = {
-                                dateRangePickerState.setSelection(
-                                    startOfDayMillis(range.first),
-                                    startOfDayMillis(range.second),
-                                )
-                            },
-                            label = { Text(text = stringResource(labelRes), style = typography.bodySmall) },
-                            shape = RoundedCornerShape(Dimens.RadiusPill),
-                            border = FilterChipDefaults.filterChipBorder(
-                                enabled = true,
-                                selected = false,
-                                borderColor = colors.surfaceVariant,
-                                selectedBorderColor = Color.Transparent,
-                            ),
-                            colors = FilterChipDefaults.filterChipColors(
-                                containerColor = colors.surfaceVariant,
-                                labelColor = colors.onSurfaceVariant,
-                            ),
-                        )
-                    }
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Dimens.SpacingL, vertical = Dimens.SpacingM),
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
-                ) {
-                    OutlinedButton(
-                        onClick = { showDateRangePicker = false },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(Dimens.ButtonHeight),
-                        shape = RoundedCornerShape(Dimens.RadiusL),
-                        border = BorderStroke(Dimens.borderThin, colors.surfaceVariant),
-                    ) {
-                        Text(text = stringResource(R.string.action_cancel), color = colors.onSurface)
-                    }
-
-                    Button(
-                        onClick = {
-                            val startMs = dateRangePickerState.selectedStartDateMillis
-                            val endMs = dateRangePickerState.selectedEndDateMillis
-                            if (startMs != null && endMs != null) {
-                                customStartMillis = startOfDayMillis(startMs)
-                                customEndMillis = startOfDayMillis(endMs)
-                            }
-                            showDateRangePicker = false
-                        },
-                        enabled = dateRangePickerState.selectedStartDateMillis != null &&
-                                dateRangePickerState.selectedEndDateMillis != null,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(Dimens.ButtonHeight),
-                        shape = RoundedCornerShape(Dimens.RadiusL),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.primary,
-                            disabledContainerColor = colors.primary.copy(alpha = 0.3f),
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(0.dp),
-                    ) {
-                        Text(text = stringResource(R.string.action_apply), color = Color.White)
-                    }
-                }
-            }
-        }
-    }
-
-    if (showShareSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showShareSheet = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false),
-            containerColor = colors.surface,
-            shape = RoundedCornerShape(topStart = Dimens.RadiusXl, topEnd = Dimens.RadiusXl),
-            dragHandle = {
-                Box(
-                    modifier = Modifier
-                        .padding(top = Dimens.SpacingS)
-                        .size(width = Dimens.bottomSheetHandleWidth, height = Dimens.bottomSheetHandleHeight)
-                        .clip(RoundedCornerShape(Dimens.RadiusPill))
-                        .background(colors.surfaceVariant),
-                )
-            },
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = Dimens.SpacingL, vertical = Dimens.SpacingM),
-                verticalArrangement = Arrangement.spacedBy(Dimens.SpacingL),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = stringResource(R.string.export_share_title),
-                        style = typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    IconButton(onClick = { showShareSheet = false }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Close,
-                            contentDescription = stringResource(R.string.action_cancel),
-                            tint = colors.onSurfaceVariant,
-                        )
-                    }
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs)) {
-                    SectionLabel(text = stringResource(R.string.export_section_format), withBottomSpacing = false)
-                    AppCard(modifier = Modifier.fillMaxWidth()) {
-                        val availableFormats = ExportFormat.entries.filter { it != ExportFormat.JSON }
-                        availableFormats.forEachIndexed { index, format ->
-                            ShareSelectionRow(
-                                label = stringResource(format.labelRes),
-                                selected = selectedFormat == format,
-                                onClick = { selectedFormat = format },
-                            )
-                            if (index < availableFormats.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(start = Dimens.SpacingM),
-                                    color = colors.surfaceVariant,
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs)) {
-                    SectionLabel(text = stringResource(R.string.export_section_period), withBottomSpacing = false)
-                    AppCard(modifier = Modifier.fillMaxWidth()) {
-                        ExportPeriod.entries.forEachIndexed { index, period ->
-                            ShareSelectionRow(
-                                label = stringResource(period.labelRes),
-                                selected = selectedPeriod == period,
-                                onClick = {
-                                    selectedPeriod = period
-                                    if (period == ExportPeriod.CUSTOM) {
-                                        showDateRangePicker = true
-                                    }
-                                },
-                            )
-                            if (index < ExportPeriod.entries.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(start = Dimens.SpacingM),
-                                    color = colors.surfaceVariant,
-                                )
-                            }
-                        }
-                    }
-
-                    if (selectedPeriod == ExportPeriod.CUSTOM && customStartMillis != null && customEndMillis != null) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = Dimens.SpacingXs)
-                                .clip(RoundedCornerShape(Dimens.RadiusM))
-                                .background(colors.primary.copy(alpha = 0.08f))
-                                .clickable { showDateRangePicker = true }
-                                .padding(horizontal = Dimens.SpacingM, vertical = Dimens.SpacingXs),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.DateRange,
-                                contentDescription = null,
-                                tint = colors.primary,
-                                modifier = Modifier.size(Dimens.IconSizeS),
-                            )
-                            Text(
-                                text = stringResource(
-                                    R.string.date_range_label,
-                                    formatEpochMillis(customStartMillis!!, "d MMM"),
-                                    formatEpochMillis(customEndMillis!!, "d MMM yyyy"),
-                                ),
-                                style = typography.bodySmall,
-                                color = colors.primary,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(horizontal = Dimens.SpacingXs),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            IconButton(
-                                onClick = {
-                                    selectedPeriod = ExportPeriod.THIS_MONTH
-                                    customStartMillis = null
-                                    customEndMillis = null
-                                },
-                                modifier = Modifier.size(Dimens.IconSizeL),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Rounded.Close,
-                                    contentDescription = stringResource(R.string.cd_clear_date_range),
-                                    tint = colors.primary,
-                                    modifier = Modifier.size(Dimens.IconSizeS),
-                                )
-                            }
-                        }
-                    }
-                }
-
-                val isExporting = exportState is ExportState.Loading
-                Button(
-                    onClick = {
-                        exportViewModel.exportAndShare(
-                            format = selectedFormat,
-                            period = selectedPeriod,
-                            customStartMillis = customStartMillis,
-                            customEndMillis = customEndMillis,
-                        )
-                    },
-                    enabled = !isExporting && (selectedPeriod != ExportPeriod.CUSTOM || (customStartMillis != null && customEndMillis != null)),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(Dimens.ButtonHeight),
-                    shape = RoundedCornerShape(Dimens.RadiusL),
-                    colors = ButtonDefaults.buttonColors(containerColor = colors.primary),
-                    elevation = ButtonDefaults.buttonElevation(0.dp),
-                ) {
-                    if (isExporting) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Rounded.Share,
-                            contentDescription = null,
-                            modifier = Modifier.size(Dimens.IconSizeM),
-                        )
-                        Spacer(Modifier.width(Dimens.SpacingXs))
-                        Text(
-                            text = stringResource(R.string.export_share),
-                            style = typography.titleMedium,
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    LaunchedEffect(state.snackbarMessage) {
-        state.snackbarMessage?.let {
-            snackbarHost.showSnackbar(it)
-            viewModel.clearSnackbar()
-        }
-    }
-
-    val listState = rememberSaveable(saver = androidx.compose.foundation.lazy.LazyListState.Saver) {
-        androidx.compose.foundation.lazy.LazyListState()
-    }
-
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = colors.background,
-        snackbarHost = { SnackbarHost(snackbarHost) },
-    ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize().padding(top = Dimens.SpacingXs),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingL),
-        ) {
-            item {
-                GreetingHeader(
-                    unreadCount = unreadCount,
-                    onNotificationsClick = onOpenNotificationsClick,
-                    onShareClick = { showShareSheet = true },
-                )
-            }
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.SpacingL)
-                ) {
-                    AccountsCarousel(
-                        accountsData = state.accountsData,
-                        totalGoalSavingsMinor = state.totalGoalSavingsMinor,
-                        defaultCurrencyCode = state.currencyCode,
-                        includeSavings = includeSavings,
-                        onIncludeSavingsChange = { includeSavings = it },
-                        pagerState = pagerState,
-                        onMonthClick = onOpenAnalyticsClick,
-                        onBalanceClick = { cardData ->
-                            if (cardData != null) {
-                                targetAccountIdForEdit = cardData.accountId
-                                editBalanceDigits = MoneyFormat.minorToMajorDigits(
-                                    amountMinor = cardData.balanceMinor,
-                                    currencyCode = cardData.currencyCode,
-                                ).takeIf { it != "0" }.orEmpty()
-                                showEditBalanceDialog = true
-                            } else {
-                                scope.launch {
-                                    val errorMsg = try {
-                                        context.getString(R.string.edit_balance_combined_error)
-                                    } catch (e: Exception) {
-                                        "Выберите конкретный счет для изменения баланса"
-                                    }
-                                    snackbarHost.showSnackbar(errorMsg)
-                                }
-                            }
-                        },
-                    )
-
-                    if (!NativeAdSession.isDismissed(AppConfig.nativeHome)) {
-                        NativeAdContainer(adUnitId = AppConfig.nativeHome)
-                    }
-                }
-            }
-            item {
-                HomeQuickActionsRow(
-                    onLimitsClick = onOpenLimitsClick,
-                    onOperationsClick = onOpenHistoryClick,
-                    onAchievementsClick = onOpenAchievementsClick,
-                    onGoalsClick = onOpenGoalsClick,
-                    hasBudgetWarnings = state.hasBudgetWarnings,
-                    operationCount = state.todayOperationsCount,
-                    unlockedAchievementsCount = state.unlockedAchievementsCount,
-                    goalsCount = state.activeGoalsCount,
-                    streak = state.streak,
-                )
-            }
-            item {
-                Column {
-                    SectionWithAction(
-                        title = stringResource(R.string.goals_home_section),
-                        actionLabel = stringResource(R.string.dashboard_see_all),
-                        onActionClick = onOpenGoalsClick,
-                    )
-                    state.featuredGoal?.let { featured ->
-                        HomeFeaturedGoalCard(
-                            goal = featured,
-                            currencyCode = state.currencyCode,
-                            onClick = { onGoalClick(featured.id) },
-                        )
-                    } ?: HomeCreateGoalCard(onClick = onCreateGoalClick)
-                }
-            }
-            item {
-                AnimatedVisibility(visible = state.hasBudgetWarnings) {
-                    BudgetWarningBanner(
-                        onClick = onOpenLimitsClick,
-                        onDismiss = viewModel::dismissWarning,
-                    )
-                }
-            }
-            if (state.insights.isNotEmpty()) {
-                item {
-                    InsightsSection(
-                        insights = state.insights,
-                        categoryMap = state.categoryMap,
-                        currencyCode = state.currencyCode,
-                    )
-                }
-            }
-            item {
-                Column {
-                    SectionWithAction(
-                        title = stringResource(R.string.smart_savings),
-                        actionLabel = stringResource(R.string.dashboard_see_all),
-                        onActionClick = onOpenSmartSavingsClick,
-                    )
-                    if (state.smartAssets.isEmpty()) {
-                        EmptyAssetCard(onClick = onCreateAssetClick)
-                    } else {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
-                                .padding(horizontal = Dimens.SpacingL),
-                            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
-                        ) {
-                            state.smartAssets.forEach { asset ->
-                                AssetMiniCard(
-                                    asset = asset,
-                                    currencyCode = state.currencyCode,
-                                    onRecordUsage = { viewModel.recordSmartUsage(asset.id) },
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            item {
-                Spacer(modifier = Modifier.height(Dimens.SpacingXl))
-            }
-        }
-    }
-}
-
-@Composable
-private fun AccountsCarousel(
-    accountsData: List<AccountDashboardData>,
-    totalGoalSavingsMinor: Long,
-    defaultCurrencyCode: String,
-    includeSavings: Boolean,
-    onIncludeSavingsChange: (Boolean) -> Unit,
-    pagerState: PagerState,
-    onMonthClick: () -> Unit,
-    onBalanceClick: (AccountDashboardData?) -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS)
-    ) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = Dimens.SpacingL),
-            pageSpacing = Dimens.SpacingS,
-        ) { page ->
-            val cardData = if (page == 0) {
-                val activeAccounts = if (includeSavings) {
-                    accountsData
-                } else {
-                    accountsData.filter { !it.isSavings }
-                }
-                val goalSavings = if (includeSavings) totalGoalSavingsMinor else 0L
-
-                AccountDashboardData(
-                    accountId = null,
-                    name = stringResource(R.string.total_budget),
-                    balanceMinor = activeAccounts.sumOf { it.balanceMinor } + goalSavings,
-                    currencyCode = defaultCurrencyCode,
-                    monthIncomeMinor = activeAccounts.sumOf { it.monthIncomeMinor },
-                    monthExpenseMinor = activeAccounts.sumOf { it.monthExpenseMinor },
-                    isSavings = false
-                )
-            } else {
-                accountsData.getOrNull(page - 1)
-            }
-
-            if (cardData != null) {
-                val context = LocalContext.current
-                val animatedBalance by animateFloatAsState(
-                    targetValue = cardData.balanceMinor.toFloat(),
-                    animationSpec = tween(durationMillis = 400),
-                    label = "home_balance_${page}",
-                )
-                val savingsRate = if (cardData.monthIncomeMinor > 0) {
-                    ((cardData.monthIncomeMinor - cardData.monthExpenseMinor).coerceAtLeast(0L).toFloat() / cardData.monthIncomeMinor)
-                        .coerceIn(0f, 1f)
-                } else {
-                    0f
-                }
-                val savingsPercent = (savingsRate * 100).roundToInt()
-                val monthLabel = SimpleDateFormat("LLLL yyyy", Locale.getDefault())
-                    .format(Date())
-                    .replaceFirstChar { it.uppercase() }
-
-                val balanceCardScale = 0.855f
-                val balancePadding = Dimens.SpacingL * balanceCardScale
-
-                AppCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { onBalanceClick(if (page == 0) null else cardData) },
-                ) {
-                    Column(
-                        modifier = Modifier.padding(balancePadding),
-                        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS * balanceCardScale),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs)
-                            ) {
-                                Text(
-                                    text = cardData.name,
-                                    style = typography.labelSmall,
-                                    color = colors.onSurfaceVariant,
-                                )
-                                if (cardData.isSavings) {
-                                    Box(
-                                        modifier = Modifier
-                                            .background(
-                                                colors.secondary.copy(alpha = 0.15f),
-                                                RoundedCornerShape(Dimens.RadiusPill)
-                                            )
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Text(
-                                            text = stringResource(R.string.savings_label),
-                                            style = typography.labelSmall.copy(fontSize = 9.sp),
-                                            color = colors.secondary,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                            }
-
-                            if (page == 0) {
-                                Row(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(Dimens.RadiusPill))
-                                        .background(colors.surfaceVariant.copy(alpha = 0.5f))
-                                        .clickable { onIncludeSavingsChange(!includeSavings) }
-                                        .padding(horizontal = Dimens.SpacingS, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = if (includeSavings) Icons.Rounded.CheckCircle else Icons.Rounded.Circle,
-                                        contentDescription = null,
-                                        tint = if (includeSavings) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.4f),
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Text(
-                                        text = if (includeSavings) stringResource(R.string.with_savings) else stringResource(R.string.without_savings),
-                                        style = typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                                        color = colors.primary,
-                                    )
-                                }
-                            } else {
-                                MonthSelector(
-                                    monthLabel = monthLabel,
-                                    onClick = onMonthClick,
-                                )
-                            }
-                        }
-                        Text(
-                            text = MoneyFormat.format(animatedBalance.roundToInt().toLong(), cardData.currencyCode),
-                            style = typography.displayMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        HorizontalDivider(
-                            color = colors.surfaceVariant,
-                            thickness = 1.dp,
-                            modifier = Modifier.padding(vertical = Dimens.SpacingS * balanceCardScale),
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            FinanceStat(
-                                icon = Icons.Rounded.ArrowUpward,
-                                tint = colors.secondary,
-                                label = stringResource(R.string.income),
-                                value = MoneyFormat.formatWithSignPrefix(
-                                    context,
-                                    cardData.monthIncomeMinor,
-                                    cardData.currencyCode,
-                                    isPositive = true,
-                                ),
-                            )
-                            FinanceStat(
-                                icon = Icons.Rounded.ArrowDownward,
-                                tint = colors.error,
-                                label = stringResource(R.string.expenses),
-                                value = MoneyFormat.format(cardData.monthExpenseMinor, cardData.currencyCode),
-                            )
-                        }
-                        if (savingsRate > 0f) {
-                            LinearProgressIndicator(
-                                progress = { savingsRate },
-                                color = colors.secondary,
-                                trackColor = colors.surfaceVariant,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(4.dp)
-                                    .clip(RoundedCornerShape(Dimens.RadiusPill)),
-                            )
-                            Text(
-                                text = stringResource(R.string.savings_rate_saved, savingsPercent),
-                                style = typography.labelSmall,
-                                color = colors.onSurfaceVariant,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        val pageCount = accountsData.size + 1
-        if (pageCount > 1) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                repeat(pageCount) { index ->
-                    val isSelected = pagerState.currentPage == index
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 4.dp)
-                            .size(if (isSelected) 8.dp else 6.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isSelected) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.3f)
-                            )
-                    )
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-private fun DashboardScreen(
-    onOpenSmartSavingsClick: () -> Unit = {},
-    onOpenGoalsClick: () -> Unit = {},
-    onOpenHistoryClick: () -> Unit = {},
-    onOpenAnalyticsClick: () -> Unit = {},
-    onOpenLimitsClick: () -> Unit = {},
-    onOpenAchievementsClick: () -> Unit = {},
-    onOpenNotificationsClick: () -> Unit = {},
-    onCreateAssetClick: () -> Unit = {},
-    onCreateGoalClick: () -> Unit = {},
-    onGoalClick: (Long) -> Unit = {},
-    viewModel: DashboardViewModel = koinViewModel(),
-) {
-    HomeScreen(
-        onOpenSmartSavingsClick = onOpenSmartSavingsClick,
-        onOpenGoalsClick = onOpenGoalsClick,
-        onOpenHistoryClick = onOpenHistoryClick,
-        onOpenAnalyticsClick = onOpenAnalyticsClick,
-        onOpenLimitsClick = onOpenLimitsClick,
-        onOpenAchievementsClick = onOpenAchievementsClick,
-        onOpenNotificationsClick = onOpenNotificationsClick,
-        onCreateAssetClick = onCreateAssetClick,
-        onCreateGoalClick = onCreateGoalClick,
-        onGoalClick = onGoalClick,
-        viewModel = viewModel,
-    )
-}
-
-@Composable
-private fun GreetingHeader(
-    unreadCount: Int,
-    onNotificationsClick: () -> Unit,
-    onShareClick: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
-    Column(
+    LazyColumn(
+        state = rememberLazyListState(),
         modifier = Modifier
-            .fillMaxWidth()
-            .background(colors.background)
-            .padding(top = Dimens.SpacingXxl),
+            .fillMaxSize()
+            .background(c.bg),
+        contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, bottom = RootBottomInset),
+        verticalArrangement = Arrangement.spacedBy(BlockGap),
     ) {
+        item(key = "header") {
+            HomeHeader(
+                streak = state.streak,
+                hasUnread = state.unreadNotifications > 0,
+                onStreak = onOpenAchievementsClick,
+                onShare = {
+                    val send = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, shareText)
+                    }
+                    context.startActivity(Intent.createChooser(send, shareTitle))
+                },
+                onBell = onOpenNotificationsClick,
+            )
+        }
+        item(key = "hero") {
+            val b = state.budget
+            if (b != null) HeroBlock(b, state.dayColors, state.currencyCode, state.today)
+            else NoBudgetHero(onSet = onOpenLimitsClick)
+        }
+        item(key = "quick") {
+            QuickActions(
+                achievementsUnlocked = state.achievementsUnlocked,
+                onScan = { onAddTransaction(true, false) },
+                onRepeat = { onAddTransaction(false, true) },
+                onLimits = onOpenLimitsClick,
+                onAchievements = onOpenAchievementsClick,
+            )
+        }
+        if (AppConfig.nativeHome.isNotBlank() && !NativeAdSession.isDismissed(AppConfig.nativeHome)) {
+            item(key = "ad") {
+                FCard(padding = PaddingValues(0.dp)) { NativeAdContainer(adUnitId = AppConfig.nativeHome) }
+            }
+        }
+        state.tip?.let { tip ->
+            item(key = "tip") {
+                SwipeableTip(text = kopiTipText(tip, state.currencyCode), onDismiss = viewModel::hideTipForToday)
+            }
+        }
+        if (state.upcoming.isNotEmpty()) {
+            item(key = "upcoming") { UpcomingCard(state, onMore = onOpenRecurringClick) }
+        }
+        item(key = "goals") {
+            GoalsStrip(state.goals, state.currencyCode, onAll = onOpenGoalsClick, onGoal = onGoalClick, onCreate = onCreateGoalClick)
+        }
+        item(key = "smart") {
+            SmartSavingsRow(state.smart, state.currencyCode, onOpen = onOpenSmartSavingsClick, onCreate = onCreateAssetClick)
+        }
+        item(key = "today") {
+            TodayCard(
+                ops = state.todayOps,
+                onAll = onOpenHistoryClick,
+                onAdd = { onAddTransaction(false, false) },
+                onOpen = onEditTransaction,
+            )
+        }
+        item(key = "accounts") {
+            AccountsRow(
+                count = state.accountsCount,
+                balance = state.totalBalanceMinor,
+                currency = state.currencyCode,
+                onOpen = onOpenAccountsClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun greeting(): String {
+    val h = LocalTime.now().hour
+    return stringResource(
+        when (h) {
+            in 5..11 -> R.string.home_greeting_morning
+            in 12..17 -> R.string.home_greeting_day
+            in 18..23 -> R.string.home_greeting_evening
+            else -> R.string.home_greeting_night
+        },
+    )
+}
+
+@Composable
+private fun HomeHeader(streak: Int, hasUnread: Boolean, onStreak: () -> Unit, onShare: () -> Unit, onBell: () -> Unit) {
+    val c = FinanceTheme.colors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(top = 12.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(greeting(), style = FinanceType.bodySmall, color = c.textSecondary)
+            Text(stringResource(R.string.nav_home), style = FinanceType.headline, color = c.textPrimary)
+        }
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            Modifier
+                .height(36.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(c.streakBg)
+                .clickable(role = Role.Button, onClick = onStreak)
+                .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
-                Text(
-                    text = greetingWithTime(),
-                    style = typography.bodyMedium,
-                    color = colors.onSurfaceVariant,
-                )
-                Text(
-                    text = stringResource(R.string.dashboard_title),
-                    style = typography.titleLarge.copy(fontSize = 28.sp),
-                    fontWeight = FontWeight.Black,
-                    color = colors.onSurface,
-                )
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
-            ) {
-                IconButton(onClick = onShareClick) {
-                    Icon(
-                        imageVector = Icons.Outlined.Share,
-                        contentDescription = stringResource(R.string.export_share),
-                        tint = colors.onSurfaceVariant,
-                        modifier = Modifier.size(Dimens.IconSizeM),
-                    )
-                }
-
-                BadgedBox(
-                    badge = {
-                        if (unreadCount > 0) {
-                            Badge {
-                                Text(
-                                    text = if (unreadCount > 99) {
-                                        stringResource(R.string.badge_count_overflow)
-                                    } else {
-                                        unreadCount.toString()
-                                    },
-                                    style = typography.labelSmall,
-                                )
-                            }
-                        }
-                    },
-                ) {
-                    IconButton(onClick = onNotificationsClick) {
-                        Icon(
-                            imageVector = Icons.Outlined.Notifications,
-                            contentDescription = stringResource(R.string.cd_notifications),
-                            tint = colors.onSurfaceVariant,
-                            modifier = Modifier.size(Dimens.IconSizeM),
-                        )
-                    }
-                }
-            }
+            Text("🔥 $streak", style = FinanceType.bodySmall.copy(fontWeight = FontWeight.Bold), color = c.streakText)
         }
+        HSpace(4.dp)
+        IconButton44(R.drawable.ic_share, stringResource(R.string.home_share_app), onShare, size = 40.dp)
+        IconButton44(R.drawable.ic_bell, stringResource(R.string.notifications), onBell, size = 40.dp, badge = hasUnread)
     }
 }
 
-@Composable
-private fun ShareSelectionRow(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = Dimens.SpacingM, vertical = Dimens.SpacingS),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            color = colors.onSurface,
-        )
-        if (selected) {
-            Icon(
-                imageVector = Icons.Rounded.Check,
-                contentDescription = null,
-                tint = colors.primary,
-                modifier = Modifier.size(Dimens.IconSizeM),
-            )
-        }
-    }
-}
+// region Hero (§6.1.2)
 
 @Composable
-private fun HomeStreakInfo(
-    streak: StreakData,
-    modifier: Modifier = Modifier,
-) {
-    if (streak.currentStreak == 0) return
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
-    ) {
-        Text(
-            text = stringResource(
-                R.string.streak_fire_format,
-                streak.currentStreak,
-                pluralStringResource(R.plurals.days_count, streak.currentStreak),
-            ),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = when {
-                streak.currentStreak >= 30 -> Color(0xFFFF9500)
-                streak.currentStreak >= 7 -> Color(0xFFFF3B30)
-                else -> MaterialTheme.colorScheme.onSurface
-            },
-        )
-        Text(
-            text = if (streak.todayHasActivity) {
-                stringResource(R.string.streak_today_done)
-            } else {
-                stringResource(R.string.streak_today_pending)
-            },
-            style = MaterialTheme.typography.labelSmall,
-            color = if (streak.todayHasActivity) {
-                Color(0xFF34C759)
-            } else {
-                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-            },
-        )
-    }
-}
-
-@Composable
-private fun greetingWithTime(): String {
-    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-    return when {
-        hour in 5..11 -> stringResource(R.string.greeting_morning)
-        hour in 12..17 -> stringResource(R.string.greeting_afternoon)
-        else -> stringResource(R.string.greeting_evening)
-    }
-}
-
-@Composable
-private fun HomeQuickActionsRow(
-    onLimitsClick: () -> Unit,
-    onOperationsClick: () -> Unit,
-    onAchievementsClick: () -> Unit,
-    onGoalsClick: () -> Unit,
-    hasBudgetWarnings: Boolean,
-    operationCount: Int,
-    unlockedAchievementsCount: Int,
-    goalsCount: Int,
-    streak: StreakData,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Dimens.SpacingL),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Max),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS)
-        ) {
-            HomeAchievementsQuickCard(
-                streak = streak,
-                unlockedCount = unlockedAchievementsCount,
-                onClick = onAchievementsClick,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-            )
-            HomeQuickActionCard(
-                title = stringResource(R.string.home_all_operations),
-                subtitle = stringResource(R.string.home_operations_count, operationCount),
-                icon = Icons.Outlined.History,
-                onClick = onOperationsClick,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-            )
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(IntrinsicSize.Max),
-            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS)
-        ) {
-            HomeLimitsQuickCard(
-                hasBudgetWarnings = hasBudgetWarnings,
-                onClick = onLimitsClick,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-            )
-            HomeQuickActionCard(
-                title = stringResource(R.string.goals_home_section),
-                subtitle = stringResource(R.string.home_goals_count, goalsCount),
-                icon = Icons.Outlined.Flag,
-                onClick = onGoalsClick,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-            )
-        }
-    }
-}
-
-@Composable
-private fun HomeLimitsQuickCard(
-    hasBudgetWarnings: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    AppCard(
-        modifier = modifier.fillMaxWidth(),
-        onClick = onClick,
-    ) {
-        Column(
-            modifier = Modifier.padding(Dimens.SpacingM),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
-        ) {
-            Icon(
-                imageVector = Icons.Rounded.DonutSmall,
-                contentDescription = null,
-                tint = if (hasBudgetWarnings) colors.error else colors.primary,
-                modifier = Modifier.size(Dimens.IconSizeM),
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs)) {
-                Text(
-                    text = stringResource(R.string.limits),
-                    style = typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = if (hasBudgetWarnings) {
-                        stringResource(R.string.budget_warning_title)
-                    } else {
-                        stringResource(R.string.current_month_limits)
-                    },
-                    style = typography.bodySmall,
-                    color = if (hasBudgetWarnings) colors.error else colors.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun HomeAchievementsQuickCard(
-    streak: StreakData,
-    unlockedCount: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val streakBackground = when {
-        streak.currentStreak >= 30 -> Color(0xFFFF9500).copy(alpha = 0.12f)
-        streak.currentStreak >= 7 -> Color(0xFFFF3B30).copy(alpha = 0.10f)
-        streak.currentStreak > 0 -> colors.surface
-        else -> Color.Transparent
-    }
-    AppCard(
-        modifier = modifier,
-        onClick = onClick,
-    ) {
-        Column (
-            modifier = Modifier
-                .clip(RoundedCornerShape(Dimens.RadiusL))
-                .background(streakBackground)
-                .padding(Dimens.SpacingM)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
-        ) {
-            MascotImage(
-                emotion = MascotEmotion.HAPPY,
-                modifier = Modifier.size(48.dp),
-            )
-            Column(
+private fun HeroBlock(b: DailyBudget, dayColors: List<BudgetMath.DayColor>, currency: String, today: java.time.LocalDate) {
+    val c = FinanceTheme.colors
+    InkCard(radius = 28.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(if (b.exhausted) R.string.home_budget_exhausted else R.string.home_can_spend_today),
+                style = FinanceType.bodySmall,
+                color = c.onInkSecondary,
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs)
+            )
+            Box(
+                Modifier
+                    .background(Color.White.copy(alpha = 0.10f), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.achievements_title),
-                    style = typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                    pluralStringResource(R.plurals.pl_days_to_month_end, b.daysLeft, b.daysLeft),
+                    style = FinanceType.caption.copy(fontWeight = FontWeight.SemiBold),
+                    color = Color.White,
                 )
-                if (streak.currentStreak > 0) {
-                    HomeStreakInfo(streak = streak)
-                } else {
-                    Text(
-                        text = stringResource(
-                            R.string.home_achievements_count,
-                            unlockedCount,
-                            12,
-                        ),
-                        style = typography.bodySmall,
-                        color = colors.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
             }
         }
-    }
-}
-
-@Composable
-private fun HomeQuickActionCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    AppCard(
-        modifier = modifier.fillMaxWidth(),
-        onClick = onClick,
-    ) {
-        Column(
-            modifier = Modifier.padding(Dimens.SpacingM),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = colors.primary,
-                modifier = Modifier.size(Dimens.IconSizeM),
-            )
-            Text(
-                text = title,
-                style = typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = subtitle,
-                style = typography.bodySmall,
-                color = colors.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-@Composable
-private fun MonthSelector(
-    monthLabel: String,
-    onClick: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
-    Row(
-        modifier = Modifier.clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
-    ) {
+        VSpace(6.dp)
+        val heroAmount = if (b.exhausted) -b.monthOverspend else b.left
+        val visibility = LocalAmountVisibility.current
         Text(
-            text = monthLabel,
-            style = typography.bodyMedium,
-            color = colors.primary,
+            masked(Money.formatRounded(heroAmount, currency)),
+            modifier = Modifier.clickable(
+                enabled = visibility.hidden,
+                onClickLabel = stringResource(R.string.home_show),
+                onClick = visibility.toggle,
+            ),
+            style = FinanceType.displayHero,
+            color = if (heroAmount < 0) c.onInkDangerText else Color.White,
         )
-        Icon(
-            imageVector = Icons.Outlined.KeyboardArrowDown,
-            contentDescription = null,
-            tint = colors.primary,
-            modifier = Modifier.size(Dimens.IconSizeS),
-        )
-    }
-}
-
-@Composable
-private fun FinanceStat(
-    icon: ImageVector,
-    tint: Color,
-    label: String,
-    value: String,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
-    Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs)) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs),
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = tint,
-                modifier = Modifier.size(Dimens.IconSizeS),
-            )
-            Text(
-                text = value,
-                style = typography.bodyMedium,
-                color = tint,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
         Text(
-            text = label,
-            style = typography.labelSmall,
-            color = colors.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun BudgetWarningBanner(
-    onClick: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
-    AppCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Dimens.SpacingL)
-            .clickable(onClick = onClick),
-        containerColor = colors.error.copy(alpha = 0.08f),
-        borderColor = colors.error.copy(alpha = 0.3f),
-    ) {
-        Row(
-            modifier = Modifier.padding(Dimens.SpacingM),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.WarningAmber,
-                contentDescription = null,
-                tint = colors.error,
-                modifier = Modifier.size(Dimens.IconSizeM),
-            )
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = Dimens.SpacingS),
-            ) {
-                Text(
-                    text = stringResource(R.string.budget_warning_title),
-                    style = typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colors.error,
-                )
-                Text(
-                    text = stringResource(R.string.budget_warning_body),
-                    style = typography.bodySmall,
-                    color = colors.onSurfaceVariant,
-                )
-            }
-            IconButton(onClick = onDismiss) {
-                Icon(
-                    imageVector = Icons.Outlined.Close,
-                    contentDescription = stringResource(R.string.cd_close),
-                    tint = colors.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SectionWithAction(
-    title: String,
-    actionLabel: String,
-    onActionClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(end = Dimens.SpacingS, bottom = Dimens.SpacingXs),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        SectionLabel(text = title, withBottomSpacing = false)
-        IosTextButton(
-            text = actionLabel,
-            onClick = onActionClick,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
-}
-
-@Composable
-private fun EmptyAssetCard(onClick: () -> Unit) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val dashEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
-    val cornerRadius = Dimens.RadiusL
-
-    AppCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Dimens.SpacingL)
-            .drawBehind {
-                drawRoundRect(
-                    color = colors.primary.copy(alpha = 0.45f),
-                    cornerRadius = CornerRadius(cornerRadius.toPx()),
-                    style = Stroke(width = 2.dp.toPx(), pathEffect = dashEffect),
+            if (b.exhausted) {
+                stringResource(R.string.home_month_overspend, masked(Money.formatRounded(b.monthOverspend, currency)))
+            } else {
+                stringResource(
+                    R.string.home_spent_of_daily,
+                    masked(Money.formatRounded(b.spentToday, currency)),
+                    masked(Money.formatRounded(b.daily.coerceAtLeast(0), currency)),
                 )
             },
-        onClick = onClick,
-    ) {
-        Row(
-            modifier = Modifier.padding(Dimens.SpacingM),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Add,
-                contentDescription = null,
-                tint = colors.primary,
-                modifier = Modifier.size(Dimens.IconSizeM),
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXxs)) {
+            style = FinanceType.bodySmall,
+            color = c.onInkSecondary,
+        )
+        VSpace(12.dp)
+        val ratio = b.todayRatio
+        FProgressBar(
+            progress = ratio,
+            color = when {
+                ratio > 1f || b.exhausted -> c.onInkDanger
+                ratio >= 0.75f -> c.onInkWarning
+                else -> c.onInkBar
+            },
+            track = Color.White.copy(alpha = 0.14f),
+            height = 6.dp,
+        )
+        VSpace(14.dp)
+        DayStrip(
+            days = dayColors.map {
+                when (it) {
+                    BudgetMath.DayColor.NORMAL -> DayState.NORMAL
+                    BudgetMath.DayColor.OVER -> DayState.OVER
+                    BudgetMath.DayColor.TODAY -> DayState.TODAY
+                    BudgetMath.DayColor.FUTURE -> DayState.FUTURE
+                }
+            },
+            labels = Triple(
+                "1 ${DateFmt.monthShort(today)}",
+                stringResource(R.string.home_today_lower),
+                b.daysInMonth.toString(),
+            ),
+            summary = stringResource(
+                R.string.a11y_day_strip,
+                b.dayOfMonth,
+                b.daysInMonth,
+                dayColors.count { it == BudgetMath.DayColor.OVER },
+            ),
+        )
+        VSpace(14.dp)
+        CardDivider(color = Color.White.copy(alpha = 0.12f))
+        VSpace(14.dp)
+        Row(Modifier.fillMaxWidth()) {
+            Column(Modifier.weight(1f)) {
+                Text(DateFmt.monthStandalone(today).replaceFirstChar { it.titlecase() }, style = FinanceType.caption, color = c.onInkSecondary)
+                Text(masked(Money.formatRounded(b.spentMonth, currency)), style = FinanceType.titleBold, color = Color.White)
                 Text(
-                    text = stringResource(R.string.add_first_asset),
-                    style = typography.bodyLarge,
-                    color = colors.primary,
+                    stringResource(R.string.home_of_budget, masked(Money.formatRounded(b.budget, currency))),
+                    style = FinanceType.caption,
+                    color = c.onInkSecondary,
                 )
+            }
+            HSpace(12.dp)
+            Column(Modifier.weight(1f)) {
                 Text(
-                    text = stringResource(R.string.track_roi),
-                    style = typography.bodySmall,
-                    color = colors.onSurfaceVariant,
+                    stringResource(R.string.home_forecast_on, DateFmt.dayMonthShort(today.withDayOfMonth(b.daysInMonth))),
+                    style = FinanceType.caption,
+                    color = c.onInkSecondary,
+                )
+                Text(masked(Money.formatRounded(b.forecast, currency)), style = FinanceType.titleBold, color = Color.White)
+                Text(
+                    if (b.diff >= 0) stringResource(R.string.home_forecast_ok, masked(Money.formatRounded(b.diff, currency)))
+                    else stringResource(R.string.home_forecast_over, masked(Money.formatRounded(-b.diff, currency))),
+                    style = FinanceType.caption.copy(fontWeight = FontWeight.SemiBold),
+                    color = if (b.diff >= 0) c.onInkSuccess else c.onInkDangerText,
                 )
             }
         }
@@ -1681,258 +429,312 @@ private fun EmptyAssetCard(onClick: () -> Unit) {
 }
 
 @Composable
-private fun HomeCreateGoalCard(onClick: () -> Unit) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    AppCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Dimens.SpacingL),
-        onClick = onClick,
-    ) {
-        Row(
-            modifier = Modifier.padding(Dimens.SpacingM),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingM),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(colors.primary.copy(alpha = 0.14f), CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = null,
-                    tint = colors.primary,
-                )
+private fun NoBudgetHero(onSet: () -> Unit) {
+    val c = FinanceTheme.colors
+    InkCard(radius = 28.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.home_can_spend_today), style = FinanceType.bodySmall, color = c.onInkSecondary)
+                VSpace(6.dp)
+                Text(stringResource(R.string.home_no_budget_title), style = FinanceType.titleLarge.copy(fontWeight = FontWeight.Bold), color = Color.White)
+                VSpace(4.dp)
+                Text(stringResource(R.string.home_no_budget_text), style = FinanceType.bodySmall, color = c.onInkSecondary)
             }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.goals_add_button),
-                    style = typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colors.onSurface,
-                )
-                Text(
-                    text = stringResource(R.string.goals_empty_subtitle),
-                    style = typography.bodySmall,
-                    color = colors.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = colors.outlineVariant,
-                modifier = Modifier.size(Dimens.IconSizeS),
-            )
+            KopiImage(Kopi.THINKING, 64.dp)
         }
+        VSpace(14.dp)
+        ButtonTonal(stringResource(R.string.home_no_budget_action), onSet, Modifier.fillMaxWidth())
     }
 }
 
+// endregion
+
 @Composable
-private fun HomeFeaturedGoalCard(
-    goal: Goal,
-    currencyCode: String,
-    onClick: () -> Unit,
+private fun QuickActions(
+    achievementsUnlocked: Int,
+    onScan: () -> Unit,
+    onRepeat: () -> Unit,
+    onLimits: () -> Unit,
+    onAchievements: () -> Unit,
 ) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val leftDays = goal.daysLeft
-    val deadlineText = when {
-        leftDays == null -> stringResource(R.string.goal_no_deadline)
-        goal.isOverdue -> stringResource(R.string.goal_days_overdue, kotlin.math.abs(leftDays))
-        else -> stringResource(R.string.goal_days_left, leftDays)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        QuickTile("📷", stringResource(R.string.home_quick_scan), onScan, Modifier.weight(1f))
+        QuickTile("🔁", stringResource(R.string.home_quick_repeat), onRepeat, Modifier.weight(1f))
+        QuickTile("🧭", stringResource(R.string.limits), onLimits, Modifier.weight(1f))
+        QuickTile(
+            "🏆",
+            stringResource(R.string.home_quick_achievements, achievementsUnlocked, AchievementId.entries.size),
+            onAchievements,
+            Modifier.weight(1f),
+        )
     }
-    val accent = if (goal.isCompleted) IosGreen else colors.primary
-    AppCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Dimens.SpacingL),
-        onClick = onClick,
+}
+
+@Composable
+private fun QuickTile(emoji: String, label: String, onClick: () -> Unit, modifier: Modifier) {
+    val c = FinanceTheme.colors
+    Column(
+        modifier
+            .heightIn(min = 72.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(c.surface)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = 10.dp, horizontal = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
-        Column(
-            modifier = Modifier.padding(Dimens.SpacingM),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .background(colors.primary.copy(alpha = 0.12f), CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(text = goal.emoji, style = typography.titleLarge)
-                }
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = Dimens.SpacingS),
-                ) {
-                    Text(
-                        text = goal.name,
-                        style = typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = stringResource(
-                            R.string.goal_saved_of,
-                            MoneyFormat.format(goal.savedAmountMinor, currencyCode),
-                            MoneyFormat.format(goal.targetAmountMinor, currencyCode),
-                        ),
-                        style = typography.bodySmall,
-                        color = colors.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-            LinearProgressIndicator(
-                progress = { goal.progress },
-                modifier = Modifier
+        Text(emoji, fontSize = 22.sp)
+        VSpace(4.dp)
+        FitText(label, style = FinanceType.caption.copy(fontWeight = FontWeight.Medium), color = c.textPrimary)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeableTip(text: String, onDismiss: () -> Unit) {
+    val state = rememberSwipeToDismissBoxState()
+    LaunchedEffect(state.currentValue) {
+        if (state.currentValue != SwipeToDismissBoxValue.Settled) onDismiss()
+    }
+    SwipeToDismissBox(state = state, backgroundContent = {}) {
+        MascotTip(text = text)
+    }
+}
+
+// region «Скоро спишется» (§6.1.5)
+
+@Composable
+private fun UpcomingCard(state: HomeUiState, onMore: () -> Unit) {
+    val c = FinanceTheme.colors
+    FCard {
+        SectionTitle(
+            text = stringResource(R.string.home_upcoming_title),
+            trailing = {
+                Text(masked(Money.formatRounded(state.upcomingSum, state.currencyCode)), style = FinanceType.title, color = c.textPrimary)
+            },
+        )
+        VSpace(4.dp)
+        state.upcoming.forEachIndexed { i, u ->
+            if (i > 0) CardDivider()
+            Row(
+                Modifier
                     .fillMaxWidth()
-                    .height(Dimens.progressHeightThin)
-                    .clip(RoundedCornerShape(Dimens.RadiusPill)),
-                color = accent,
-                trackColor = colors.outline,
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = stringResource(R.string.percent_short, (goal.progress * 100).roundToInt()),
-                    style = typography.labelSmall,
-                    color = accent,
-                )
-                Text(
-                    text = deadlineText,
-                    style = typography.labelSmall,
-                    color = colors.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun AssetMiniCard(
-    asset: SmartAsset,
-    currencyCode: String,
-    onRecordUsage: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val progress = asset.paybackProgress.coerceIn(0f, 1f)
-    val progressColor = if (asset.status == SmartAssetStatus.PROFIT) {
-        colors.secondary
-    } else {
-        colors.primary
-    }
-
-    AppCard(
-        modifier = Modifier.width(Dimens.smartCardWidth),
-    ) {
-        Column(
-            modifier = Modifier.padding(Dimens.SpacingM),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
-        ) {
-            Row(
+                    .heightIn(min = 64.dp)
+                    .padding(vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
             ) {
+                Column(Modifier.width(38.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(u.charge.date.dayOfMonth.toString(), style = FinanceType.titleSection, color = c.textPrimary)
+                    Text(DateFmt.monthShort(u.charge.date), style = FinanceType.micro, color = c.textSecondary)
+                }
+                HSpace(10.dp)
                 Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(progressColor.copy(alpha = 0.15f), CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(text = asset.icon, style = typography.titleMedium)
+                    Modifier
+                        .width(3.dp)
+                        .height(36.dp)
+                        .background(if (u.charge.daysUntil <= 3) c.warning else c.outline, RoundedCornerShape(2.dp)),
+                )
+                HSpace(12.dp)
+                Text(u.emoji, fontSize = 20.sp)
+                HSpace(10.dp)
+                Column(Modifier.weight(1f)) {
+                    Text(u.charge.title, style = FinanceType.bodyMedium, color = c.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(whenLabel(u.charge.daysUntil), style = FinanceType.caption, color = c.textSecondary)
                 }
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = asset.name,
-                        style = typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = stringResource(R.string.percent_short, (progress * 100).roundToInt()),
-                        style = typography.labelSmall,
-                        color = colors.onSurfaceVariant,
-                    )
-                }
+                Text(masked(Money.formatRounded(u.charge.amountMinor, state.currencyCode)), style = FinanceType.body.copy(fontWeight = FontWeight.SemiBold), color = c.textPrimary)
             }
-            LinearProgressIndicator(
-                progress = { progress },
+        }
+        if (state.upcomingMore > 0) {
+            CardDivider()
+            Text(
+                stringResource(R.string.home_upcoming_more, state.upcomingMore),
+                style = FinanceType.bodySmall.copy(fontWeight = FontWeight.Medium),
+                color = c.primary,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(Dimens.progressHeightThin)
-                    .clip(RoundedCornerShape(Dimens.RadiusPill)),
-                color = progressColor,
-                trackColor = colors.surfaceVariant,
-                strokeCap = StrokeCap.Round,
+                    .clickable(role = Role.Button, onClick = onMore)
+                    .padding(vertical = 12.dp),
             )
-            Text(
-                text = stringResource(
-                    R.string.dashboard_saved_amount,
-                    MoneyFormat.format(asset.totalSavedMinor, currencyCode),
-                ),
-                style = typography.bodySmall,
-                color = colors.secondary,
-            )
-            OutlinedButton(
-                onClick = onRecordUsage,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(Dimens.RadiusS),
-                border = BorderStroke(Dimens.borderThin, colors.primary),
-                contentPadding = PaddingValues(
-                    horizontal = Dimens.SpacingS,
-                    vertical = Dimens.SpacingS,
-                ),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = colors.primary,
-                ),
-            ) {
-                Text(
-                    text = stringResource(R.string.dashboard_record),
-                    style = typography.labelMedium,
-                )
+        }
+    }
+}
+
+@Composable
+private fun whenLabel(days: Int): String = when (days) {
+    0 -> stringResource(R.string.home_today_lower)
+    1 -> stringResource(R.string.home_tomorrow)
+    else -> pluralStringResource(R.plurals.pl_in_days, days, days)
+}
+
+// endregion
+
+// region Цели (§6.1.6)
+
+@Composable
+private fun GoalsStrip(goals: List<Goal>, currency: String, onAll: () -> Unit, onGoal: (Long) -> Unit, onCreate: () -> Unit) {
+    Column {
+        SectionTitle(stringResource(R.string.goals_title), action = stringResource(R.string.home_all), onAction = onAll)
+        VSpace(8.dp)
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            items(goals, key = { it.id }) { g -> GoalCard(g, currency) { onGoal(g.id) } }
+            item(key = "new") {
+                DashedCard(
+                    modifier = Modifier
+                        .width(130.dp)
+                        .height(172.dp),
+                    onClick = onCreate,
+                ) {
+                    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                        Text("+", style = FinanceType.headline, color = FinanceTheme.colors.primary)
+                        Text(
+                            stringResource(R.string.home_new_goal),
+                            style = FinanceType.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                            color = FinanceTheme.colors.primary,
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-private fun normalizeBalanceDigits(raw: String): String {
-    val filtered = raw.filter { it.isDigit() || it == '.' }
-    if (filtered.isEmpty()) return ""
-    if (filtered == ".") return "0."
-    val dotIndex = filtered.indexOf('.')
-    return if (dotIndex >= 0) {
-        val intPart = filtered.substring(0, dotIndex).filter { it.isDigit() }
-        val fracPart = filtered.substring(dotIndex + 1).filter { it.isDigit() }.take(2)
-        val safeInt = intPart.ifEmpty { "0" }.trimStart('0').ifEmpty { "0" }.take(9)
-        "$safeInt.$fracPart"
-    } else {
-        filtered.filter { it.isDigit() }.trimStart('0').ifEmpty { "0" }.take(9)
+@Composable
+private fun GoalCard(g: Goal, currency: String, onClick: () -> Unit) {
+    val c = FinanceTheme.colors
+    FCard(modifier = Modifier.width(200.dp).height(172.dp), onClick = onClick) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ProgressRing(progress = g.progress, size = 52.dp, stroke = 5.dp) { Text(g.emoji, fontSize = 20.sp) }
+            HSpace(12.dp)
+            Text(
+                "${(g.progress * 100).toInt()}%",
+                style = FinanceType.titleLarge.copy(fontSize = 22.sp, fontWeight = FontWeight.ExtraBold),
+                color = c.primary,
+            )
+        }
+        VSpace(10.dp)
+        Text(g.name, style = FinanceType.title, color = c.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(
+            stringResource(R.string.home_goal_saved, masked(Money.formatRounded(g.savedAmountMinor, g.currencyCode))),
+            style = FinanceType.caption,
+            color = c.textSecondary,
+            maxLines = 1,
+        )
+        Text(
+            stringResource(R.string.home_goal_of, masked(Money.formatRounded(g.targetAmountMinor, g.currencyCode))),
+            style = FinanceType.caption,
+            color = c.textSecondary,
+            maxLines = 1,
+        )
     }
 }
 
-private fun startOfDayOffset(field: Int, amount: Int): Long {
-    val calendar = Calendar.getInstance()
-    calendar.set(Calendar.HOUR_OF_DAY, 0)
-    calendar.set(Calendar.MINUTE, 0)
-    calendar.set(Calendar.SECOND, 0)
-    calendar.set(Calendar.MILLISECOND, 0)
-    calendar.add(field, amount)
-    return calendar.timeInMillis
+// endregion
+
+@Composable
+private fun SmartSavingsRow(s: SmartSummary, currency: String, onOpen: () -> Unit, onCreate: () -> Unit) {
+    val c = FinanceTheme.colors
+    if (s.assets == 0) {
+        DashedCard(modifier = Modifier.fillMaxWidth(), onClick = onCreate) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                EmojiBadge("🌱", c.success, size = 44.dp, circle = false)
+                HSpace(12.dp)
+                Column {
+                    Text(stringResource(R.string.home_smart_first), style = FinanceType.title, color = c.textPrimary)
+                    Text(stringResource(R.string.home_smart_first_sub), style = FinanceType.caption, color = c.textSecondary)
+                }
+            }
+        }
+        return
+    }
+    FCard(onClick = onOpen) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            EmojiBadge("🌱", c.success, size = 44.dp, circle = false)
+            HSpace(12.dp)
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.smart_savings_title), style = FinanceType.title, color = c.textPrimary)
+                Text(
+                    "${pluralStringResource(R.plurals.pl_assets, s.assets, s.assets)} · ${pluralStringResource(R.plurals.pl_uses, s.uses, s.uses)}",
+                    style = FinanceType.caption,
+                    color = c.textSecondary,
+                )
+            }
+            Text(masked(Money.withSign(s.savedMinor, currency)), style = FinanceType.title.copy(fontWeight = FontWeight.Bold), color = c.successText)
+        }
+    }
 }
 
-private fun formatEpochMillis(millis: Long, pattern: String): String =
-    SimpleDateFormat(pattern, Locale.getDefault()).format(Date(millis))
+// region «Сегодня» (§6.1.9)
+
+@Composable
+private fun TodayCard(ops: List<TxItem>, onAll: () -> Unit, onAdd: () -> Unit, onOpen: (Long) -> Unit) {
+    val c = FinanceTheme.colors
+    FCard {
+        SectionTitle(stringResource(R.string.home_today), action = stringResource(R.string.home_all_history), onAction = onAll)
+        if (ops.isEmpty()) {
+            Column(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                KopiImage(Kopi.THINKING, 72.dp)
+                VSpace(8.dp)
+                Text(stringResource(R.string.home_today_empty), style = FinanceType.bodySmall, color = c.textSecondary)
+                VSpace(10.dp)
+                ButtonTonal(stringResource(R.string.home_add), onAdd, compact = true)
+            }
+        } else {
+            ops.forEachIndexed { i, op ->
+                if (i > 0) CardDivider()
+                TxRow(op, onClick = { onOpen(op.id) })
+            }
+        }
+    }
+}
+
+/** Строка операции (§6.1.9): иконка-круг 42dp, название, «Категория · 13:15», сумма. */
+@Composable
+fun TxRow(op: TxItem, onClick: (() -> Unit)? = null, showAccount: Boolean = false) {
+    val c = FinanceTheme.colors
+    val meta = buildList {
+        add(op.categoryName)
+        if (showAccount && op.accountName != null) add(op.accountName)
+        add(op.time)
+    }.distinct().joinToString(" · ")
+    ListRow(
+        title = op.title,
+        subtitle = meta,
+        value = masked(Money.signed(op.amountMinor, op.isIncome, op.currencyCode)),
+        valueColor = if (op.isIncome) c.successText else c.textPrimary,
+        leading = { EmojiBadge(op.emoji, op.color, size = 42.dp) },
+        onClick = onClick,
+    )
+}
+
+// endregion
+
+@Composable
+private fun AccountsRow(count: Int, balance: Long, currency: String, onOpen: () -> Unit) {
+    val c = FinanceTheme.colors
+    val visibility = LocalAmountVisibility.current
+    val hidden = visibility.hidden
+    val onToggle = visibility.toggle
+    FCard(onClick = onOpen) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            EmojiBadge("💳", c.primary, size = 42.dp)
+            HSpace(12.dp)
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.home_all_accounts, count), style = FinanceType.caption, color = c.textSecondary)
+                Text(
+                    masked(Money.format(balance, currency, forceFraction = true)),
+                    style = FinanceType.title.copy(fontWeight = FontWeight.Bold),
+                    color = c.textPrimary,
+                )
+            }
+            Text(
+                stringResource(if (hidden) R.string.home_show else R.string.home_hide),
+                style = FinanceType.bodySmall.copy(fontWeight = FontWeight.Medium),
+                color = c.primary,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(role = Role.Button, onClick = onToggle)
+                    .padding(horizontal = 8.dp, vertical = 10.dp),
+            )
+        }
+    }
+}

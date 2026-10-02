@@ -1,74 +1,66 @@
 package ru.plumsoftware.finance.presentation.smartsavings
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.outlined.ArrowBackIosNew
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 import ru.plumsoftware.finance.R
-import ru.plumsoftware.finance.domain.model.SmartAssetStatus
-import ru.plumsoftware.finance.domain.model.SmartAssetUsage
-import ru.plumsoftware.finance.presentation.common.MoneyFormat
-import ru.plumsoftware.finance.ui.components.AppCard
-import ru.plumsoftware.finance.ui.components.FinanceNumPad
-import ru.plumsoftware.finance.ui.components.IosPrimaryButton
-import ru.plumsoftware.finance.ui.components.SectionLabel
-import ru.plumsoftware.finance.ui.components.ios.IosAlertDialog
-import ru.plumsoftware.finance.ui.components.ios.IosNavigationTextButton
-import ru.plumsoftware.finance.ui.components.ios.IosTextButton
-import ru.plumsoftware.finance.ui.theme.Dimens
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import ru.plumsoftware.finance.presentation.common.DateFmt
+import ru.plumsoftware.finance.presentation.common.Money
+import ru.plumsoftware.finance.presentation.dashboard.AmountEntrySheet
+import ru.plumsoftware.finance.ui.ds.ButtonPrimary
+import ru.plumsoftware.finance.ui.ds.CardDivider
+import ru.plumsoftware.finance.ui.ds.EmptyState
+import ru.plumsoftware.finance.ui.ds.FCard
+import ru.plumsoftware.finance.ui.ds.FProgressBar
+import ru.plumsoftware.finance.ui.ds.HSpace
+import ru.plumsoftware.finance.ui.ds.IconButton44
+import ru.plumsoftware.finance.ui.ds.Kopi
+import ru.plumsoftware.finance.ui.ds.LocalMascotSnackbar
+import ru.plumsoftware.finance.ui.ds.SectionTitle
+import ru.plumsoftware.finance.ui.ds.SubScreenAppBar
+import ru.plumsoftware.finance.ui.ds.TextAction
+import ru.plumsoftware.finance.ui.ds.VSpace
+import ru.plumsoftware.finance.ui.ds.masked
+import ru.plumsoftware.finance.ui.theme.FinanceTheme
+import ru.plumsoftware.finance.ui.theme.FinanceType
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Подробности актива умной экономии: окупаемость, отметка использования, история, удаление. */
 @Composable
 fun SmartSavingsDetailScreen(
     assetId: Long,
@@ -77,399 +69,183 @@ fun SmartSavingsDetailScreen(
     onDeleteSuccess: () -> Unit,
     viewModel: SmartSavingsDetailViewModel = koinViewModel { parametersOf(assetId) },
 ) {
-    val context = LocalContext.current
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val asset = state.asset
-    var showDeleteSheet by remember { mutableStateOf(false) }
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    state.errorMessage?.let { msg ->
-        IosAlertDialog(message = msg, onDismiss = viewModel::clearError)
-    }
+    val c = FinanceTheme.colors
+    val snackbar = LocalMascotSnackbar.current
+    var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    var customAmount by rememberSaveable { mutableStateOf(false) }
 
-    if (state.showRecordSheet) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
-            onDismissRequest = viewModel::closeRecordSheet,
-            sheetState = sheetState,
-            containerColor = colors.background,
-        ) {
-            var isNumPadVisible by remember { mutableStateOf(true) }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.SpacingXl - 4.dp)
-                    .padding(bottom = Dimens.bottomSheetBottomPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Box(
-                    Modifier
-                        .width(Dimens.bottomSheetHandleWidth)
-                        .height(Dimens.bottomSheetHandleHeight)
-                        .background(colors.outlineVariant, MaterialTheme.shapes.extraSmall),
-                )
-                Spacer(Modifier.height(Dimens.spacingRow))
-                Text(
-                    text = stringResource(R.string.smart_record_usage_title),
-                    style = typography.titleLarge,
-                )
-                Spacer(Modifier.height(Dimens.spacingList))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = MoneyFormat.formatEntryDisplay(context, state.amountDigits, state.currencyCode),
-                        style = typography.displayMedium,
-                        color = colors.secondary,
-                        modifier = Modifier.clickable { isNumPadVisible = true },
-                    )
-                    val cursorAlpha by rememberInfiniteTransition(label = "cursor").animateFloat(
-                        initialValue = 1f,
-                        targetValue = 0f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(1000, easing = LinearEasing),
-                            repeatMode = RepeatMode.Reverse,
-                        ),
-                        label = "cursor_alpha",
-                    )
-                    Text(
-                        text = stringResource(R.string.pipe_separator),
-                        style = typography.displayLarge,
-                        color = colors.secondary,
-                        modifier = Modifier.alpha(cursorAlpha),
-                    )
-                }
-                Text(
-                    text = stringResource(R.string.smart_default_saving_hint),
-                    style = typography.bodySmall,
-                    color = colors.onSurfaceVariant,
-                    modifier = Modifier.padding(top = Dimens.SpacingXxs + 2.dp, bottom = Dimens.SpacingM),
-                    textAlign = TextAlign.Center,
-                )
-                if (isNumPadVisible) {
-                    FinanceNumPad(
-                        onDigit = viewModel::appendDigit,
-                        onBackspace = viewModel::backspace,
-                        onCollapse = { isNumPadVisible = false },
-                    )
-                }
-                Spacer(Modifier.height(Dimens.spacingRow + 4.dp))
-                IosPrimaryButton(
-                    text = stringResource(R.string.smart_confirm),
-                    onClick = viewModel::recordSaving,
-                    enabled = MoneyFormat.majorDigitsToMinor(state.amountDigits, state.currencyCode) > 0L,
-                    loading = state.isSaving,
-                )
+    // Данные перечитываются при возврате на экран, например после редактирования.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        var first = true
+        val observer = LifecycleEventObserver { _, e ->
+            if (e == Lifecycle.Event.ON_RESUME) {
+                if (!first) viewModel.refresh()
+                first = false
             }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    LaunchedEffect(state.errorMessage) {
+        state.errorMessage?.let {
+            snackbar.show(it, Kopi.THINKING)
+            viewModel.clearError()
         }
     }
 
-    if (showDeleteSheet && asset != null) {
-        val deleteSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
-            onDismissRequest = { showDeleteSheet = false },
-            sheetState = deleteSheetState,
-            containerColor = colors.background,
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.SpacingXl - 4.dp, vertical = Dimens.SpacingXs),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = stringResource(R.string.smart_delete_asset_title, asset.name),
-                    style = typography.titleMedium,
-                    color = colors.onSurface,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(Dimens.SpacingXl - 6.dp))
-                IosTextButton(
-                    text = stringResource(R.string.cancel),
-                    onClick = { showDeleteSheet = false },
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        vertical = Dimens.spacingList,
-                    ),
-                )
-                IosTextButton(
-                    text = stringResource(R.string.delete),
-                    onClick = {
-                        showDeleteSheet = false
-                        viewModel.deleteAsset(onDeleted = onDeleteSuccess)
-                    },
-                    color = colors.error,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        vertical = Dimens.spacingList,
-                    ),
-                )
-                Spacer(Modifier.height(Dimens.SpacingXl - 6.dp))
-            }
-        }
+    if (customAmount && asset != null) {
+        AmountEntrySheet(
+            title = stringResource(R.string.smart_record_usage_title),
+            message = stringResource(R.string.smart_custom_amount_hint),
+            confirmLabel = stringResource(R.string.save),
+            dismissLabel = stringResource(R.string.cancel),
+            initialMinor = asset.alternativeCostMinor,
+            currencyCode = state.currencyCode,
+            onConfirm = {
+                viewModel.recordAmount(it)
+                customAmount = false
+            },
+            onDismiss = { customAmount = false },
+        )
+    }
+    if (confirmDelete && asset != null) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            containerColor = c.surface,
+            title = { Text(stringResource(R.string.smart_delete_asset_title, asset.name), style = FinanceType.titleLarge, color = c.textPrimary) },
+            text = { Text(stringResource(R.string.smart_delete_text), style = FinanceType.bodySmall, color = c.textSecondary) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDelete = false
+                    viewModel.deleteAsset(onDeleteSuccess)
+                }) { Text(stringResource(R.string.delete), color = c.dangerText) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel), color = c.textSecondary) } },
+        )
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = colors.background,
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.SpacingXs, vertical = Dimens.RadiusS),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IosNavigationTextButton(
-                    text = stringResource(R.string.smart_savings_tab),
-                    onClick = onBack,
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Outlined.ArrowBackIosNew,
-                )
-                Text(
-                    text = asset?.name.orEmpty(),
-                    style = typography.bodyLarge,
-                    color = colors.onSurface,
-                )
-                Row(
-                    modifier = Modifier.weight(1f),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    IconButton(onClick = { onEdit(assetId) }) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = stringResource(R.string.cd_edit),
-                            tint = colors.primary,
-                            modifier = Modifier.size(Dimens.iconSizeSmall + 2.dp),
-                        )
-                    }
-                }
-            }
-        },
-    ) { padding ->
+    Column(Modifier.fillMaxSize().background(c.bg)) {
+        SubScreenAppBar(
+            title = asset?.name.orEmpty(),
+            onBack = onBack,
+            actions = { if (asset != null) IconButton44(R.drawable.ic_edit, stringResource(R.string.cd_edit), { onEdit(asset.id) }) },
+        )
         if (asset == null) {
-            Text(
-                text = stringResource(R.string.smart_asset_not_found),
-                modifier = Modifier
-                    .padding(padding)
-                    .padding(Dimens.SpacingXl - 4.dp),
-                style = typography.bodyLarge,
-            )
-            return@Scaffold
+            EmptyState(title = stringResource(R.string.smart_asset_not_found), pose = Kopi.THINKING, modifier = Modifier.padding(top = 48.dp))
+            return@Column
         }
-
-        val animatedProgress by animateFloatAsState(
-            targetValue = asset.paybackProgress.coerceIn(0f, 1f),
-            animationSpec = tween(600),
-            label = "asset_progress",
-        )
-
-        LazyColumn(
-            modifier = Modifier
+        val cur = state.currencyCode
+        Column(
+            Modifier
                 .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(horizontal = Dimens.SpacingM, vertical = Dimens.RadiusS),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
+            // Окупаемость.
+            FCard {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
-                        modifier = Modifier
-                            .size(Dimens.avatarSizeLarge)
-                            .background(colors.primary.copy(alpha = 0.12f), CircleShape),
+                        Modifier.size(64.dp).background(c.success.copy(alpha = 0x22 / 255f), RoundedCornerShape(20.dp)),
                         contentAlignment = Alignment.Center,
-                    ) {
-                        Text(asset.icon, style = typography.displayMedium)
+                    ) { Text(asset.icon, fontSize = 30.sp) }
+                    HSpace(14.dp)
+                    Column(Modifier.weight(1f)) {
+                        Text(asset.name, style = FinanceType.titleSection, color = c.textPrimary)
+                        if (!asset.note.isNullOrBlank()) Text(asset.note, style = FinanceType.caption, color = c.textSecondary)
                     }
-                    Spacer(Modifier.height(Dimens.spacingList))
                     Text(
-                        text = asset.name,
-                        style = typography.headlineMedium,
-                        color = colors.onSurface,
-                    )
-                    Text(
-                        text = MoneyFormat.formatWithSignPrefix(
-                            context,
-                            asset.totalSavedMinor,
-                            state.currencyCode,
-                            isPositive = true,
-                        ),
-                        style = typography.headlineSmall,
-                        color = colors.secondary,
-                        modifier = Modifier.padding(top = Dimens.SpacingXxs),
-                    )
-                    Text(
-                        text = stringResource(R.string.smart_total_saved_label),
-                        style = typography.labelMedium,
-                        color = colors.onSurfaceVariant,
+                        "${(asset.paybackProgress * 100).toInt()}%",
+                        style = FinanceType.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
+                        color = if (asset.isPaidOff) c.successText else c.primary,
                     )
                 }
-            }
-            item {
-                AppCard(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(Dimens.SpacingM)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(
-                                stringResource(R.string.smart_payback_label),
-                                style = typography.bodyMedium,
-                                color = colors.onSurfaceVariant,
-                            )
-                            Text(
-                                stringResource(R.string.percent_short, (animatedProgress * 100).toInt()),
-                                style = typography.bodyMedium,
-                                color = if (asset.status == SmartAssetStatus.PROFIT) colors.secondary else colors.primary,
-                            )
-                        }
-                        LinearProgressIndicator(
-                            progress = { animatedProgress },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = Dimens.SpacingXs)
-                                .height(Dimens.progressHeight),
-                            color = if (asset.status == SmartAssetStatus.PROFIT) colors.secondary else colors.primary,
-                            trackColor = colors.outline,
-                            strokeCap = StrokeCap.Round,
-                        )
-                        Text(
-                            text = if (asset.status == SmartAssetStatus.PROFIT) {
-                                stringResource(R.string.smart_profit_celebration)
-                            } else {
-                                stringResource(
-                                    R.string.smart_remaining_payback,
-                                    MoneyFormat.format(
-                                        (asset.purchaseCostMinor - asset.totalSavedMinor).coerceAtLeast(0),
-                                        state.currencyCode,
-                                    ),
-                                )
-                            },
-                            style = typography.bodySmall,
-                            color = if (asset.status == SmartAssetStatus.PROFIT) colors.secondary else colors.onSurfaceVariant,
-                            modifier = Modifier.padding(top = Dimens.SpacingXs),
-                        )
-                    }
-                }
-            }
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
-                ) {
-                    StatCell(
-                        label = stringResource(R.string.smart_purchase_cost_label),
-                        value = MoneyFormat.format(asset.purchaseCostMinor, state.currencyCode),
-                        valueColor = colors.onSurface,
-                        modifier = Modifier.weight(1f),
-                    )
-                    StatCell(
-                        label = stringResource(R.string.smart_saving_per_use),
-                        value = MoneyFormat.format(asset.alternativeCostMinor, state.currencyCode),
-                        valueColor = colors.secondary,
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-            item {
-                IosPrimaryButton(
-                    text = stringResource(R.string.smart_record_saving_cta),
-                    onClick = viewModel::openRecordSheet,
-                    modifier = Modifier.padding(top = 2.dp),
-                )
-            }
-            item {
-                SectionLabel(text = stringResource(R.string.smart_history_section))
-            }
-            item {
-                AppCard(modifier = Modifier.fillMaxWidth()) {
-                    if (state.usages.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.smart_history_empty_short),
-                            style = typography.bodyMedium,
-                            color = colors.onSurfaceVariant,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(Dimens.SpacingXl),
-                            textAlign = TextAlign.Center,
-                        )
-                    } else {
-                        Column {
-                            state.usages.forEachIndexed { index, usage ->
-                                UsageRow(usage, state.currencyCode)
-                                if (index != state.usages.lastIndex) {
-                                    HorizontalDivider(
-                                        color = colors.outline,
-                                        thickness = Dimens.dividerThickness,
-                                        modifier = Modifier.padding(start = Dimens.RadiusS + 4.dp),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            item {
-                IosTextButton(
-                    text = stringResource(R.string.smart_delete_asset),
-                    onClick = { showDeleteSheet = true },
-                    color = colors.error,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                        top = Dimens.SpacingM,
-                        bottom = Dimens.bottomSheetBottomPadding,
+                VSpace(14.dp)
+                FProgressBar(asset.paybackProgress, if (asset.isPaidOff) c.success else c.primary, height = 8.dp)
+                VSpace(8.dp)
+                Text(
+                    stringResource(
+                        R.string.smart_progress_of,
+                        masked(Money.formatRounded(asset.totalSavedMinor.coerceAtMost(asset.purchaseCostMinor), cur)),
+                        Money.formatRounded(asset.purchaseCostMinor, cur),
                     ),
+                    style = FinanceType.bodySmall,
+                    color = c.textSecondary,
+                )
+                val usesLeft = if (asset.alternativeCostMinor > 0) {
+                    ((asset.purchaseCostMinor - asset.totalSavedMinor + asset.alternativeCostMinor - 1) / asset.alternativeCostMinor).toInt()
+                } else 0
+                Text(
+                    if (asset.isPaidOff) stringResource(R.string.smart_paid_off_status)
+                    else pluralStringResource(R.plurals.pl_uses_left, usesLeft, usesLeft),
+                    style = FinanceType.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                    color = if (asset.isPaidOff) c.successText else c.textPrimary,
                 )
             }
-        }
-    }
-}
 
-@Composable
-private fun StatCell(
-    label: String,
-    value: String,
-    valueColor: androidx.compose.ui.graphics.Color,
-    modifier: Modifier = Modifier,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    AppCard(modifier = modifier) {
-        Column(Modifier.padding(Dimens.RadiusS + 4.dp)) {
-            Text(label, style = typography.labelSmall, color = colors.onSurfaceVariant)
-            Text(
-                value,
-                style = typography.titleMedium,
-                color = valueColor,
-                modifier = Modifier.padding(top = Dimens.SpacingXxs),
+            // Показатели.
+            FCard {
+                Row(Modifier.fillMaxWidth()) {
+                    Stat(stringResource(R.string.smart_stat_saved), masked(Money.withSign(asset.totalSavedMinor, cur)), c.successText, Modifier.weight(1f))
+                    Stat(stringResource(R.string.smart_stat_uses), asset.totalUses.toString(), c.textPrimary, Modifier.weight(1f))
+                    Stat(stringResource(R.string.smart_stat_per_use), Money.formatRounded(asset.alternativeCostMinor, cur), c.textPrimary, Modifier.weight(1f))
+                }
+            }
+
+            // Отметить использование.
+            ButtonPrimary(
+                text = stringResource(R.string.smart_mark_use, Money.formatRounded(asset.alternativeCostMinor, cur)),
+                onClick = { viewModel.recordAmount(asset.alternativeCostMinor) },
+                enabled = !state.isSaving,
+                color = c.success,
+                modifier = Modifier.fillMaxWidth(),
             )
+            TextAction(
+                stringResource(R.string.smart_other_amount),
+                { customAmount = true },
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+
+            // История.
+            FCard {
+                SectionTitle(stringResource(R.string.smart_history_title))
+                if (state.usages.isEmpty()) {
+                    VSpace(8.dp)
+                    Text(stringResource(R.string.smart_history_empty_short), style = FinanceType.bodySmall, color = c.textSecondary)
+                } else {
+                    state.usages.forEachIndexed { i, u ->
+                        if (i > 0) CardDivider()
+                        Row(Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically) {
+                            val d = DateFmt.toLocalDate(u.usedAtMillis)
+                            Column(Modifier.weight(1f)) {
+                                Text(DateFmt.dayMonth(d), style = FinanceType.body, color = c.textPrimary)
+                                Text(DateFmt.time(u.usedAtMillis) + (u.note?.let { " · $it" } ?: ""), style = FinanceType.caption, color = c.textSecondary)
+                            }
+                            Text(masked(Money.withSign(u.savedAmountMinor, cur)), style = FinanceType.body.copy(fontWeight = FontWeight.SemiBold), color = c.successText)
+                        }
+                    }
+                }
+            }
+
+            TextAction(
+                stringResource(R.string.smart_delete_asset),
+                { confirmDelete = true },
+                color = c.dangerText,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+            VSpace(16.dp)
         }
     }
 }
 
 @Composable
-private fun UsageRow(usage: SmartAssetUsage, currencyCode: String) {
-    val context = LocalContext.current
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val date = SimpleDateFormat("d MMMM, HH:mm", Locale("ru")).format(Date(usage.usedAtMillis))
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Dimens.RadiusS + 4.dp, vertical = Dimens.RadiusS + 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(text = date, style = typography.bodyMedium, color = colors.onSurfaceVariant)
-        Text(
-            text = MoneyFormat.formatWithSignPrefix(
-                context,
-                usage.savedAmountMinor,
-                currencyCode,
-                isPositive = true,
-            ),
-            color = colors.secondary,
-            style = typography.bodyMedium,
-        )
+private fun Stat(label: String, value: String, color: Color, modifier: Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value, style = FinanceType.title.copy(fontWeight = FontWeight.Bold), color = color, textAlign = TextAlign.Center, maxLines = 1)
+        Text(label, style = FinanceType.caption, color = FinanceTheme.colors.textSecondary, textAlign = TextAlign.Center)
     }
 }

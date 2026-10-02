@@ -68,8 +68,11 @@ class RecurringRepositoryImpl(
             RecurringFrequency.DAILY -> cal.add(Calendar.DAY_OF_YEAR, 1)
             RecurringFrequency.WEEKLY -> cal.add(Calendar.WEEK_OF_YEAR, 1)
             RecurringFrequency.MONTHLY -> {
+                // Число месяца сохраняется; в коротких месяцах — последний день (29–31 → 28/29/30).
+                cal.set(Calendar.DAY_OF_MONTH, 1)
                 cal.add(Calendar.MONTH, 1)
-                dayOfMonth?.let { cal.set(Calendar.DAY_OF_MONTH, it.coerceIn(1, 28)) }
+                val target = dayOfMonth ?: Calendar.getInstance().apply { timeInMillis = currentMillis }.get(Calendar.DAY_OF_MONTH)
+                cal.set(Calendar.DAY_OF_MONTH, target.coerceIn(1, cal.getActualMaximum(Calendar.DAY_OF_MONTH)))
             }
             RecurringFrequency.YEARLY -> cal.add(Calendar.YEAR, 1)
         }

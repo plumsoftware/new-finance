@@ -135,13 +135,19 @@ abstract class FinanceDatabase : RoomDatabase() {
 
                 CategoryDeduplicator.deduplicate(categoryDao, transactionDao)
 
-                val existingKeys = categoryDao.getAllSync()
-                    .map { CategoryDeduplicator.categoryKey(it) }
-                    .toSet()
-                val missing = DefaultCategories.all(context)
-                    .filter { CategoryDeduplicator.categoryKey(it) !in existingKeys }
+                val existing = categoryDao.getAllSync()
+                val existingKeys = existing.map { CategoryDeduplicator.categoryKey(it) }.toSet()
+                val defaults = DefaultCategories.all(context)
+                val missing = defaults.filter { CategoryDeduplicator.categoryKey(it) !in existingKeys }
                 if (missing.isNotEmpty()) {
                     categoryDao.insertAll(missing)
+                }
+                // Системные категории, созданные до редизайна, получают цвет из ТЗ §3.1.
+                val defaultColors = defaults.associate { CategoryDeduplicator.categoryKey(it) to it.colorArgb }
+                existing.filter { it.isSystem && it.colorArgb == null }.forEach { entity ->
+                    defaultColors[CategoryDeduplicator.categoryKey(entity)]?.let { color ->
+                        categoryDao.update(entity.copy(colorArgb = color))
+                    }
                 }
             }
         }

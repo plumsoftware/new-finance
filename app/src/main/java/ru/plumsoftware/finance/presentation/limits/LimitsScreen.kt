@@ -1,40 +1,16 @@
 package ru.plumsoftware.finance.presentation.limits
 
-import androidx.annotation.StringRes
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.EditNote
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,597 +18,237 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import org.koin.androidx.compose.koinViewModel
-import ru.plumsoftware.finance.R
-import ru.plumsoftware.finance.domain.model.CategoryWithSpending
-import ru.plumsoftware.finance.domain.model.LimitStatus
 import ru.plumsoftware.finance.AppConfig
-import ru.plumsoftware.finance.presentation.common.MoneyFormat
-import ru.plumsoftware.finance.ui.ads.AdBannerBottomBar
-import ru.plumsoftware.finance.ui.components.AppCard
-import ru.plumsoftware.finance.ui.components.PrimaryButton
-import ru.plumsoftware.finance.ui.components.SectionLabel
+import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.domain.budget.BudgetMath
 import ru.plumsoftware.finance.navigation.popBackStackOrHome
-import ru.plumsoftware.finance.navigation.previousRouteBackLabelRes
-import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
-import ru.plumsoftware.finance.ui.theme.Dimens
+import ru.plumsoftware.finance.presentation.common.CategoryColors
+import ru.plumsoftware.finance.presentation.common.DateFmt
+import ru.plumsoftware.finance.presentation.common.Money
+import ru.plumsoftware.finance.presentation.dashboard.AmountEntrySheet
+import ru.plumsoftware.finance.ui.ads.AdBannerBottomBar
+import ru.plumsoftware.finance.ui.ds.ButtonTonal
+import ru.plumsoftware.finance.ui.ds.CardDivider
+import ru.plumsoftware.finance.ui.ds.EmojiBadge
+import ru.plumsoftware.finance.ui.ds.FCard
+import ru.plumsoftware.finance.ui.ds.FProgressBar
+import ru.plumsoftware.finance.ui.ds.HSpace
+import ru.plumsoftware.finance.ui.ds.ListRow
+import ru.plumsoftware.finance.ui.ds.SectionHeader
+import ru.plumsoftware.finance.ui.ds.SubScreenAppBar
+import ru.plumsoftware.finance.ui.ds.TextAction
+import ru.plumsoftware.finance.ui.ds.VSpace
+import ru.plumsoftware.finance.ui.theme.FinanceTheme
+import ru.plumsoftware.finance.ui.theme.FinanceType
+import java.time.LocalDate
 
-private val LimitWarningOrange = Color(0xFFFF9500)
+private sealed interface LimitsSheet {
+    data class Category(val item: LimitItem, val initial: Long) : LimitsSheet
+    data object Budget : LimitsSheet
+}
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LimitsScreen(
-    navController: NavController,
-    viewModel: LimitsViewModel = koinViewModel(),
-) {
+fun LimitsScreen(navController: NavController, viewModel: LimitsViewModel = koinViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val categories = state.categoriesWithSpending
-    val colors = MaterialTheme.colorScheme
+    val c = FinanceTheme.colors
+    val cur = state.currencyCode
+    val today = LocalDate.now()
+    var sheet by remember { mutableStateOf<LimitsSheet?>(null) }
 
-    var showSheet by remember { mutableStateOf(false) }
-    var sheetCategory by remember { mutableStateOf<CategoryWithSpending?>(null) }
-    var limitInput by remember { mutableStateOf("") }
-
-    fun showLimitSheet(item: CategoryWithSpending) {
-        sheetCategory = item
-        limitInput = item.limit?.let { formatLimitInput(it) } ?: ""
-        showSheet = true
-    }
-
-    if (showSheet && sheetCategory != null) {
-        LimitEditSheet(
-            item = sheetCategory!!,
-            limitInput = limitInput,
-            currencyCode = state.currencyCode,
-            onInputChange = { limitInput = it.filter { c -> c.isDigit() || c == '.' } },
-            onSave = {
-                limitInput.toDoubleOrNull()?.let { amount ->
-                    viewModel.setLimit(sheetCategory!!.category.id, amount)
+    when (val s = sheet) {
+        is LimitsSheet.Category -> AmountEntrySheet(
+            title = "${s.item.category.icon} ${s.item.category.name}",
+            message = stringResource(R.string.limits_sheet_message, Money.formatRounded(s.item.spentMinor, cur)),
+            confirmLabel = stringResource(R.string.save),
+            dismissLabel = stringResource(R.string.cancel),
+            initialMinor = s.initial,
+            currencyCode = cur,
+            onConfirm = {
+                viewModel.setLimit(s.item.category.id, it)
+                sheet = null
+            },
+            onDismiss = { sheet = null },
+            secondaryAction = if (s.item.limitMinor != null) {
+                stringResource(R.string.limits_remove) to {
+                    viewModel.setLimit(s.item.category.id, null)
+                    sheet = null
                 }
-                showSheet = false
-            },
-            onRemove = {
-                viewModel.removeLimit(sheetCategory!!.category.id)
-                showSheet = false
-            },
-            onDismiss = { showSheet = false },
+            } else null,
         )
-    }
-
-    val sorted = remember(categories) {
-        categories.sortedByDescending { it.status.ordinal }
-    }
-    val exceededCount = categories.count { it.status == LimitStatus.EXCEEDED }
-    val warningCount = categories.count { it.status == LimitStatus.WARNING }
-    val okCount = categories.count { it.status == LimitStatus.OK }
-    val withLimits = sorted.filter { it.limit != null }
-    val noLimits = sorted.filter { it.limit == null }
-    val backLabelRes = remember(navController.currentBackStackEntry) {
-        navController.previousRouteBackLabelRes()
+        LimitsSheet.Budget -> AmountEntrySheet(
+            title = stringResource(R.string.limits_budget_title),
+            message = stringResource(R.string.limits_budget_message),
+            confirmLabel = stringResource(R.string.save),
+            dismissLabel = stringResource(R.string.cancel),
+            initialMinor = state.explicitBudgetMinor ?: state.budgetMinor,
+            currencyCode = cur,
+            onConfirm = {
+                viewModel.setBudget(it)
+                sheet = null
+            },
+            onDismiss = { sheet = null },
+            secondaryAction = if (state.explicitBudgetMinor != null) {
+                stringResource(R.string.limits_budget_reset) to {
+                    viewModel.setBudget(null)
+                    sheet = null
+                }
+            } else null,
+        )
+        null -> Unit
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = colors.background,
-        bottomBar = {
-            AdBannerBottomBar(adUnitId = AppConfig.bannerLimits)
-        },
+        containerColor = c.bg,
         topBar = {
-            IosEditorTopBar(
+            SubScreenAppBar(
                 title = stringResource(R.string.limits),
-                backLabel = stringResource(backLabelRes),
-                onBack = navController::popBackStackOrHome,
+                onBack = { navController.popBackStackOrHome() },
+                actions = { Text(DateFmt.monthStandalone(today), style = FinanceType.bodySmall, color = c.textSecondary) },
             )
         },
+        // Баннер в bottomBar: список получает нижний отступ = высоте баннера (§2 п.11).
+        bottomBar = { AdBannerBottomBar(adUnitId = AppConfig.bannerLimits) },
     ) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(
-                horizontal = Dimens.SpacingL,
-                vertical = Dimens.SpacingXs,
-            ),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
-                LimitsSummaryBanner(
-                    okCount = okCount,
-                    warningCount = warningCount,
-                    exceededCount = exceededCount,
-                    modifier = Modifier.padding(
-                        top = Dimens.SpacingM,
-                        bottom = Dimens.SpacingXs,
-                    ),
-                )
-            }
-
-            if (withLimits.isNotEmpty()) {
-                item { SectionLabel(text = stringResource(R.string.limits_set)) }
-                items(withLimits, key = { it.category.id }) { item ->
-                    LimitCategoryCard(
-                        item = item,
-                        currencyCode = state.currencyCode,
-                        onEditClick = { showLimitSheet(item) },
-                    )
-                }
-            }
-
-            if (noLimits.isNotEmpty()) {
-                item {
-                    SectionLabel(
-                        text = stringResource(R.string.limits_not_set),
-                        modifier = Modifier.padding(top = Dimens.SpacingM),
-                    )
-                }
-                items(noLimits, key = { it.category.id }) { item ->
-                    NoLimitCategoryRow(
-                        item = item,
-                        onAddClick = { showLimitSheet(item) },
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LimitsSummaryBanner(
-    okCount: Int,
-    warningCount: Int,
-    exceededCount: Int,
-    modifier: Modifier = Modifier,
-) {
-    val colors = MaterialTheme.colorScheme
-
-    AppCard(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimens.SpacingM),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            SummaryStatItem(
-                count = okCount,
-                label = R.string.limit_status_ok,
-                color = colors.secondary,
-                modifier = Modifier.weight(1f),
-            )
-            VerticalDivider(
-                modifier = Modifier.height(36.dp),
-                color = colors.surfaceVariant,
-            )
-            SummaryStatItem(
-                count = warningCount,
-                label = R.string.limit_status_warning,
-                color = LimitWarningOrange,
-                modifier = Modifier.weight(1f),
-            )
-            VerticalDivider(
-                modifier = Modifier.height(36.dp),
-                color = colors.surfaceVariant,
-            )
-            SummaryStatItem(
-                count = exceededCount,
-                label = R.string.limit_status_exceeded,
-                color = colors.error,
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Composable
-private fun SummaryStatItem(
-    count: Int,
-    @StringRes label: Int,
-    color: Color,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = count.toString(),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = color,
-        )
-        Text(
-            text = stringResource(label),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun LimitCategoryCard(
-    item: CategoryWithSpending,
-    currencyCode: String,
-    onEditClick: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val category = item.category
-    val categoryColor = category.colorArgb?.let { Color(it.toInt()) } ?: colors.onSurfaceVariant
-    val statusColor = item.status.color()
-
-    AppCard(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(Dimens.SpacingM)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(Dimens.RadiusM))
-                        .background(categoryColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(category.icon, fontSize = 22.sp)
-                }
-
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = Dimens.SpacingM),
-                ) {
-                    Text(
-                        text = category.name,
-                        style = typography.bodyLarge,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    if (item.status != LimitStatus.OK) {
-                        Spacer(Modifier.height(Dimens.SpacingXxs))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(Dimens.RadiusPill))
-                                .background(statusColor.copy(alpha = 0.12f))
-                                .padding(
-                                    horizontal = Dimens.SpacingS,
-                                    vertical = 2.dp,
-                                ),
-                        ) {
+                FCard(onClick = { sheet = LimitsSheet.Budget }) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(stringResource(R.string.limits_budget_title), style = FinanceType.caption, color = c.textSecondary)
                             Text(
-                                text = stringResource(item.status.labelRes),
-                                style = typography.labelSmall,
-                                color = statusColor,
+                                if (state.budgetMinor > 0) Money.formatRounded(state.budgetMinor, cur) else stringResource(R.string.limits_budget_not_set),
+                                style = FinanceType.titleBold,
+                                color = c.textPrimary,
+                            )
+                            Text(
+                                stringResource(
+                                    when (state.budgetSource) {
+                                        BudgetSource.EXPLICIT -> R.string.limits_budget_src_explicit
+                                        BudgetSource.LIMITS -> R.string.limits_budget_src_limits
+                                        BudgetSource.AVERAGE -> R.string.limits_budget_src_avg
+                                        BudgetSource.NONE -> R.string.limits_budget_src_none
+                                    },
+                                ),
+                                style = FinanceType.caption,
+                                color = c.textSecondary,
+                            )
+                        }
+                        TextAction(stringResource(R.string.goal_edit), { sheet = LimitsSheet.Budget })
+                    }
+                }
+            }
+            if (state.withLimit.isNotEmpty()) {
+                item {
+                    FCard {
+                        Row(Modifier.fillMaxWidth()) {
+                            SummaryCell(state.okCount, stringResource(R.string.limit_status_ok), c.successText, Modifier.weight(1f))
+                            SummaryCell(state.almostCount, stringResource(R.string.limit_status_warning), c.warningText, Modifier.weight(1f))
+                            SummaryCell(state.exceededCount, stringResource(R.string.limit_status_exceeded), c.dangerText, Modifier.weight(1f))
+                        }
+                    }
+                }
+                item { SectionHeader(stringResource(R.string.limits_with_limit)) }
+                item {
+                    FCard(padding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
+                        state.withLimit.forEachIndexed { i, item ->
+                            if (i > 0) CardDivider()
+                            LimitRow(item, cur) { sheet = LimitsSheet.Category(item, item.limitMinor ?: item.suggestedMinor) }
+                        }
+                    }
+                }
+            }
+            if (state.withoutLimit.isNotEmpty()) {
+                item { SectionHeader(stringResource(R.string.limits_without_limit)) }
+                item {
+                    FCard(padding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
+                        state.withoutLimit.forEachIndexed { i, item ->
+                            if (i > 0) CardDivider()
+                            ListRow(
+                                title = item.category.name,
+                                subtitle = stringResource(R.string.limits_spent_in_month, Money.formatRounded(item.spentMinor, cur), monthPrepositional(today)),
+                                leading = { EmojiBadge(item.category.icon, CategoryColors.of(item.category), size = 42.dp) },
+                                trailing = {
+                                    ButtonTonal(
+                                        stringResource(R.string.limits_set_action),
+                                        onClick = { sheet = LimitsSheet.Category(item, item.suggestedMinor) },
+                                        compact = true,
+                                    )
+                                },
                             )
                         }
                     }
                 }
-
-                IconButton(
-                    onClick = onEditClick,
-                    modifier = Modifier.size(Dimens.IconSizeL),
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.EditNote,
-                        contentDescription = stringResource(R.string.cd_edit_limit),
-                        tint = colors.primary,
-                        modifier = Modifier.size(Dimens.IconSizeM),
-                    )
-                }
             }
-
-            Spacer(Modifier.height(Dimens.SpacingM))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
+            item {
                 Text(
-                    text = stringResource(
-                        R.string.spent_amount,
-                        item.spentThisMonth.formatMoney(currencyCode),
-                    ),
-                    style = typography.bodyMedium,
-                    color = statusColor,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(
-                        R.string.limit_of,
-                        item.limit!!.formatMoney(currencyCode),
-                    ),
-                    style = typography.bodyMedium,
-                    color = colors.onSurfaceVariant,
-                )
-            }
-
-            Spacer(Modifier.height(Dimens.SpacingXs))
-
-            LinearProgressIndicator(
-                progress = { item.progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(Dimens.RadiusPill)),
-                color = statusColor,
-                trackColor = colors.surfaceVariant,
-            )
-
-            Spacer(Modifier.height(Dimens.SpacingXs))
-
-            val remainingText = when (item.status) {
-                LimitStatus.EXCEEDED -> stringResource(
-                    R.string.limit_overspend,
-                    (item.spentThisMonth - item.limit!!).formatMoney(currencyCode),
-                )
-                else -> stringResource(
-                    R.string.limit_remaining,
-                    (item.limit!! - item.spentThisMonth).coerceAtLeast(0.0)
-                        .formatMoney(currencyCode),
-                )
-            }
-            Text(
-                text = remainingText,
-                style = typography.labelSmall,
-                color = colors.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun NoLimitCategoryRow(
-    item: CategoryWithSpending,
-    onAddClick: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
-    AppCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .padding(Dimens.SpacingM)
-                .height(Dimens.RowHeight - Dimens.SpacingM),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(Dimens.RadiusM))
-                    .background(colors.surfaceVariant),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(item.category.icon, fontSize = 22.sp)
-            }
-
-            Text(
-                text = item.category.name,
-                style = typography.bodyLarge,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = Dimens.SpacingM),
-            )
-
-            TextButton(onClick = onAddClick) {
-                Text(
-                    text = stringResource(R.string.set_limit),
-                    style = typography.bodyMedium,
-                    color = colors.primary,
+                    stringResource(R.string.limits_hint),
+                    style = FinanceType.caption,
+                    color = c.textSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                 )
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** «в сентябре» */
 @Composable
-private fun LimitEditSheet(
-    item: CategoryWithSpending,
-    limitInput: String,
-    currencyCode: String,
-    onInputChange: (String) -> Unit,
-    onSave: () -> Unit,
-    onRemove: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val focusManager = LocalFocusManager.current
-    val category = item.category
-    val categoryColor = category.colorArgb?.let { Color(it.toInt()) } ?: colors.onSurfaceVariant
-    val currencySymbol = MoneyFormat.symbol(currencyCode)
+private fun monthPrepositional(date: LocalDate): String =
+    stringArrayResourceSafe(R.array.months_prepositional, date.monthValue - 1)
 
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = colors.surface,
-        shape = RoundedCornerShape(
-            topStart = Dimens.RadiusXl,
-            topEnd = Dimens.RadiusXl,
-        ),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Dimens.SpacingL)
-                .navigationBarsPadding(),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(Dimens.RadiusM))
-                        .background(categoryColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(category.icon, fontSize = 24.sp)
-                }
-                Column(modifier = Modifier.padding(start = Dimens.SpacingM)) {
-                    Text(
-                        text = category.name,
-                        style = typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    Text(
-                        text = stringResource(R.string.monthly_limit_label),
-                        style = typography.bodySmall,
-                        color = colors.onSurfaceVariant,
-                    )
-                }
-            }
+@Composable
+private fun stringArrayResourceSafe(res: Int, index: Int): String =
+    androidx.compose.ui.res.stringArrayResource(res).getOrElse(index) { "" }
 
-            Spacer(Modifier.height(Dimens.SpacingXl))
-
-            OutlinedTextField(
-                value = limitInput,
-                onValueChange = onInputChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.limit_amount_label)) },
-                suffix = { Text(currencySymbol) },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal,
-                    imeAction = ImeAction.Done,
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = { focusManager.clearFocus() },
-                ),
-                singleLine = true,
-                shape = RoundedCornerShape(Dimens.RadiusM),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = colors.primary,
-                    unfocusedBorderColor = colors.surfaceVariant,
-                ),
-            )
-
-            Spacer(Modifier.height(Dimens.SpacingXs))
-            Text(
-                text = stringResource(
-                    R.string.spent_this_month_hint,
-                    item.spentThisMonth.formatMoney(currencyCode),
-                ),
-                style = typography.bodySmall,
-                color = colors.onSurfaceVariant,
-                modifier = Modifier.padding(start = Dimens.SpacingXs),
-            )
-
-            Spacer(Modifier.height(Dimens.SpacingM))
-            Text(
-                text = stringResource(R.string.quick_presets),
-                style = typography.labelMedium,
-                color = colors.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(Dimens.SpacingXs))
-            Row(horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs)) {
-                val numberFormat = java.text.NumberFormat.getNumberInstance(java.util.Locale("ru"))
-                listOf(3_000, 5_000, 10_000, 20_000).forEach { presetAmount ->
-                    val presetDisplay = numberFormat.format(presetAmount)
-                    val presetValue = presetAmount.toString()
-                    LimitPresetChip(
-                        label = stringResource(
-                            R.string.limit_preset_label,
-                            presetDisplay,
-                            currencySymbol,
-                        ),
-                        selected = limitInput == presetValue,
-                        onClick = { onInputChange(presetValue) },
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(Dimens.SpacingXl))
-
-            PrimaryButton(
-                text = stringResource(R.string.save_limit),
-                enabled = limitInput.isNotBlank() &&
-                    limitInput.toDoubleOrNull() != null &&
-                    limitInput.toDouble() > 0,
-                onClick = onSave,
-            )
-
-            if (item.limit != null) {
-                Spacer(Modifier.height(Dimens.SpacingS))
-                TextButton(
-                    onClick = onRemove,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = stringResource(R.string.remove_limit),
-                        style = typography.bodyMedium,
-                        color = colors.error,
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(Dimens.SpacingM))
-        }
+@Composable
+private fun SummaryCell(value: Int, label: String, color: Color, modifier: Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(value.toString(), style = FinanceType.headline.copy(fontSize = 30.sp, fontWeight = FontWeight.ExtraBold), color = color)
+        Text(label, style = FinanceType.caption, color = FinanceTheme.colors.textSecondary)
     }
 }
 
 @Composable
-private fun LimitPresetChip(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val shape = RoundedCornerShape(Dimens.RadiusPill)
-    val backgroundColor = if (selected) {
-        colors.primary.copy(alpha = 0.12f)
-    } else {
-        colors.surface
+private fun LimitRow(item: LimitItem, cur: String, onClick: () -> Unit) {
+    val c = FinanceTheme.colors
+    val limit = item.limitMinor ?: 0L
+    val color = when (item.status) {
+        BudgetMath.LimitStatus.OK -> c.success
+        BudgetMath.LimitStatus.ALMOST -> c.warning
+        BudgetMath.LimitStatus.EXCEEDED -> c.danger
     }
-    val borderModifier = if (selected) {
+    Column(
         Modifier
-    } else {
-        Modifier.border(Dimens.borderThin, colors.surfaceVariant, shape)
-    }
-    val textColor = if (selected) colors.primary else colors.onSurfaceVariant
-
-    Box(
-        modifier = Modifier
-            .clip(shape)
-            .then(borderModifier)
-            .background(backgroundColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = Dimens.SpacingS, vertical = Dimens.SpacingXxs),
-        contentAlignment = Alignment.Center,
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
     ) {
-        Text(
-            text = label,
-            style = typography.bodySmall,
-            color = textColor,
+        ListRow(
+            title = item.category.name,
+            subtitle = "${Money.formatRounded(item.spentMinor, cur)} / ${Money.formatRounded(limit, cur)}",
+            leading = { EmojiBadge(item.category.icon, CategoryColors.of(item.category), size = 42.dp) },
+            value = if (item.spentMinor > limit) stringResource(R.string.limits_over_by, Money.formatRounded(item.spentMinor - limit, cur))
+            else stringResource(R.string.limits_left, Money.formatRounded(limit - item.spentMinor, cur)),
+            valueColor = if (item.spentMinor > limit) c.dangerText else c.textSecondary,
+            onClick = onClick,
         )
-    }
-}
-
-@Composable
-private fun LimitStatus.color(): Color {
-    val colors = MaterialTheme.colorScheme
-    return when (this) {
-        LimitStatus.NONE -> colors.onSurfaceVariant
-        LimitStatus.OK -> colors.secondary
-        LimitStatus.WARNING -> LimitWarningOrange
-        LimitStatus.EXCEEDED -> colors.error
-    }
-}
-
-private val LimitStatus.labelRes: Int
-    @StringRes get() = when (this) {
-        LimitStatus.NONE -> R.string.limit_status_ok
-        LimitStatus.OK -> R.string.limit_status_ok
-        LimitStatus.WARNING -> R.string.limit_status_warning
-        LimitStatus.EXCEEDED -> R.string.limit_status_exceeded
-    }
-
-private fun formatLimitInput(value: Double): String {
-    return if (value % 1.0 == 0.0) {
-        value.toLong().toString()
-    } else {
-        value.toString()
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            HSpace(54.dp)
+            FProgressBar(item.ratio, color, Modifier.weight(1f), height = 6.dp)
+        }
+        VSpace(10.dp)
     }
 }

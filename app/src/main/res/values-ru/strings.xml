@@ -85,7 +85,7 @@
     <string name="type_savings">Экономия</string>
     <string name="note_placeholder">Заметка</string>
 
-    <string name="smart_savings_title">Моя экономия</string>
+    <string name="smart_savings_title">Умная экономия</string>
     <string name="total_saved">Всего сэкономлено</string>
     <string name="smart_paying_off">В процессе окупаемости</string>
     <string name="smart_profit">Приносят прибыль</string>
@@ -261,7 +261,7 @@
     <string name="nav_goals">Цели</string>
     <string name="nav_analytics">Аналитика</string>
     <string name="nav_settings">Настройки</string>
-    <string name="nav_tools">Инструменты</string>
+    <string name="nav_tools">Расчёты</string>
 
     <!-- Tools screen sections -->
     <string name="tools_section_calculators">КАЛЬКУЛЯТОРЫ</string>

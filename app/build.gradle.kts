@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.kotlin.android)
 }
 
 val googleServicesFile = file("google-services.json")
@@ -24,8 +23,8 @@ android {
         applicationId = "ru.plumsoftware.finance"
         minSdk = 26
         targetSdk = 37
-        versionCode = 14
-        versionName = "1.1.4"
+        versionCode = 15
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -79,8 +78,11 @@ android {
         compose = true
         buildConfig = true
     }
-    kotlinOptions {
-        jvmTarget = "11"
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
     }
 }
 
@@ -127,6 +129,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.inappmessaging.display)
+    implementation(libs.firebase.config)
 
     // Vico Charts
     implementation(libs.vico.compose)
@@ -134,6 +137,9 @@ dependencies {
 
     // Yandex Mobile Ads (RuStore)
     implementation(libs.yandex.mobileads)
+
+    // Скан QR-кода чека ФНС (без Google Play Services)
+    implementation(libs.zxing.android.embedded)
 
     // PDF
     implementation(libs.pdfbox.android)

@@ -17,10 +17,13 @@ class StreakRepository(
 ) {
     fun observe(): Flow<StreakData> = streakDao.observe().map { it?.toDomain() ?: StreakData() }
 
-    suspend fun calculateAndSave(): StreakData {
+    /**
+     * День засчитывается, если записана хотя бы одна операция или отмечено «Сегодня без трат» ([noSpendDays], ТЗ §8.7).
+     */
+    suspend fun calculateAndSave(noSpendDays: Set<LocalDate> = emptySet()): StreakData {
         val zone = ZoneId.systemDefault()
-        val dates = transactionDao.getAllDates()
-            .map { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
+        val dates = (transactionDao.getAllDates()
+            .map { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() } + noSpendDays)
             .distinct()
             .sortedDescending()
 

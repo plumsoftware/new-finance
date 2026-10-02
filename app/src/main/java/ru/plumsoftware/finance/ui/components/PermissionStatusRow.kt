@@ -38,6 +38,7 @@ fun PermissionStatusRow(
     description: String,
     isGranted: Boolean,
     modifier: Modifier = Modifier,
+    onRequest: (() -> Unit)? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
@@ -80,43 +81,11 @@ fun PermissionStatusRow(
             )
         }
 
-        AnimatedContent(
-            targetState = isGranted,
-            transitionSpec = {
-                scaleIn(initialScale = 0.7f) + fadeIn() togetherWith
-                    scaleOut(targetScale = 0.7f) + fadeOut()
-            },
-            label = "perm_check",
-        ) { granted ->
-            Box(
-                modifier = Modifier
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .background(
-                        if (granted) {
-                            colors.secondary.copy(alpha = 0.12f)
-                        } else {
-                            colors.surfaceVariant
-                        },
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (granted) {
-                    Icon(
-                        imageVector = Icons.Rounded.Check,
-                        contentDescription = null,
-                        tint = colors.secondary,
-                        modifier = Modifier.size(16.dp),
-                    )
-                } else {
-                    Box(
-                        Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(colors.onSurfaceVariant.copy(alpha = 0.4f)),
-                    )
-                }
-            }
-        }
+        // Переключатель вместо значка статуса (§6.14).
+        ru.plumsoftware.finance.ui.ds.FSwitch(
+            checked = isGranted,
+            onCheckedChange = { if (!isGranted) onRequest?.invoke() },
+            enabled = isGranted || onRequest != null,
+        )
     }
 }

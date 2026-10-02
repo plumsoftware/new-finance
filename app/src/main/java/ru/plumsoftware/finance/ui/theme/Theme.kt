@@ -7,45 +7,70 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = AccentBlue,
+private fun FinanceColors.toDarkScheme() = darkColorScheme(
+    primary = primary,
     onPrimary = Color.White,
-    secondary = IncomeGreen,
+    primaryContainer = primaryTonalBg,
+    onPrimaryContainer = primaryTonalText,
+    secondary = success,
     onSecondary = Color.White,
-    tertiary = AccentBlue,
-    background = BackgroundDark,
-    onBackground = TextPrimaryD,
-    surface = SurfaceDark,
-    onSurface = TextPrimaryD,
-    surfaceVariant = SeparatorDark,
-    onSurfaceVariant = TextSecondaryD,
-    error = ExpenseRed,
-    outline = SeparatorDark,
-    outlineVariant = TextPlaceholderD,
+    tertiary = primary,
+    background = bg,
+    onBackground = textPrimary,
+    surface = surface,
+    onSurface = textPrimary,
+    surfaceContainer = surface,
+    surfaceContainerLow = surface,
+    surfaceContainerHigh = surface,
+    surfaceVariant = trackMuted,
+    onSurfaceVariant = textSecondary,
+    error = danger,
+    outline = outline,
+    outlineVariant = textDisabled,
+    scrim = scrim,
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = AccentBlue,
+private fun FinanceColors.toLightScheme() = lightColorScheme(
+    primary = primary,
     onPrimary = Color.White,
-    secondary = IncomeGreen,
+    primaryContainer = primaryTonalBg,
+    onPrimaryContainer = primaryTonalText,
+    secondary = success,
     onSecondary = Color.White,
-    tertiary = AccentBlue,
-    background = BackgroundLight,
-    onBackground = TextPrimaryL,
-    surface = SurfaceLight,
-    onSurface = TextPrimaryL,
-    surfaceVariant = SeparatorLight,
-    onSurfaceVariant = TextSecondaryL,
-    error = ExpenseRed,
-    outline = SeparatorLight,
-    outlineVariant = TextPlaceholderL,
+    tertiary = primary,
+    background = bg,
+    onBackground = textPrimary,
+    surface = surface,
+    onSurface = textPrimary,
+    surfaceContainer = surface,
+    surfaceContainerLow = surface,
+    surfaceContainerHigh = surface,
+    surfaceVariant = trackMuted,
+    onSurfaceVariant = textSecondary,
+    error = danger,
+    outline = outline,
+    outlineVariant = textDisabled,
+    scrim = scrim,
 )
+
+private val DarkColorScheme = DarkFinanceColors.toDarkScheme()
+private val LightColorScheme = LightFinanceColors.toLightScheme()
+
+/** Доступ к токенам редизайна: `FinanceTheme.colors`. */
+object FinanceTheme {
+    val colors: FinanceColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalFinanceColors.current
+}
 
 @Composable
 fun FinanceTheme(
@@ -71,10 +96,14 @@ fun FinanceTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        shapes = Shapes,
-        content = content,
-    )
+    CompositionLocalProvider(
+        LocalFinanceColors provides if (darkTheme) DarkFinanceColors else LightFinanceColors,
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            shapes = Shapes,
+            content = content,
+        )
+    }
 }

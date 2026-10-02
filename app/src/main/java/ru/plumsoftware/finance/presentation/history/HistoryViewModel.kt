@@ -1,81 +1,139 @@
 package ru.plumsoftware.finance.presentation.history
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import ru.plumsoftware.finance.domain.model.Category
+import kotlinx.coroutines.launch
+import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.domain.budget.BudgetService
 import ru.plumsoftware.finance.domain.model.CategoryType
-import ru.plumsoftware.finance.domain.model.Transaction
 import ru.plumsoftware.finance.domain.model.TransactionType
+import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.CategoryRepository
 import ru.plumsoftware.finance.domain.repository.GoalRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.domain.repository.TransactionRepository
+import ru.plumsoftware.finance.presentation.common.AmountInputMatcher
+import ru.plumsoftware.finance.presentation.common.DateFmt
+import ru.plumsoftware.finance.presentation.common.TxItem
+import ru.plumsoftware.finance.presentation.common.toTxItem
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
+
+enum class HistoryFilter { ALL, EXPENSES, INCOME }
+
+data class WeekBar(val date: LocalDate, val totalMinor: Long, val isToday: Boolean, val aboveNorm: Boolean, val isFuture: Boolean)
+
+data class DayGroup(val date: LocalDate, val expensesMinor: Long, val items: List<TxItem>)
 
 data class HistoryUiState(
-    val transactions: List<Transaction> = emptyList(),
-    val categoryMap: Map<Long, Category> = emptyMap(),
+    val isLoading: Boolean = true,
     val currencyCode: String = "RUB",
-    val dateRangeStart: LocalDate? = null,
-    val dateRangeEnd: LocalDate? = null,
-) {
-    val dateRangeActive: Boolean
-        get() = dateRangeStart != null && dateRangeEnd != null
-}
+    val weekStart: LocalDate = LocalDate.now(),
+    val weekEnd: LocalDate = LocalDate.now(),
+    val weekTotal: Long = 0,
+    val weekBars: List<WeekBar> = emptyList(),
+    val query: String = "",
+    val filter: HistoryFilter = HistoryFilter.ALL,
+    val groups: List<DayGroup> = emptyList(),
+    val hasAny: Boolean = false,
+)
 
+/** История (§6.3). Хранит всю историю операций — без автоудаления старых записей. */
 class HistoryViewModel(
     private val transactionRepository: TransactionRepository,
     private val goalRepository: GoalRepository,
     categoryRepository: CategoryRepository,
     settingsRepository: SettingsRepository,
+    accountRepository: AccountRepository,
+    private val context: Context,
 ) : ViewModel() {
-    private val _dateRangeStart = MutableStateFlow<LocalDate?>(null)
-    private val _dateRangeEnd = MutableStateFlow<LocalDate?>(null)
 
-    init {
-        pruneOldTransactions()
-    }
+    private val query = MutableStateFlow("")
+    private val filter = MutableStateFlow(HistoryFilter.ALL)
+
+    private val categories = combine(
+        categoryRepository.observeByType(CategoryType.EXPENSE, includeHidden = true),
+        categoryRepository.observeByType(CategoryType.INCOME, includeHidden = true),
+    ) { e, i -> e + i }
 
     val uiState: StateFlow<HistoryUiState> = combine(
         transactionRepository.observeAll(),
-        categoryRepository.observeByType(CategoryType.EXPENSE, includeHidden = true),
-        categoryRepository.observeByType(CategoryType.INCOME, includeHidden = true),
-        settingsRepository.settings,
-        _dateRangeStart,
-        _dateRangeEnd,
-    ) { values ->
-        val transactions = values[0] as List<Transaction>
-        val expenseCategories = values[1] as List<Category>
-        val incomeCategories = values[2] as List<Category>
-        val settings = values[3] as ru.plumsoftware.finance.domain.model.AppSettings
-        val dateRangeStart = values[4] as LocalDate?
-        val dateRangeEnd = values[5] as LocalDate?
-        val cutoffMillis = System.currentTimeMillis() - NINETY_DAYS_MILLIS
-        val latestTransactions = transactions
-            .asSequence()
-            .filter { it.dateMillis >= cutoffMillis }
-            .sortedByDescending { it.dateMillis }
-            .take(90)
-            .toList()
+        categories,
+        combine(settingsRepository.settings, accountRepository.observeAllActive()) { s, a -> s to a },
+        query,
+        filter,
+    ) { tx, cats, (settings, accounts), q, f ->
+        val today = LocalDate.now()
+        val catMap = cats.associateBy { it.id }
+        val accMap = accounts.associateBy { it.id }
+        val savings = context.getString(R.string.home_savings_to_goal)
+        val noCat = context.getString(R.string.home_no_category)
+        val items = tx.sortedByDescending { it.dateMillis }.map { it.toTxItem(catMap, accMap, savings, noCat) }
+
+        // Неделя Пн–Вс.
+        val monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val sunday = monday.plusDays(6)
+        val budget = BudgetService.compute(tx, cats, settings.monthlyBudgetMinor, today, DateFmt::toLocalDate)?.budget
+        val norm = budget?.let { it.budget / it.daysInMonth }
+        val expenseByDate = items.filter { it.type == TransactionType.EXPENSE }.groupBy { it.date }
+            .mapValues { e -> e.value.sumOf { it.amountMinor } }
+        val bars = (0..6).map { i ->
+            val d = monday.plusDays(i.toLong())
+            val total = expenseByDate[d] ?: 0L
+            WeekBar(d, total, d == today, norm != null && total > norm, d.isAfter(today))
+        }
+
+        val filtered = items.filter { item ->
+            when (f) {
+                HistoryFilter.ALL -> true
+                HistoryFilter.EXPENSES -> item.type == TransactionType.EXPENSE
+                HistoryFilter.INCOME -> item.type == TransactionType.INCOME
+            }
+        }.filter { matches(it, q) }
+
+        val groups = filtered.groupBy { it.date }.map { (date, list) ->
+            DayGroup(date, list.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amountMinor }, list)
+        }.sortedByDescending { it.date }
+
         HistoryUiState(
-            transactions = latestTransactions,
-            categoryMap = (expenseCategories + incomeCategories).associateBy { it.id },
+            isLoading = false,
             currencyCode = settings.defaultCurrencyCode,
-            dateRangeStart = dateRangeStart,
-            dateRangeEnd = dateRangeEnd,
+            weekStart = monday,
+            weekEnd = sunday,
+            weekTotal = bars.sumOf { it.totalMinor },
+            weekBars = bars,
+            query = q,
+            filter = f,
+            groups = groups,
+            hasAny = items.isNotEmpty(),
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = HistoryUiState(),
-    )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HistoryUiState())
+
+    /** Поиск по названию, категории, заметке и сумме. */
+    private fun matches(item: TxItem, q: String): Boolean {
+        val query = q.trim()
+        if (query.isEmpty()) return true
+        val lower = query.lowercase()
+        return item.title.lowercase().contains(lower) ||
+            item.categoryName.lowercase().contains(lower) ||
+            item.note.orEmpty().lowercase().contains(lower) ||
+            AmountInputMatcher.matches(item.amountMinor, query)
+    }
+
+    fun setQuery(q: String) {
+        query.value = q
+    }
+
+    fun setFilter(f: HistoryFilter) {
+        filter.value = f
+    }
 
     fun deleteTransaction(id: Long) {
         viewModelScope.launch {
@@ -86,39 +144,5 @@ class HistoryViewModel(
                 transactionRepository.delete(id)
             }
         }
-    }
-
-    fun setDateRange(start: LocalDate, end: LocalDate) {
-        _dateRangeStart.value = start
-        _dateRangeEnd.value = end
-    }
-
-    fun clearDateRange() {
-        _dateRangeStart.value = null
-        _dateRangeEnd.value = null
-    }
-
-    private fun pruneOldTransactions() {
-        viewModelScope.launch {
-            val cutoffMillis = System.currentTimeMillis() - NINETY_DAYS_MILLIS
-            val oldTransactionIds = transactionRepository.observeAll()
-                .first()
-                .asSequence()
-                .filter { it.dateMillis < cutoffMillis }
-                .map { it.id }
-                .toList()
-            oldTransactionIds.forEach { id ->
-                val transaction = transactionRepository.getById(id)
-                if (transaction?.type == TransactionType.SAVINGS && transaction.goalId != null) {
-                    goalRepository.deleteDepositByTransactionId(id)
-                } else {
-                    transactionRepository.delete(id)
-                }
-            }
-        }
-    }
-
-    private companion object {
-        const val NINETY_DAYS_MILLIS = 90L * 24L * 60L * 60L * 1000L
     }
 }

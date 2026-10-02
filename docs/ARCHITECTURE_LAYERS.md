@@ -7,7 +7,12 @@
 **Что входит:**
 - экраны Compose (`.../presentation/*Screen.kt`)
 - `ViewModel` для экранов (`.../presentation/*ViewModel.kt`)
-- UI-компоненты (`.../ui/components`, `.../ui/theme`)
+- дизайн-система редизайна (`.../ui/ds`): `FCard`, `InkCard`, `SectionTitle`, `ListRow`, `SettingsRow`,
+  `SegmentedInk/Light`, `FChip`, `FSwitch`, кнопки, `FProgressBar`, `ProgressRing`, `DayStrip`, `BarChart`,
+  `AmountKeypad`, `FBottomSheet`, `PeriodPickerSheet`, `MascotTip`, `MascotSnackbar`, `EmptyState`
+- токены (`.../ui/theme/FinanceColors.kt`, `FinanceType.kt`): доступ через `FinanceTheme.colors`, пары light/dark
+- форматтеры (`.../presentation/common/Fmt.kt`): `Money`, `DateFmt`, `plural()` — по ТЗ §11
+- legacy-компоненты (`.../ui/components`) — только для ещё не переведённых экранов
 
 **Ответственность:**
 - отрисовка интерфейса
@@ -16,9 +21,11 @@
 - преобразование данных в UI-модель
 
 **Правила:**
-- пользовательские строки только из `strings.xml`
+- пользовательские строки только из ресурсов (новые — в `strings_redesign.xml`, склонения — `plurals_redesign.xml`)
 - экран не ходит напрямую в БД
 - доступ к данным только через репозитории из `domain`
+- цвета/типографика новых экранов — только из `FinanceTheme.colors` / `FinanceType`, не хардкодить
+- глобальные сообщения — `LocalMascotSnackbar.current.show(...)` (хост в `FinanceApp`)
 
 ## 2) Domain Layer (`app/src/main/java/.../domain`)
 
@@ -26,6 +33,13 @@
 - бизнес-модели (`.../domain/model`)
 - интерфейсы репозиториев (`.../domain/repository`)
 - бизнес-логика/движки (`.../domain/insights`, `.../domain/notifications`)
+- чистые расчёты без Android API (покрыты `RedesignLogicTest`):
+  - `domain/budget` — дневной лимит, прогноз, полоса дней (§8.1–8.2), `BudgetService`, ближайшие списания
+  - `domain/analytics` — периоды, бакеты, сравнение (§8.3)
+  - `domain/calculators` — формулы 7 калькуляторов (§8.5)
+  - `domain/insights/KopiTips` — советы Коппи по приоритетам (§8.6)
+  - `domain/achievements` — 12 достижений (§6.12)
+  - `domain/receipt` — разбор QR-кода чека ФНС
 
 **Ответственность:**
 - бизнес-правила и инварианты
@@ -44,6 +58,9 @@
 - DataStore (`.../data/local/datastore`)
 - mapper'ы (`.../data/mapper`)
 - интеграции Firebase (`.../data/firebase`)
+- отчёты и экспорт PDF/Excel/CSV (`.../data/report`, §9)
+- локальные уведомления: каналы, пороги лимитов, ежедневное напоминание (`.../data/notifications`, §10)
+- удалённая конфигурация калькуляторов и «Мои расчёты» (`.../data/config`)
 
 **Ответственность:**
 - чтение/запись данных

@@ -3,7 +3,7 @@
 Android-приложение для учёта финансов: операции, категории, лимиты, цели, умные накопления (экоактива), аналитика, достижения.
 
 **Package:** `ru.plumsoftware.finance`  
-**Min SDK:** 24 · **Target SDK:** 36  
+**Min SDK:** 26 · **Target SDK:** 37  
 **Стек:** Kotlin, Jetpack Compose, Room, Koin, Navigation Compose, Firebase (опционально), Yandex Mobile Ads (RuStore).
 
 ---
@@ -11,12 +11,13 @@ Android-приложение для учёта финансов: операци�
 ## Сборка
 
 ```bash
-./gradlew :app:assembleDebug
+./gradlew :app:assembleRuStoreDebug
 ```
 
 - **Firebase:** положите `app/google-services.json` — иначе сборка без FCM (см. [docs/FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md)).
-- **Платформа магазина:** `app/build.gradle.kts` → `buildConfigField("int", "PLATFORM", "1")`  
-  `1` = RuStore, `2` = Google Play, `3` = Huawei. От этого зависят рекламные блоки в [AppConfig.kt](app/src/main/java/ru/plumsoftware/finance/AppConfig.kt).
+- **Платформа магазина:** product flavors `RuStore` (PLATFORM=1), `GooglePlay` (2), `HuaweiappGallery` (3) в `app/build.gradle.kts`.  
+  От этого зависят рекламные блоки и ссылка на магазин в [AppConfig.kt](app/src/main/java/ru/plumsoftware/finance/AppConfig.kt).
+- **Remote Config** (при наличии Firebase): `family_mortgage_rate`, `family_mortgage_limit` — условия семейной ипотеки для калькулятора.
 
 ---
 
@@ -37,6 +38,7 @@ Android-приложение для учёта финансов: операци�
 
 ## Быстрые ссылки по фичам
 
+- **Редизайн (ТЗ):** `TZ/ТЗ.md`; дизайн-система — `ui/ds/`, токены — `ui/theme/FinanceColors.kt`, `FinanceType.kt`
 - **Навигация:** `ui/AppRoute.kt`, `navigation/AppDeepLinks.kt`, `presentation/FinanceApp.kt`
 - **Реклама:** `AppConfig.kt`, `ads/`, `ui/ads/` → [YANDEX_ADS.md](docs/YANDEX_ADS.md)
 - **Push:** `data/firebase/` → [FIREBASE_SETUP.md](docs/FIREBASE_SETUP.md), [DEEPLINKS.md](docs/DEEPLINKS.md)

@@ -1,5 +1,7 @@
 package ru.plumsoftware.finance.presentation.smartsavings
 
+import ru.plumsoftware.finance.presentation.common.Money
+
 import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -80,6 +82,13 @@ class CreateSmartSavingsViewModel(
     fun setNote(v: String) = _uiState.update { it.copy(note = v) }
     fun setRecordPurchaseExpense(v: Boolean) = _uiState.update { it.copy(recordPurchaseExpense = v) }
     fun clearError() = _uiState.update { it.copy(errorMessage = null) }
+
+    /** Суммы из нижней панели ввода (копейки). */
+    fun setPurchaseMinor(minor: Long) = _uiState.update { it.copy(purchaseDigits = minorToDigits(minor, it.currencyCode)) }
+    fun setSavingMinor(minor: Long) = _uiState.update { it.copy(savingPerUseDigits = minorToDigits(minor, it.currencyCode)) }
+
+    private fun minorToDigits(minor: Long, currency: String): String =
+        if (minor <= 0) "" else Money.toMajor(minor, currency).stripTrailingZeros().toPlainString()
 
     fun appendPurchaseDigit(d: String) = _uiState.update { it.copy(purchaseDigits = normalizeDigits(it.purchaseDigits + d)) }
     fun backspacePurchase() = _uiState.update { it.copy(purchaseDigits = it.purchaseDigits.dropLast(1)) }

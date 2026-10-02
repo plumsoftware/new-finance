@@ -10,12 +10,12 @@ import kotlinx.coroutines.launch
 import ru.plumsoftware.finance.domain.model.AccountWithBalance
 import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
-import ru.plumsoftware.finance.presentation.common.MoneyFormat
 
 data class AccountsUiState(
     val accounts: List<AccountWithBalance> = emptyList(),
     val selectedAccountId: Long = 1L,
-    val totalBalanceLabel: String = "",
+    val totalBalanceMinor: Long = 0L,
+    val currencyCode: String = "RUB",
 )
 
 class AccountsViewModel(
@@ -32,7 +32,8 @@ class AccountsViewModel(
         AccountsUiState(
             accounts = accounts,
             selectedAccountId = settings.selectedAccountId,
-            totalBalanceLabel = MoneyFormat.format(totalMinor, currency),
+            totalBalanceMinor = totalMinor,
+            currencyCode = currency,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AccountsUiState())
 

@@ -160,6 +160,21 @@ fun PermissionsBottomSheet(
         }
     }
 
+    val requestMissing: () -> Unit = {
+        when {
+            showSettingsHint -> {
+                context.openAppSettings()
+                refreshPermissionStates()
+            }
+            permissionsToRequest.isNotEmpty() ->
+                multiplePermissionsLauncher.launch(permissionsToRequest.toTypedArray())
+            !backgroundState.isGranted -> {
+                activity.requestBackgroundWorkExemption()
+                refreshPermissionStates()
+            }
+        }
+    }
+
     ModalBottomSheet(
         onDismissRequest = { dismissSheet() },
         sheetState = sheetState,
@@ -173,8 +188,14 @@ fun PermissionsBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
                 .navigationBarsPadding(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
@@ -239,6 +260,7 @@ fun PermissionsBottomSheet(
                     title = stringResource(R.string.perm_notif_title),
                     description = stringResource(R.string.perm_notif_desc),
                     isGranted = notifState.isGranted,
+                    onRequest = requestMissing,
                 )
 
                 HorizontalDivider(
@@ -252,6 +274,7 @@ fun PermissionsBottomSheet(
                     title = stringResource(R.string.perm_storage_title),
                     description = stringResource(R.string.perm_storage_desc),
                     isGranted = storageState.isGranted,
+                    onRequest = requestMissing,
                 )
 
                 HorizontalDivider(
@@ -265,6 +288,7 @@ fun PermissionsBottomSheet(
                     title = stringResource(R.string.perm_background_title),
                     description = stringResource(R.string.perm_background_desc),
                     isGranted = backgroundState.isGranted,
+                    onRequest = requestMissing,
                 )
             }
 
@@ -313,7 +337,9 @@ fun PermissionsBottomSheet(
             }
 
             Spacer(Modifier.height(Dimens.SpacingL))
-
+        }
+        // Кнопка «Разрешить доступ» закреплена внизу (§6.14).
+        Column(Modifier.fillMaxWidth().background(colors.surface).padding(top = Dimens.SpacingS)) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -383,6 +409,7 @@ fun PermissionsBottomSheet(
             }
 
             Spacer(Modifier.height(Dimens.SpacingM))
+        }
         }
     }
 }

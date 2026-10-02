@@ -86,39 +86,10 @@ fun PermissionScreenRow(
                 )
             }
 
-            if (item.isGranted) {
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(CircleShape)
-                        .background(colors.secondary.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Check,
-                        contentDescription = null,
-                        tint = colors.secondary,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
-            } else {
-                OutlinedButton(
-                    onClick = onRequest,
-                    modifier = Modifier.height(32.dp),
-                    shape = RoundedCornerShape(Dimens.RadiusPill),
-                    contentPadding = PaddingValues(
-                        horizontal = Dimens.SpacingM,
-                        vertical = 0.dp,
-                    ),
-                    border = BorderStroke(Dimens.borderThin, colors.primary),
-                ) {
-                    Text(
-                        text = stringResource(R.string.perm_allow),
-                        style = typography.labelMedium,
-                        color = colors.primary,
-                    )
-                }
-            }
+            ru.plumsoftware.finance.ui.ds.FSwitch(
+                checked = item.isGranted,
+                onCheckedChange = { if (!item.isGranted) onRequest() },
+            )
         }
 
         AnimatedVisibility(visible = !item.isGranted) {

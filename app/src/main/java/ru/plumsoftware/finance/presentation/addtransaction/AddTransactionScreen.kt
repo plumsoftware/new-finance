@@ -1,704 +1,330 @@
 package ru.plumsoftware.finance.presentation.addtransaction
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Backspace
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlin.math.roundToInt
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.TransactionType
-// import ru.plumsoftware.finance.ads.InterstitialPlacement
-import ru.plumsoftware.finance.presentation.common.MoneyFormat
-// import ru.plumsoftware.finance.ui.ads.InterstitialAdEffect
-import ru.plumsoftware.finance.ui.components.CurrencyPickerSheet
-import ru.plumsoftware.finance.ui.components.ios.IosAlertDialog
-import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
-import ru.plumsoftware.finance.ui.components.ios.IosTextField
-import ru.plumsoftware.finance.ui.components.PrimaryButton
-import ru.plumsoftware.finance.ui.theme.CategoryUiDefaults
-import ru.plumsoftware.finance.ui.theme.Dimens
-import ru.plumsoftware.finance.ui.theme.Inter28Family
+import ru.plumsoftware.finance.presentation.common.Money
+import ru.plumsoftware.finance.presentation.common.NBSP
+import ru.plumsoftware.finance.ui.ds.AmountInput
+import ru.plumsoftware.finance.ui.ds.AmountKeypad
+import ru.plumsoftware.finance.ui.ds.ButtonPrimary
+import ru.plumsoftware.finance.ui.ds.FChip
+import ru.plumsoftware.finance.ui.ds.HSpace
+import ru.plumsoftware.finance.ui.ds.Kopi
+import ru.plumsoftware.finance.ui.ds.KopiImage
+import ru.plumsoftware.finance.ui.ds.LocalMascotSnackbar
+import ru.plumsoftware.finance.ui.ds.SegmentedLight
+import ru.plumsoftware.finance.ui.ds.SubScreenAppBar
+import ru.plumsoftware.finance.ui.ds.VSpace
+import ru.plumsoftware.finance.ui.theme.FinanceTheme
+import ru.plumsoftware.finance.ui.theme.FinanceType
 
-private val numPadKeys = listOf(
-    listOf("1", "2", "3"),
-    listOf("4", "5", "6"),
-    listOf("7", "8", "9"),
-    listOf(".", "0", "⌫"),
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AddTransactionScreen(
     onBack: () -> Unit,
+    onCreateCategory: (TransactionType) -> Unit = {},
     viewModel: AddTransactionViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val haptic = LocalHapticFeedback.current
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val canSave = MoneyFormat.majorDigitsToMinor(state.amountMajorDigits, state.currencyCode) > 0L && !state.isSaving
-    var showQuickCategorySheet by remember { mutableStateOf(false) }
-    var quickName by remember { mutableStateOf("") }
-    var quickIcon by remember { mutableStateOf("🛒") }
-    var quickColor by remember { mutableLongStateOf(CategoryUiDefaults.DEFAULT_COLOR_ARGB) }
+    val saved by viewModel.saved.collectAsStateWithLifecycle()
+    val snackbar = LocalMascotSnackbar.current
+    val c = FinanceTheme.colors
 
-    LaunchedEffect(state.saved) {
-        if (state.saved) {
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            onBack()
-        }
-    }
-
-    // InterstitialAdEffect(
-    //     placement = InterstitialPlacement.TRANSACTION,
-    //     trigger = state.saved,
-    //     onContinue = onBack,
-    // )
-
-    state.errorMessage?.let { message ->
-        IosAlertDialog(
-            message = message,
-            onDismiss = viewModel::clearError,
+    // Скан чека: камера → QR ФНС (§6.2).
+    val scanPrompt = stringResource(R.string.add_scan_prompt)
+    val scanner = rememberLauncherForActivityResult(ScanContract()) { result -> viewModel.onScanResult(result.contents) }
+    val startScan = {
+        viewModel.setScanning(true)
+        scanner.launch(
+            ScanOptions()
+                .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+                .setPrompt(scanPrompt)
+                .setBeepEnabled(false)
+                .setOrientationLocked(false),
         )
     }
-
-    if (state.showCurrencyPicker) {
-        CurrencyPickerSheet(
-            selectedCode = state.currencyCode,
-            onSelect = viewModel::setCurrency,
-            onDismiss = viewModel::closeCurrencyPicker,
-        )
-    }
-
-    if (showQuickCategorySheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showQuickCategorySheet = false },
-            containerColor = colors.surface,
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.SpacingM, vertical = Dimens.SpacingXs),
-            ) {
-                Text(
-                    stringResource(R.string.new_category_title),
-                    style = typography.titleLarge,
-                )
-                Spacer(Modifier.height(Dimens.SpacingS))
-                IosTextField(
-                    value = quickName,
-                    onValueChange = { quickName = it.take(30) },
-                    placeholder = stringResource(R.string.category_name),
-                )
-                Spacer(Modifier.height(Dimens.RadiusS))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                ) {
-                    val emojis = if (state.type == TransactionType.INCOME) {
-                        listOf("💼", "💻", "📈", "🎓", "💰", "🏆", "🚀", "🎤")
-                    } else {
-                        listOf("🛒", "☕", "🚌", "💊", "🍕", "🏠", "🎮", "🎁")
-                    }
-                    emojis.forEach { emoji ->
-                        Surface(
-                            shape = RoundedCornerShape(Dimens.RadiusS),
-                            color = if (quickIcon == emoji) {
-                                Color(quickColor.toInt()).copy(alpha = 0.2f)
-                            } else {
-                                colors.surfaceVariant
-                            },
-                            modifier = Modifier
-                                .size(Dimens.emojiPickerSize)
-                                .clickable { quickIcon = emoji },
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(emoji, style = typography.titleMedium)
-                            }
-                        }
-                    }
-                }
-                Spacer(Modifier.height(Dimens.RadiusS))
-                Row(horizontalArrangement = Arrangement.spacedBy(Dimens.RadiusS)) {
-                    listOf(
-                        CategoryUiDefaults.DEFAULT_COLOR_ARGB,
-                        0xFFFF3B30,
-                        0xFFFF9500,
-                        0xFF34C759,
-                        0xFF007AFF,
-                        0xFF5856D6,
-                    ).forEach { color ->
-                        Surface(
-                            shape = CircleShape,
-                            color = Color(color.toInt()),
-                            modifier = Modifier
-                                .size(Dimens.colorSwatchSize)
-                                .clickable { quickColor = color },
-                        ) {
-                            if (quickColor == color) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        stringResource(R.string.checkmark),
-                                        color = colors.surface,
-                                        style = typography.labelLarge,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-                Spacer(Modifier.height(Dimens.RadiusS + Dimens.SpacingXxs))
-                AddTransactionPrimaryButton(
-                    text = stringResource(R.string.create),
-                    onClick = {
-                        viewModel.createQuickCategory(
-                            name = quickName,
-                            icon = quickIcon,
-                            colorArgb = quickColor,
-                            onCreated = {
-                                quickName = ""
-                                showQuickCategorySheet = false
-                            },
-                        )
-                    },
-                    enabled = quickName.isNotBlank(),
-                    loading = state.quickCategorySaving,
-                )
-                Spacer(Modifier.height(Dimens.SpacingXl))
-            }
+    var autoScanDone by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (viewModel.startWithScan && !autoScanDone) {
+            autoScanDone = true
+            startScan()
         }
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = colors.background,
-        topBar = {
-            IosEditorTopBar(
-                title = stringResource(R.string.add_transaction),
-                backLabel = stringResource(R.string.nav_home),
-                onBack = onBack,
-            )
-        },
-        bottomBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Dimens.SpacingL)
-                    .navigationBarsPadding()
-                    .padding(bottom = Dimens.SpacingM),
-            ) {
-                AddTransactionPrimaryButton(
-                    text = stringResource(R.string.save),
-                    onClick = viewModel::save,
-                    loading = state.isSaving,
-                    enabled = canSave,
-                )
-            }
-        },
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = Dimens.SpacingL),
-        ) {
-            val segmentType = when (state.type) {
-                TransactionType.INCOME -> TransactionType.INCOME
-                else -> TransactionType.EXPENSE
-            }
-            AddTransactionTypeToggle(
-                labels = listOf(
-                    stringResource(R.string.type_expense),
-                    stringResource(R.string.type_income),
-                ),
-                selectedIndex = if (segmentType == TransactionType.INCOME) 1 else 0,
-                onSelectIndex = { index ->
-                    viewModel.setType(
-                        if (index == 1) TransactionType.INCOME else TransactionType.EXPENSE,
-                    )
-                },
-            )
-            Spacer(modifier = Modifier.height(Dimens.SpacingS))
-            AddTransactionAmountDisplay(
-                digits = state.amountMajorDigits,
-                currencyCode = state.currencyCode,
-                onCurrencyClick = viewModel::openCurrencyPicker,
-            )
-            Spacer(modifier = Modifier.height(Dimens.SpacingS))
-            if (state.accounts.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.add_transaction_account),
-                    style = typography.labelSmall,
-                    color = colors.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = Dimens.SpacingXs),
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
-                ) {
-                    state.accounts.forEach { account ->
-                        AddTransactionCategoryChip(
-                            text = stringResource(
-                                R.string.chip_emoji_name_format,
-                                account.emoji,
-                                account.name,
-                            ),
-                            selected = state.selectedAccountId == account.id,
-                            onClick = { viewModel.selectAccount(account.id) },
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(Dimens.SpacingS))
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
-            ) {
-                state.categories.forEach { cat ->
-                    AddTransactionCategoryChip(
-                        text = stringResource(
-                            R.string.chip_emoji_name_format,
-                            cat.icon,
-                            cat.name,
-                        ),
-                        selected = state.selectedCategoryId == cat.id,
-                        onClick = { viewModel.selectCategory(cat.id) },
-                    )
-                }
-                AddTransactionCategoryChip(
-                    text = stringResource(R.string.plus_sign) + stringResource(R.string.new_category_chip),
-                    selected = false,
-                    onClick = { showQuickCategorySheet = true },
-                )
-            }
-            Spacer(modifier = Modifier.height(Dimens.SpacingS))
-            AddTransactionNoteField(
-                value = state.note,
-                onValueChange = viewModel::setNote,
-                placeholder = stringResource(R.string.note_placeholder),
-            )
-            Spacer(modifier = Modifier.height(Dimens.SpacingS))
-            AddTransactionNumPad(
-                onDigit = viewModel::appendDigit,
-                onBackspace = viewModel::backspace,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
+    LaunchedEffect(saved) {
+        val result = saved ?: return@LaunchedEffect
+        snackbar.show(result.message, if (result.overLimit) Kopi.THINKING else Kopi.HAPPY)
+        onBack()
     }
-}
-
-@Composable
-private fun AddTransactionTypeToggle(
-    labels: List<String>,
-    selectedIndex: Int,
-    onSelectIndex: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    if (labels.isEmpty()) return
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val safeIndex = selectedIndex.coerceIn(0, labels.lastIndex)
-    val animatedIndex by animateFloatAsState(
-        targetValue = safeIndex.toFloat(),
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "add_tx_segment_offset",
-    )
-    val density = LocalDensity.current
-    val segmentHeight = Dimens.categoryEditorMiniSegmentHeight
-    val segmentInnerPadding = Dimens.categoryEditorMiniSegmentInset
-    val trackShape = RoundedCornerShape(segmentHeight / 2)
-    val thumbShape = RoundedCornerShape(Dimens.RadiusS)
-
-    BoxWithConstraints(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(segmentHeight)
-            .clip(trackShape)
-            .background(colors.outline),
-    ) {
-        val innerWidth = maxWidth - segmentInnerPadding * 2
-        val segmentWidth = innerWidth / labels.size
-        val indicatorOffsetPx = with(density) { (segmentWidth * animatedIndex).toPx() }
-
-        Box(
-            modifier = Modifier
-                .padding(segmentInnerPadding)
-                .offset { IntOffset(indicatorOffsetPx.roundToInt(), 0) }
-                .width(segmentWidth)
-                .height(segmentHeight - segmentInnerPadding * 2)
-                .shadow(
-                    elevation = Dimens.borderThin,
-                    shape = thumbShape,
-                    clip = false,
-                    ambientColor = Color.Black.copy(alpha = 0.12f),
-                    spotColor = Color.Black.copy(alpha = 0.12f),
-                )
-                .clip(thumbShape)
-                .background(colors.surface),
-        )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(segmentInnerPadding),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            labels.forEachIndexed { index, label ->
-                val isSelected = index == safeIndex
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(segmentHeight - segmentInnerPadding * 2)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { onSelectIndex(index) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = label,
-                        style = typography.bodyMedium.copy(fontSize = 15.sp),
-                        color = if (isSelected) colors.onSurface else colors.onSurfaceVariant,
-                    )
-                }
-            }
-        }
+    LaunchedEffect(state.errorMessage) {
+        val msg = state.errorMessage ?: return@LaunchedEffect
+        snackbar.show(msg, Kopi.THINKING)
+        viewModel.clearError()
     }
-}
 
-@Composable
-private fun AddTransactionAmountDisplay(
-    digits: String,
-    currencyCode: String,
-    onCurrencyClick: (() -> Unit)? = null,
-) {
-    val context = LocalContext.current
-    val colors = MaterialTheme.colorScheme
-    val symbol = MoneyFormat.symbol(currencyCode)
-    val display = MoneyFormat.formatEntryDisplay(context, digits, currencyCode)
-    val amountText = if (display.endsWith(symbol)) {
-        display.dropLast(symbol.length).trimEnd()
-    } else {
-        display
-    }
-    val amountSize = 56.sp
-
-    AnimatedContent(
-        targetState = amountText,
-        transitionSpec = {
-            (scaleIn(
-                initialScale = 0.95f,
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessMedium,
-                ),
-            ) + fadeIn(tween(120))).togetherWith(
-                scaleOut(targetScale = 0.95f, animationSpec = tween(100)) + fadeOut(tween(80)),
-            )
-        },
-        label = "add_tx_amount",
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (onCurrencyClick != null) {
-                    Modifier.clickable(onClick = onCurrencyClick)
-                } else {
-                    Modifier
-                },
-            ),
-    ) { amount ->
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = amount,
-                style = TextStyle(
-                    fontFamily = Inter28Family,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = amountSize,
-                    letterSpacing = (-1).sp,
-                ),
-                color = colors.onSurface,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = stringResource(R.string.amount_currency_space, symbol),
-                style = TextStyle(
-                    fontFamily = Inter28Family,
-                    fontWeight = FontWeight.Light,
-                    fontSize = amountSize,
-                    letterSpacing = (-1).sp,
-                ),
-                color = if (onCurrencyClick != null) colors.primary else colors.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun AddTransactionCategoryChip(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val chipShape = RoundedCornerShape(Dimens.RadiusL)
-    Box(
-        modifier = Modifier
-            .height(Dimens.segmentedHeight)
-            .clip(chipShape)
-            .background(if (selected) colors.primary else colors.outline)
-            .clickable(onClick = onClick)
-            .padding(horizontal = Dimens.SpacingM),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = text,
-            style = typography.bodyMedium.copy(fontSize = 15.sp),
-            color = if (selected) colors.onPrimary else colors.onSurface,
-        )
-    }
-}
-
-@Composable
-private fun AddTransactionNoteField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val shapes = MaterialTheme.shapes
-    val textStyle = typography.bodyMedium.copy(
-        fontSize = 14.sp,
-        color = colors.onSurface,
-    )
-
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        textStyle = textStyle,
-        singleLine = true,
-        cursorBrush = SolidColor(colors.primary),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shapes.small)
-            .background(colors.surface)
-            .padding(
-                horizontal = Dimens.RadiusM,
-                vertical = Dimens.RadiusM,
-            ),
-        decorationBox = { inner ->
-            Box(contentAlignment = Alignment.CenterStart) {
-                if (value.isEmpty()) {
-                    Text(
-                        text = placeholder,
-                        style = textStyle,
-                        color = colors.outlineVariant,
-                    )
-                }
-                inner()
-            }
-        },
-    )
-}
-
-@Composable
-private fun AddTransactionNumPad(
-    onDigit: (String) -> Unit,
-    onBackspace: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = MaterialTheme.colorScheme
-    val shapes = MaterialTheme.shapes
-    val keyStyle = TextStyle(
-        fontFamily = Inter28Family,
-        fontWeight = FontWeight.Normal,
-        fontSize = 28.sp,
-    )
+    val isIncome = state.type == TransactionType.INCOME
     Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
+        Modifier
+            .fillMaxSize()
+            .background(c.bg)
+            .navigationBarsPadding()
+            .imePadding(),
     ) {
-        numPadKeys.forEach { row ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
+        SubScreenAppBar(
+            title = stringResource(if (state.isEdit) R.string.add_title_edit else R.string.add_title),
+            onBack = onBack,
+            backIcon = R.drawable.ic_close,
+            backDescription = stringResource(R.string.add_close),
+        )
+        Column(
+            Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState()),
+        ) {
+            SegmentedLight(
+                options = listOf(stringResource(R.string.add_expense), stringResource(R.string.add_income)),
+                selectedIndex = if (isIncome) 1 else 0,
+                onSelect = { viewModel.setType(if (it == 1) TransactionType.INCOME else TransactionType.EXPENSE) },
+                onBackground = true,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 86.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                row.forEach { key ->
-                    val cellModifier = Modifier
-                        .weight(1f)
-                        .height(Dimens.numPadKeyHeight)
-                    when (key) {
-                        "⌫" -> AddTransactionNumPadKey(
-                            modifier = cellModifier,
-                            onClick = onBackspace,
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Backspace,
-                                contentDescription = null,
-                                tint = colors.onSurface,
-                                modifier = Modifier.size(Dimens.iconSizeNav),
-                            )
-                        }
-                        else -> AddTransactionNumPadKey(
-                            modifier = cellModifier,
-                            onClick = { onDigit(key) },
-                        ) {
-                            Text(text = key, style = keyStyle, color = colors.onSurface)
-                        }
+                if (state.isScanning) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        KopiImage(Kopi.THINKING, 44.dp)
+                        HSpace(8.dp)
+                        Text(stringResource(R.string.add_scan_reading), style = FinanceType.title, color = c.textSecondary)
                     }
+                } else {
+                    Text(
+                        text = "${AmountInput.display(state.input)}$NBSP${Money.symbol(state.currencyCode)}",
+                        style = FinanceType.displayAmount,
+                        color = if (isIncome) c.successText else c.textPrimary,
+                        maxLines = 1,
+                        textAlign = TextAlign.Center,
+                    )
                 }
+            }
+
+            // Быстрый ввод: «📷 Чек» + недавние шаблоны.
+            val scanChip: @Composable () -> Unit = {
+                FChip(
+                    text = "📷 ${stringResource(R.string.home_quick_scan)}",
+                    selected = true,
+                    onClick = { startScan() },
+                    selectedBg = c.primary,
+                )
+            }
+            if (state.expandRecent && state.templates.isNotEmpty()) {
+                FlowRow(
+                    Modifier.padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    scanChip()
+                    state.templates.forEach { t -> TemplateChip(t, state.currencyCode) { viewModel.applyTemplate(t) } }
+                }
+            } else {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    item { scanChip() }
+                    items(state.templates) { t -> TemplateChip(t, state.currencyCode) { viewModel.applyTemplate(t) } }
+                }
+            }
+            VSpace(12.dp)
+
+            // Категории.
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(state.categories, key = { it.id }) { cat ->
+                    FChip(
+                        text = "${cat.icon} ${cat.name}",
+                        selected = cat.id == state.selectedCategoryId,
+                        onClick = { viewModel.selectCategory(cat.id) },
+                        selectedBg = c.primary,
+                    )
+                }
+                item {
+                    FChip(
+                        text = "＋",
+                        selected = false,
+                        onClick = { onCreateCategory(state.type) },
+                        border = c.outline,
+                    )
+                }
+            }
+            VSpace(12.dp)
+
+            // Счёт + заметка.
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AccountPicker(state, onSelect = viewModel::selectAccount)
+                NoteField(state.note, viewModel::setNote, Modifier.weight(1f))
+            }
+            VSpace(12.dp)
+        }
+
+        Column(Modifier.padding(horizontal = 16.dp)) {
+            AmountKeypad(onKey = viewModel::onKey)
+            VSpace(12.dp)
+            ButtonPrimary(
+                text = if (state.amountMinor > 0) {
+                    stringResource(R.string.add_save_amount, Money.format(state.amountMinor, state.currencyCode))
+                } else {
+                    stringResource(R.string.save)
+                },
+                onClick = viewModel::save,
+                enabled = state.canSave,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            VSpace(12.dp)
+        }
+    }
+}
+
+@Composable
+private fun TemplateChip(t: RecentTemplate, currency: String, onClick: () -> Unit) {
+    FChip(
+        text = "${t.emoji} ${t.title} · ${Money.format(t.amountMinor, currency)}",
+        selected = false,
+        onClick = onClick,
+    )
+}
+
+@Composable
+private fun AccountPicker(state: AddTransactionUiState, onSelect: (Long) -> Unit) {
+    val c = FinanceTheme.colors
+    var expanded by remember { mutableStateOf(false) }
+    val current = state.accounts.find { it.id == state.selectedAccountId }
+    Box {
+        Row(
+            Modifier
+                .height(44.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(c.surface)
+                .clickable(role = Role.Button) { if (state.accounts.size > 1) expanded = true }
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "${current?.emoji ?: "💳"} ${current?.name.orEmpty()}",
+                style = FinanceType.bodySmall.copy(fontWeight = FontWeight.Medium),
+                color = c.textPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.widthIn(max = 140.dp),
+            )
+            if (state.accounts.size > 1) {
+                HSpace(4.dp)
+                Icon(painterResource(R.drawable.ic_chevron_down), null, tint = c.textSecondary, modifier = Modifier.size(16.dp))
+            }
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, containerColor = c.surface) {
+            state.accounts.forEach { acc ->
+                DropdownMenuItem(
+                    text = { Text("${acc.emoji} ${acc.name}", style = FinanceType.body, color = c.textPrimary) },
+                    onClick = {
+                        expanded = false
+                        onSelect(acc.id)
+                    },
+                )
             }
         }
     }
 }
 
 @Composable
-private fun AddTransactionNumPadKey(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val shapes = MaterialTheme.shapes
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val backgroundColor by animateFloatAsState(
-        targetValue = if (isPressed) 1f else 0f,
-        animationSpec = tween(durationMillis = 80),
-        label = "numpad_press",
-    )
-    val pressedBg = colors.outline
-    val normalBg = colors.surface
-
+private fun NoteField(value: String, onChange: (String) -> Unit, modifier: Modifier) {
+    val c = FinanceTheme.colors
     Box(
-        modifier = modifier
-            .clip(shapes.small)
-            .background(lerp(normalBg, pressedBg, backgroundColor))
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick,
-            ),
-        contentAlignment = Alignment.Center,
+        modifier
+            .height(44.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(c.surface)
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.CenterStart,
     ) {
-        content()
-    }
-}
-
-@Composable
-private fun AddTransactionPrimaryButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    loading: Boolean = false,
-) {
-    if (loading) {
-        val colors = MaterialTheme.colorScheme
-        Button(
-            onClick = onClick,
-            enabled = false,
-            modifier = modifier
-                .fillMaxWidth()
-                .height(Dimens.ButtonHeight),
-            shape = RoundedCornerShape(Dimens.RadiusL),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = colors.primary,
-                contentColor = Color.White,
-            ),
-            elevation = ButtonDefaults.buttonElevation(0.dp, 0.dp, 0.dp),
-        ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(Dimens.IconSizeM),
-                strokeWidth = Dimens.borderThin + 1.5.dp,
-                color = Color.White,
-            )
+        if (value.isEmpty()) {
+            Text(stringResource(R.string.add_note_hint), style = FinanceType.bodySmall, color = c.textSecondary)
         }
-    } else {
-        PrimaryButton(
-            text = text,
-            onClick = onClick,
-            modifier = modifier,
-            enabled = enabled,
+        BasicTextField(
+            value = value,
+            onValueChange = onChange,
+            singleLine = true,
+            textStyle = FinanceType.bodySmall.copy(color = c.textPrimary, fontSize = 14.sp),
+            cursorBrush = SolidColor(c.primary),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }

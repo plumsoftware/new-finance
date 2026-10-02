@@ -1,5 +1,7 @@
 package ru.plumsoftware.finance.presentation.smartsavings
 
+import ru.plumsoftware.finance.presentation.common.Money
+
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -40,6 +42,9 @@ class SmartSavingsDetailViewModel(
         load()
     }
 
+    /** Перезагрузка при возврате на экран (например, после редактирования актива). */
+    fun refresh() = load()
+
     private fun load() {
         viewModelScope.launch {
             val currency = settingsRepository.settings.first().defaultCurrencyCode
@@ -79,6 +84,12 @@ class SmartSavingsDetailViewModel(
     fun backspace() = _uiState.update { it.copy(amountDigits = it.amountDigits.dropLast(1)) }
 
     fun clearError() = _uiState.update { it.copy(errorMessage = null) }
+
+    /** Отметить использование с заданной экономией (копейки). */
+    fun recordAmount(amountMinor: Long) {
+        _uiState.update { it.copy(amountDigits = Money.toMajor(amountMinor, it.currencyCode).toPlainString()) }
+        recordSaving()
+    }
 
     fun recordSaving() {
         val state = _uiState.value

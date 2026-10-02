@@ -3,29 +3,25 @@ package ru.plumsoftware.finance.presentation.categories
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.outlined.DragHandle
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,24 +40,41 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlin.math.roundToInt
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.AppConfig
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.Category
-import ru.plumsoftware.finance.ui.ads.AdBannerBottomBar
 import ru.plumsoftware.finance.domain.model.CategoryType
-import ru.plumsoftware.finance.ui.components.AppCard
-import ru.plumsoftware.finance.ui.components.PrimaryButton
-import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
-import ru.plumsoftware.finance.ui.components.ios.IosSegmentedControl
-import ru.plumsoftware.finance.ui.theme.Dimens
+import ru.plumsoftware.finance.presentation.common.CategoryColors
+import ru.plumsoftware.finance.ui.ads.AdBannerBottomBar
+import ru.plumsoftware.finance.ui.ds.CardDivider
+import ru.plumsoftware.finance.ui.ds.EmojiBadge
+import ru.plumsoftware.finance.ui.ds.EmptyState
+import ru.plumsoftware.finance.ui.ds.HSpace
+import ru.plumsoftware.finance.ui.ds.IconButton44
+import ru.plumsoftware.finance.ui.ds.Kopi
+import ru.plumsoftware.finance.ui.ds.SegmentedLight
+import ru.plumsoftware.finance.ui.ds.SubScreenAppBar
+import ru.plumsoftware.finance.ui.ds.SwipeHint
+import ru.plumsoftware.finance.ui.ds.SwipeHintButton
+import ru.plumsoftware.finance.ui.ds.rememberSwipeHint
+import ru.plumsoftware.finance.ui.ds.VSpace
+import ru.plumsoftware.finance.ui.theme.FinanceTheme
+import ru.plumsoftware.finance.ui.theme.FinanceType
+import kotlin.math.roundToInt
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+private val RowHeight = 64.dp
+
+/**
+ * Категории: «Расходы / Доходы», порядок перетаскиванием за ≡ (долгое нажатие),
+ * удаление пользовательских категорий свайпом с подтверждением.
+ */
 @Composable
 fun CategoriesScreen(
     onBack: () -> Unit,
@@ -69,94 +83,82 @@ fun CategoriesScreen(
     viewModel: CategoriesViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val categories = if (state.selectedType == CategoryType.EXPENSE) state.expenseCategories else state.incomeCategories
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
+    val c = FinanceTheme.colors
+    val isExpense = state.selectedType == CategoryType.EXPENSE
+    val categories = if (isExpense) state.expenseCategories else state.incomeCategories
+    var toDelete by remember { mutableStateOf<Category?>(null) }
+    val showSwipeHint = rememberSwipeHint(SwipeHint.CATEGORIES, hasItems = categories.isNotEmpty())
+
+    toDelete?.let { cat ->
+        AlertDialog(
+            onDismissRequest = { toDelete = null },
+            containerColor = c.surface,
+            title = { Text(stringResource(R.string.categories_delete_title, cat.name), style = FinanceType.titleLarge, color = c.textPrimary) },
+            text = { Text(stringResource(R.string.categories_delete_text), style = FinanceType.bodySmall, color = c.textSecondary) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteCategory(cat.id)
+                    toDelete = null
+                }) { Text(stringResource(R.string.delete), color = c.dangerText) }
+            },
+            dismissButton = { TextButton(onClick = { toDelete = null }) { Text(stringResource(R.string.cancel), color = c.textSecondary) } },
+        )
+    }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = colors.background,
-        bottomBar = {
-            AdBannerBottomBar(adUnitId = AppConfig.bannerCategories)
-        },
+        containerColor = c.bg,
         topBar = {
-            IosEditorTopBar(
+            SubScreenAppBar(
                 title = stringResource(R.string.categories_title),
-                backLabel = stringResource(R.string.categories_back_settings),
                 onBack = onBack,
-                actionLabel = stringResource(R.string.categories_add),
-                onAction = { onAdd(state.selectedType) },
+                actions = {
+                    SwipeHintButton(showSwipeHint)
+                    IconButton44(R.drawable.ic_add, stringResource(R.string.categories_add_category), { onAdd(state.selectedType) })
+                },
             )
         },
+        bottomBar = { AdBannerBottomBar(adUnitId = AppConfig.bannerCategories) },
     ) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(
-                horizontal = Dimens.SpacingM,
-                vertical = Dimens.RadiusS,
-            ),
-            verticalArrangement = Arrangement.spacedBy(Dimens.SpacingS),
+            Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
         ) {
             item {
-                IosSegmentedControl(
-                    labels = listOf(
-                        stringResource(R.string.categories_expense_tab),
-                        stringResource(R.string.categories_income_tab),
-                    ),
-                    selectedIndex = if (state.selectedType == CategoryType.EXPENSE) 0 else 1,
-                    onSelectIndex = { viewModel.selectType(if (it == 0) CategoryType.EXPENSE else CategoryType.INCOME) },
-                    modifier = Modifier.padding(vertical = Dimens.SpacingS),
+                SegmentedLight(
+                    options = listOf(stringResource(R.string.categories_expense_tab), stringResource(R.string.categories_income_tab)),
+                    selectedIndex = if (isExpense) 0 else 1,
+                    onSelect = { viewModel.selectType(if (it == 0) CategoryType.EXPENSE else CategoryType.INCOME) },
+                    onBackground = true,
                 )
+                VSpace(12.dp)
             }
             if (categories.isEmpty()) {
                 item {
-                    AppCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(
-                                    horizontal = Dimens.SpacingXl,
-                                    vertical = Dimens.SpacingXxl,
-                                ),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Text(
-                                stringResource(R.string.categories_empty_emoji),
-                                style = typography.displayMedium,
-                            )
-                            Text(
-                                stringResource(R.string.categories_empty_title),
-                                style = typography.titleMedium,
-                                modifier = Modifier.padding(top = Dimens.SpacingS),
-                            )
-                            Text(
-                                text = if (state.selectedType == CategoryType.EXPENSE) {
-                                    stringResource(R.string.categories_empty_expense_subtitle)
-                                } else {
-                                    stringResource(R.string.categories_empty_income_subtitle)
-                                },
-                                color = colors.onSurfaceVariant,
-                                style = typography.bodyMedium,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(top = Dimens.SpacingXs),
-                            )
-                            PrimaryButton(
-                                text = stringResource(R.string.categories_add_category),
-                                onClick = { onAdd(state.selectedType) },
-                                modifier = Modifier.padding(top = Dimens.SpacingXl),
-                            )
-                        }
-                    }
+                    EmptyState(
+                        title = stringResource(R.string.categories_empty_title),
+                        text = stringResource(if (isExpense) R.string.categories_empty_expense_subtitle else R.string.categories_empty_income_subtitle),
+                        pose = Kopi.THINKING,
+                        action = stringResource(R.string.categories_add_category),
+                        onAction = { onAdd(state.selectedType) },
+                    )
                 }
             } else {
-                item {
-                    ReorderableCategoriesCard(
+                item(key = "list_${state.selectedType}") {
+                    ReorderableCard(
                         categories = categories,
                         onEdit = onEdit,
-                        onDelete = { viewModel.deleteCategory(it) },
+                        onDeleteRequest = { toDelete = it },
                         onReorder = { viewModel.reorderCategories(state.selectedType, it) },
+                    )
+                }
+                item {
+                    VSpace(10.dp)
+                    Text(
+                        stringResource(R.string.categories_hint),
+                        style = FinanceType.caption,
+                        color = c.textSecondary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
@@ -165,48 +167,50 @@ fun CategoriesScreen(
 }
 
 @Composable
-private fun ReorderableCategoriesCard(
+private fun ReorderableCard(
     categories: List<Category>,
     onEdit: (Long) -> Unit,
-    onDelete: (Long) -> Unit,
+    onDeleteRequest: (Category) -> Unit,
     onReorder: (List<Long>) -> Unit,
 ) {
+    val c = FinanceTheme.colors
     val ordered = remember { mutableStateListOf<Category>() }
     var draggingIndex by remember { mutableIntStateOf(-1) }
     var dragOffsetY by remember { mutableFloatStateOf(0f) }
-    val density = LocalDensity.current
-    val rowHeightPx = with(density) {
-        (Dimens.avatarSize + Dimens.categoryRowVerticalPadding * 2).toPx()
-    }
-    val categoryIds = categories.map { it.id }
+    val rowHeightPx = with(LocalDensity.current) { RowHeight.toPx() }
 
-    LaunchedEffect(categoryIds) {
+    LaunchedEffect(categories) {
         if (draggingIndex == -1) {
             ordered.clear()
             ordered.addAll(categories)
         }
     }
 
-    AppCard(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(c.surface),
+    ) {
         ordered.forEachIndexed { index, category ->
-            CategoryListRow(
+            if (index > 0) CardDivider(Modifier.padding(start = 70.dp))
+            CategoryRow(
                 category = category,
-                onClick = { if (draggingIndex == -1) onEdit(category.id) },
-                onDelete = { onDelete(category.id) },
                 isDragging = index == draggingIndex,
                 dragOffsetY = if (index == draggingIndex) dragOffsetY else 0f,
+                onClick = { if (draggingIndex == -1) onEdit(category.id) },
+                onDeleteRequest = { onDeleteRequest(category) },
                 onDragStart = {
                     draggingIndex = index
                     dragOffsetY = 0f
                 },
-                onDrag = { amount ->
-                    dragOffsetY += amount.y
-                    val targetIndex = (draggingIndex + (dragOffsetY / rowHeightPx).roundToInt())
-                        .coerceIn(0, ordered.lastIndex)
-                    if (targetIndex != draggingIndex) {
-                        ordered.add(targetIndex, ordered.removeAt(draggingIndex))
-                        draggingIndex = targetIndex
-                        dragOffsetY = 0f
+                onDrag = { dy ->
+                    dragOffsetY += dy
+                    val target = (draggingIndex + (dragOffsetY / rowHeightPx).roundToInt()).coerceIn(0, ordered.lastIndex)
+                    if (target != draggingIndex) {
+                        ordered.add(target, ordered.removeAt(draggingIndex))
+                        dragOffsetY -= (target - draggingIndex) * rowHeightPx
+                        draggingIndex = target
                     }
                 },
                 onDragEnd = {
@@ -215,120 +219,88 @@ private fun ReorderableCategoriesCard(
                     onReorder(ordered.map { it.id })
                 },
             )
-            if (index != ordered.lastIndex) {
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outline,
-                    thickness = Dimens.dividerThickness,
-                    modifier = Modifier.padding(
-                        start = Dimens.SpacingM + Dimens.avatarSize + Dimens.SpacingS,
-                    ),
-                )
-            }
         }
     }
 }
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CategoryListRow(
+private fun CategoryRow(
     category: Category,
-    onClick: () -> Unit,
-    onDelete: () -> Unit,
     isDragging: Boolean,
     dragOffsetY: Float,
+    onClick: () -> Unit,
+    onDeleteRequest: () -> Unit,
     onDragStart: () -> Unit,
-    onDrag: (androidx.compose.ui.geometry.Offset) -> Unit,
+    onDrag: (Float) -> Unit,
     onDragEnd: () -> Unit,
 ) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val defaultCategoryColor = colors.onSurfaceVariant
-    val color = category.colorArgb?.let { Color(it.toInt()) } ?: defaultCategoryColor
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                onDelete()
-                true
-            } else {
-                false
-            }
-        },
-        positionalThreshold = { it * 0.35f },
-    )
+    val c = FinanceTheme.colors
+    val swipe = rememberSwipeToDismissBoxState()
+    LaunchedEffect(swipe.currentValue) {
+        if (swipe.currentValue == SwipeToDismissBoxValue.EndToStart) {
+            onDeleteRequest()
+            swipe.reset()
+        }
+    }
     SwipeToDismissBox(
-        state = dismissState,
+        state = swipe,
         enableDismissFromStartToEnd = false,
+        // Стандартные категории репозиторий не удаляет — свайп для них отключён.
+        enableDismissFromEndToStart = !category.isSystem && !isDragging,
+        modifier = Modifier
+            .zIndex(if (isDragging) 1f else 0f)
+            .offset { IntOffset(0, dragOffsetY.roundToInt()) },
         backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(Dimens.categorySwipeCornerRadius))
-                    .background(colors.error),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.cd_delete),
-                    tint = colors.onError,
-                    modifier = Modifier.padding(end = Dimens.categorySwipeDeleteEndPadding),
-                )
+            Box(Modifier.fillMaxSize().background(c.danger).padding(horizontal = 20.dp), contentAlignment = Alignment.CenterEnd) {
+                Text(stringResource(R.string.delete), style = FinanceType.title, color = Color.White)
             }
         },
     ) {
         Row(
-            modifier = Modifier
+            Modifier
                 .fillMaxWidth()
-                .zIndex(if (isDragging) 1f else 0f)
-                .offset { IntOffset(0, dragOffsetY.roundToInt()) }
-                .then(
-                    if (isDragging) {
-                        Modifier.shadow(Dimens.SpacingXs, RoundedCornerShape(Dimens.categorySwipeCornerRadius))
-                    } else {
-                        Modifier
-                    },
-                )
-                .clickable(onClick = onClick)
-                .clip(RoundedCornerShape(Dimens.categorySwipeCornerRadius))
-                .background(if (isDragging) colors.surfaceVariant else colors.surface)
-                .padding(
-                    horizontal = Dimens.SpacingM,
-                    vertical = Dimens.categoryRowVerticalPadding,
-                ),
+                .heightIn(min = RowHeight)
+                .then(if (isDragging) Modifier.shadow(8.dp, RoundedCornerShape(12.dp)) else Modifier)
+                .background(if (isDragging) c.bg else c.surface)
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(start = 16.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(Dimens.avatarSize)
-                    .background(color.copy(alpha = 0.12f), CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(text = category.icon, style = typography.titleMedium)
+            EmojiBadge(category.icon, CategoryColors.of(category), size = 42.dp)
+            HSpace(12.dp)
+            Column(Modifier.weight(1f)) {
+                Text(category.name, style = FinanceType.bodyMedium, color = c.textPrimary, maxLines = 2)
+                category.monthlyLimitMinor?.takeIf { it > 0 }?.let { limit ->
+                    Text(
+                        stringResource(R.string.categories_limit_caption, ru.plumsoftware.finance.presentation.common.Money.formatRounded(limit)),
+                        style = FinanceType.caption,
+                        color = c.textSecondary,
+                    )
+                }
             }
-            Text(
-                text = category.name,
-                style = typography.bodyLarge,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = Dimens.SpacingS),
-            )
-            Icon(
-                imageVector = Icons.Outlined.DragHandle,
-                contentDescription = stringResource(R.string.cd_drag_handle),
-                tint = if (isDragging) colors.primary else colors.outlineVariant,
-                modifier = Modifier
-                    .size(Dimens.dragIconSize)
+            Box(
+                Modifier
+                    .size(44.dp)
                     .pointerInput(category.id) {
                         detectDragGesturesAfterLongPress(
                             onDragStart = { onDragStart() },
                             onDragEnd = { onDragEnd() },
                             onDragCancel = { onDragEnd() },
-                            onDrag = { change, dragAmount ->
+                            onDrag = { change, amount ->
                                 change.consume()
-                                onDrag(dragAmount)
+                                onDrag(amount.y)
                             },
                         )
                     },
-            )
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    "≡",
+                    style = FinanceType.titleLarge,
+                    color = if (isDragging) c.primary else c.textDisabled,
+                )
+            }
         }
     }
 }

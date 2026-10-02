@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="pl_days">
+        <item quantity="one">%d день</item>
+        <item quantity="few">%d дня</item>
+        <item quantity="many">%d дней</item>
+        <item quantity="other">%d дней</item>
+    </plurals>
+    <plurals name="pl_days_gen">
+        <item quantity="one">%d дня</item>
+        <item quantity="few">%d дней</item>
+        <item quantity="many">%d дней</item>
+        <item quantity="other">%d дней</item>
+    </plurals>
+    <plurals name="pl_goals">
+        <item quantity="one">%d цель</item>
+        <item quantity="few">%d цели</item>
+        <item quantity="many">%d целей</item>
+        <item quantity="other">%d целей</item>
+    </plurals>
+    <plurals name="pl_active_goals">
+        <item quantity="one">%d активная цель</item>
+        <item quantity="few">%d активные цели</item>
+        <item quantity="many">%d активных целей</item>
+        <item quantity="other">%d активных целей</item>
+    </plurals>
+    <plurals name="pl_ops">
+        <item quantity="one">%d операция</item>
+        <item quantity="few">%d операции</item>
+        <item quantity="many">%d операций</item>
+        <item quantity="other">%d операций</item>
+    </plurals>
+    <plurals name="pl_months">
+        <item quantity="one">%d месяц</item>
+        <item quantity="few">%d месяца</item>
+        <item quantity="many">%d месяцев</item>
+        <item quantity="other">%d месяцев</item>
+    </plurals>
+    <plurals name="pl_months_short">
+        <item quantity="one">%d мес.</item>
+        <item quantity="few">%d мес.</item>
+        <item quantity="many">%d мес.</item>
+        <item quantity="other">%d мес.</item>
+    </plurals>
+    <plurals name="pl_years">
+        <item quantity="one">%d год</item>
+        <item quantity="few">%d года</item>
+        <item quantity="many">%d лет</item>
+        <item quantity="other">%d лет</item>
+    </plurals>
+    <plurals name="pl_assets">
+        <item quantity="one">%d актив</item>
+        <item quantity="few">%d актива</item>
+        <item quantity="many">%d активов</item>
+        <item quantity="other">%d активов</item>
+    </plurals>
+    <plurals name="pl_uses">
+        <item quantity="one">%d использование</item>
+        <item quantity="few">%d использования</item>
+        <item quantity="many">%d использований</item>
+        <item quantity="other">%d использований</item>
+    </plurals>
+    <plurals name="pl_items">
+        <item quantity="one">%d позиция</item>
+        <item quantity="few">%d позиции</item>
+        <item quantity="many">%d позиций</item>
+        <item quantity="other">%d позиций</item>
+    </plurals>
+    <plurals name="pl_in_days">
+        <item quantity="one">через %d день</item>
+        <item quantity="few">через %d дня</item>
+        <item quantity="many">через %d дней</item>
+        <item quantity="other">через %d дней</item>
+    </plurals>
+    <plurals name="pl_uses_left">
+        <item quantity="one">Окупится через %d исп.</item>
+        <item quantity="few">Окупится через %d исп.</item>
+        <item quantity="many">Окупится через %d исп.</item>
+        <item quantity="other">Окупится через %d исп.</item>
+    </plurals>
+    <plurals name="pl_days_to_month_end">
+        <item quantity="one">%d день до конца месяца</item>
+        <item quantity="few">%d дня до конца месяца</item>
+        <item quantity="many">%d дней до конца месяца</item>
+        <item quantity="other">%d дней до конца месяца</item>
+    </plurals>
+    <plurals name="pl_accounts">
+        <item quantity="one">%d счёт</item>
+        <item quantity="few">%d счёта</item>
+        <item quantity="many">%d счетов</item>
+        <item quantity="other">%d счетов</item>
+    </plurals>
+</resources>

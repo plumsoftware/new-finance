@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="pl_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <plurals name="pl_days_gen">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <plurals name="pl_goals">
+        <item quantity="one">%d goal</item>
+        <item quantity="other">%d goals</item>
+    </plurals>
+    <plurals name="pl_active_goals">
+        <item quantity="one">%d active goal</item>
+        <item quantity="other">%d active goals</item>
+    </plurals>
+    <plurals name="pl_ops">
+        <item quantity="one">%d transaction</item>
+        <item quantity="other">%d transactions</item>
+    </plurals>
+    <plurals name="pl_months">
+        <item quantity="one">%d month</item>
+        <item quantity="other">%d months</item>
+    </plurals>
+    <plurals name="pl_months_short">
+        <item quantity="one">%d mo</item>
+        <item quantity="other">%d mo</item>
+    </plurals>
+    <plurals name="pl_years">
+        <item quantity="one">%d year</item>
+        <item quantity="other">%d years</item>
+    </plurals>
+    <plurals name="pl_assets">
+        <item quantity="one">%d asset</item>
+        <item quantity="other">%d assets</item>
+    </plurals>
+    <plurals name="pl_uses">
+        <item quantity="one">%d use</item>
+        <item quantity="other">%d uses</item>
+    </plurals>
+    <plurals name="pl_items">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+    <plurals name="pl_in_days">
+        <item quantity="one">in %d day</item>
+        <item quantity="other">in %d days</item>
+    </plurals>
+    <plurals name="pl_uses_left">
+        <item quantity="one">Pays off in %d use</item>
+        <item quantity="other">Pays off in %d uses</item>
+    </plurals>
+    <plurals name="pl_days_to_month_end">
+        <item quantity="one">%d day to month end</item>
+        <item quantity="other">%d days to month end</item>
+    </plurals>
+    <plurals name="pl_accounts">
+        <item quantity="one">%d account</item>
+        <item quantity="other">%d accounts</item>
+    </plurals>
+</resources>

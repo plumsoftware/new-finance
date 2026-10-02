@@ -1,47 +1,67 @@
 package ru.plumsoftware.finance.presentation.accounts
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.AccountWithBalance
-import ru.plumsoftware.finance.presentation.common.MoneyFormat
-import ru.plumsoftware.finance.ui.components.IosCard
-import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
-import ru.plumsoftware.finance.ui.components.ios.IosTextButton
-import ru.plumsoftware.finance.ui.theme.Dimens
-import ru.plumsoftware.finance.ui.theme.IosRed
+import ru.plumsoftware.finance.presentation.common.Money
+import ru.plumsoftware.finance.presentation.goals.colorFromHexOrDefault
+import ru.plumsoftware.finance.ui.ds.CardDivider
+import ru.plumsoftware.finance.ui.ds.EmojiBadge
+import ru.plumsoftware.finance.ui.ds.HSpace
+import ru.plumsoftware.finance.ui.ds.IconButton44
+import ru.plumsoftware.finance.ui.ds.InkCard
+import ru.plumsoftware.finance.ui.ds.LocalAmountVisibility
+import ru.plumsoftware.finance.ui.ds.SubScreenAppBar
+import ru.plumsoftware.finance.ui.ds.SwipeHint
+import ru.plumsoftware.finance.ui.ds.SwipeHintButton
+import ru.plumsoftware.finance.ui.ds.rememberSwipeHint
+import ru.plumsoftware.finance.ui.ds.masked
+import ru.plumsoftware.finance.ui.theme.FinanceTheme
+import ru.plumsoftware.finance.ui.theme.FinanceType
 
+/** Счета: общий баланс, выбор текущего счёта, редактирование, удаление свайпом. */
 @Composable
 fun AccountsScreen(
     onBack: () -> Unit,
@@ -50,176 +70,165 @@ fun AccountsScreen(
     viewModel: AccountsViewModel = koinViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
+    val c = FinanceTheme.colors
+    var toDelete by remember { mutableStateOf<AccountWithBalance?>(null) }
+    val showSwipeHint = rememberSwipeHint(SwipeHint.ACCOUNTS, hasItems = state.accounts.size > 1)
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = colors.background,
-        topBar = {
-            IosEditorTopBar(
-                title = stringResource(R.string.accounts_title),
-                backLabel = stringResource(R.string.accounts_back_settings),
-                onBack = onBack,
-                actionLabel = stringResource(R.string.accounts_add),
-                onAction = onAdd,
-            )
-        },
-    ) { padding ->
+    toDelete?.let { row ->
+        AlertDialog(
+            onDismissRequest = { toDelete = null },
+            containerColor = c.surface,
+            title = { Text(stringResource(R.string.account_delete_title, row.account.name), style = FinanceType.titleLarge, color = c.textPrimary) },
+            text = { Text(stringResource(R.string.account_delete_message), style = FinanceType.bodySmall, color = c.textSecondary) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteAccount(row.account.id)
+                    toDelete = null
+                }) { Text(stringResource(R.string.account_delete_confirm), color = c.dangerText) }
+            },
+            dismissButton = { TextButton(onClick = { toDelete = null }) { Text(stringResource(R.string.cancel), color = c.textSecondary) } },
+        )
+    }
+
+    Column(Modifier.fillMaxSize().background(c.bg)) {
+        SubScreenAppBar(
+            title = stringResource(R.string.accounts_title),
+            onBack = onBack,
+            actions = {
+                SwipeHintButton(showSwipeHint)
+                IconButton44(R.drawable.ic_add, stringResource(R.string.accounts_add), onAdd)
+            },
+        )
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(Dimens.paddingMedium),
-            verticalArrangement = Arrangement.spacedBy(Dimens.spacingList),
+            Modifier.fillMaxSize().navigationBarsPadding(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             item {
-                IosCard {
+                InkCard(radius = 24.dp) {
+                    Text(stringResource(R.string.accounts_total), style = FinanceType.bodySmall, color = c.onInkSecondary)
+                    val visibility = LocalAmountVisibility.current
                     Text(
-                        text = stringResource(R.string.accounts_total),
-                        style = typography.labelSmall,
-                        color = colors.onSurfaceVariant,
+                        masked(Money.format(state.totalBalanceMinor, state.currencyCode, forceFraction = true)),
+                        style = FinanceType.headlineLarge,
+                        color = Color.White,
+                        modifier = Modifier.clickable(enabled = visibility.hidden, onClick = visibility.toggle),
                     )
                     Text(
-                        text = state.totalBalanceLabel,
-                        style = typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
+                        pluralStringResource(R.plurals.pl_accounts, state.accounts.size, state.accounts.size),
+                        style = FinanceType.caption,
+                        color = c.onInkSecondary,
                     )
                 }
             }
-            items(state.accounts, key = { it.account.id }) { row ->
-                AccountRow(
-                    row = row,
-                    isSelected = row.account.id == state.selectedAccountId,
-                    onSelect = { viewModel.selectAccount(row.account.id) },
-                    onEdit = { onEdit(row.account.id) },
-                    onDelete = { viewModel.deleteAccount(row.account.id) },
+            item {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(c.surface),
+                ) {
+                    state.accounts.forEachIndexed { i, row ->
+                        if (i > 0) CardDivider(Modifier.padding(start = 70.dp))
+                        AccountRow(
+                            row = row,
+                            isSelected = row.account.id == state.selectedAccountId,
+                            onSelect = { viewModel.selectAccount(row.account.id) },
+                            onEdit = { onEdit(row.account.id) },
+                            onDeleteRequest = { toDelete = row },
+                        )
+                    }
+                }
+            }
+            item {
+                Text(
+                    stringResource(R.string.accounts_hint),
+                    style = FinanceType.caption,
+                    color = c.textSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AccountRow(
     row: AccountWithBalance,
     isSelected: Boolean,
     onSelect: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit,
+    onDeleteRequest: () -> Unit,
 ) {
+    val c = FinanceTheme.colors
     val account = row.account
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    var showDeleteConfirm by remember { mutableStateOf(false) }
-
-    if (showDeleteConfirm) {
-        Dialog(onDismissRequest = { showDeleteConfirm = false }) {
-            Surface(
-                shape = RoundedCornerShape(Dimens.cornerRadiusCard),
-                color = colors.surface,
-            ) {
-                Column(modifier = Modifier.padding(Dimens.paddingMedium + Dimens.paddingMicro)) {
-                    Text(
-                        text = stringResource(R.string.account_delete_title, account.name),
-                        style = typography.titleMedium,
-                    )
-                    Text(
-                        text = stringResource(R.string.account_delete_message),
-                        style = typography.bodyMedium,
-                        color = colors.onSurfaceVariant,
-                        modifier = Modifier.padding(top = Dimens.paddingSmall),
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = Dimens.paddingMedium),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        TextButton(onClick = { showDeleteConfirm = false }) {
-                            Text(
-                                text = stringResource(R.string.cancel),
-                                color = colors.primary,
-                            )
-                        }
-                        TextButton(
-                            onClick = {
-                                showDeleteConfirm = false
-                                onDelete()
-                            },
-                        ) {
-                            Text(
-                                text = stringResource(R.string.account_delete_confirm),
-                                color = IosRed,
-                            )
-                        }
-                    }
-                }
-            }
+    val swipe = rememberSwipeToDismissBoxState()
+    LaunchedEffect(swipe.currentValue) {
+        if (swipe.currentValue == SwipeToDismissBoxValue.EndToStart) {
+            onDeleteRequest()
+            swipe.reset()
         }
     }
-
-    IosCard {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onSelect)
-                .padding(vertical = Dimens.paddingMicro),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Dimens.spacingRow),
-            ) {
-                Text(account.emoji, style = typography.headlineSmall)
-                Column {
-                    Row(horizontalArrangement = Arrangement.spacedBy(Dimens.paddingMicro)) {
-                        Text(account.name, style = typography.bodyLarge, fontWeight = FontWeight.SemiBold)
-                        if (account.isDefault) {
-                            Text(
-                                text = stringResource(R.string.account_default_badge),
-                                style = typography.labelSmall,
-                                color = colors.primary,
-                            )
-                        }
-                    }
-                    Text(
-                        text = MoneyFormat.format(row.calculatedBalanceMinor, account.currencyCode),
-                        style = typography.bodyMedium,
-                        color = colors.onSurfaceVariant,
-                    )
-                }
+    SwipeToDismissBox(
+        state = swipe,
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = !account.isDefault,
+        backgroundContent = {
+            Box(Modifier.fillMaxSize().background(c.danger).padding(horizontal = 20.dp), contentAlignment = Alignment.CenterEnd) {
+                Text(stringResource(R.string.delete), style = FinanceType.title, color = Color.White)
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (isSelected) {
+        },
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(c.surface)
+                .heightIn(min = 68.dp)
+                .clickable(role = Role.RadioButton, onClick = onSelect)
+                .padding(start = 16.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            EmojiBadge(account.emoji, colorFromHexOrDefault(account.colorHex, c.primary), size = 42.dp)
+            HSpace(12.dp)
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = stringResource(R.string.checkmark),
-                        color = colors.primary,
-                        style = typography.titleMedium,
+                        account.name,
+                        style = FinanceType.bodyMedium,
+                        color = c.textPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
                     )
+                    if (account.isDefault) {
+                        HSpace(6.dp)
+                        Text(
+                            stringResource(R.string.account_default_badge),
+                            style = FinanceType.caption.copy(fontWeight = FontWeight.SemiBold),
+                            color = c.primaryTonalText,
+                            modifier = Modifier
+                                .background(c.primaryTonalBg, RoundedCornerShape(6.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                        )
+                    }
                 }
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = colors.onSurfaceVariant,
-                    modifier = Modifier
-                        .clickable(onClick = onEdit)
-                        .padding(start = Dimens.paddingSmall),
+                Text(
+                    masked(Money.format(row.calculatedBalanceMinor, account.currencyCode, forceFraction = true)),
+                    style = FinanceType.caption,
+                    color = c.textSecondary,
                 )
             }
-        }
-        if (isSelected && !account.isDefault) {
-            HorizontalDivider(color = colors.outline.copy(alpha = 0.4f))
-            IosTextButton(
-                text = stringResource(R.string.delete),
-                onClick = { showDeleteConfirm = true },
-                color = colors.error,
-                style = typography.labelLarge,
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                contentPadding = PaddingValues(vertical = Dimens.spacingRow),
-            )
+            if (isSelected) {
+                Icon(
+                    painterResource(R.drawable.ic_check),
+                    contentDescription = stringResource(R.string.accounts_selected),
+                    tint = c.primary,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            IconButton44(R.drawable.ic_edit, stringResource(R.string.accounts_edit), onEdit, tint = c.textSecondary)
         }
     }
 }

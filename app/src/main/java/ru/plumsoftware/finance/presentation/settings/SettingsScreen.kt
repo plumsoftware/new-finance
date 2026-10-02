@@ -1,158 +1,93 @@
 package ru.plumsoftware.finance.presentation.settings
 
-
-import android.annotation.SuppressLint
-
-import androidx.compose.animation.AnimatedVisibility
+import android.app.TimePickerDialog
+import android.text.format.DateFormat
 import androidx.compose.foundation.background
-
 import androidx.compose.foundation.layout.Arrangement
-
-import androidx.compose.foundation.layout.Box
-
 import androidx.compose.foundation.layout.Column
-
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-
 import androidx.compose.foundation.layout.fillMaxSize
-
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-
 import androidx.compose.foundation.layout.padding
-
-import androidx.compose.foundation.layout.size
-
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-
-import androidx.compose.foundation.shape.CircleShape
-
-import androidx.compose.material.icons.Icons
-
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-
-import androidx.compose.material.icons.rounded.AdminPanelSettings
-
-import androidx.compose.material.icons.rounded.AccountBalance
-import androidx.compose.material.icons.rounded.Category
-
-import androidx.compose.material.icons.rounded.DarkMode
-
-import androidx.compose.material.icons.rounded.EmojiEvents
-
-import androidx.compose.material.icons.rounded.FileDownload
-import androidx.compose.material.icons.rounded.FileUpload
-import androidx.compose.material.icons.rounded.Flag
-
-import androidx.compose.material.icons.rounded.Fingerprint
-
-import androidx.compose.material.icons.rounded.Info
-
-import androidx.compose.material.icons.rounded.Language
-
-import androidx.compose.material.icons.rounded.PieChart
-
-import androidx.compose.material.icons.rounded.Repeat
-
-import androidx.compose.material.icons.rounded.Star
-
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-
-import androidx.compose.material3.ExperimentalMaterial3Api
-
-import androidx.compose.material3.Icon
-
-import androidx.compose.material3.MaterialTheme
-
-import androidx.compose.material3.Scaffold
-
 import androidx.compose.material3.Text
-
 import androidx.compose.material3.TextButton
-
 import androidx.compose.runtime.Composable
-
 import androidx.compose.runtime.DisposableEffect
-
 import androidx.compose.runtime.getValue
-
 import androidx.compose.runtime.mutableStateOf
-
 import androidx.compose.runtime.remember
-
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-
 import androidx.compose.ui.Alignment
-
 import androidx.compose.ui.Modifier
-
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-
 import androidx.compose.ui.platform.LocalContext
-
 import androidx.compose.ui.res.stringResource
-
-import androidx.compose.ui.text.font.FontWeight
-
 import androidx.compose.ui.text.style.TextAlign
-
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-
-import org.koin.androidx.compose.koinViewModel
-
-import ru.plumsoftware.finance.BuildConfig
-
-import ru.plumsoftware.finance.R
-import ru.plumsoftware.finance.util.openStoreListing
-
 import androidx.navigation.NavController
+import org.koin.androidx.compose.koinViewModel
+import ru.plumsoftware.finance.BuildConfig
+import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.data.report.ReportKind
+import ru.plumsoftware.finance.domain.achievements.AchievementId
+import ru.plumsoftware.finance.domain.analytics.DateRange
+import ru.plumsoftware.finance.domain.model.ThemeMode
+import ru.plumsoftware.finance.domain.util.SupportedCurrencies
 import ru.plumsoftware.finance.presentation.common.BiometricHelper
+import ru.plumsoftware.finance.presentation.common.DateFmt
+import ru.plumsoftware.finance.presentation.common.Money
+import ru.plumsoftware.finance.presentation.export.ReportExportSheet
 import ru.plumsoftware.finance.presentation.importdata.ImportPickerSheet
+import ru.plumsoftware.finance.ui.components.CurrencyPickerSheet
+import ru.plumsoftware.finance.ui.ds.CardDivider
+import ru.plumsoftware.finance.ui.ds.Kopi
+import ru.plumsoftware.finance.ui.ds.KopiImage
+import ru.plumsoftware.finance.ui.ds.RootBottomInset
+import ru.plumsoftware.finance.ui.ds.SectionHeader
+import ru.plumsoftware.finance.ui.ds.SegmentedLight
+import ru.plumsoftware.finance.ui.ds.SettingsRow
+import ru.plumsoftware.finance.ui.ds.VSpace
+import ru.plumsoftware.finance.ui.theme.FinanceTheme
+import ru.plumsoftware.finance.ui.theme.FinanceType
+import ru.plumsoftware.finance.util.openStoreListing
+import java.time.LocalDate
+import java.time.LocalTime
 
-import ru.plumsoftware.finance.ui.components.AppCard
-
-import ru.plumsoftware.finance.ui.components.SectionLabel
-
-import ru.plumsoftware.finance.ui.components.ThemeToggle
-
-import ru.plumsoftware.finance.ui.components.settings.SettingsNavRow
-
-import ru.plumsoftware.finance.ui.components.settings.SettingsRow
-
-import ru.plumsoftware.finance.ui.components.settings.SettingsRowDivider
-
-import ru.plumsoftware.finance.ui.components.settings.SettingsToggleRow
-
-import ru.plumsoftware.finance.ui.theme.AccentBlue
-
-import ru.plumsoftware.finance.ui.theme.Dimens
-
-import ru.plumsoftware.finance.ui.theme.IncomeGreen
-
-import ru.plumsoftware.finance.ui.theme.IosOrange
-
-import ru.plumsoftware.finance.ui.theme.IosPurple
-
-import ru.plumsoftware.finance.ui.theme.TextPrimaryL
-
-
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-
-@OptIn(ExperimentalMaterial3Api::class)
+/** Цвета плиток настроек (§3.6). */
+private object Tiles {
+    val Theme = Color(0xFF5856D6)
+    val Currency = Color(0xFF007AFF)
+    val Accounts = Color(0xFF007AFF)
+    val Categories = Color(0xFFFF9500)
+    val Limits = Color(0xFF0A84FF)
+    val Goals = Color(0xFF5856D6)
+    val Achievements = Color(0xFFE0A100)
+    val Recurring = Color(0xFF34C759)
+    val Export = Color(0xFF5E5CE6)
+    val Import = Color(0xFF5E5CE6)
+    val Bell = Color(0xFFFF3B30)
+    val Alert = Color(0xFFFF9500)
+    val Calendar = Color(0xFF34C759)
+    val Permissions = Color(0xFF34C759)
+    val Biometry = Color(0xFF1C1C1E)
+    val EyeOff = Color(0xFF8E8E93)
+    val Rate = Color(0xFFFF9500)
+    val About = Color(0xFF007AFF)
+}
 
 @Composable
-
 fun SettingsScreen(
     navController: NavController,
     onOpenCategories: () -> Unit = {},
@@ -166,582 +101,270 @@ fun SettingsScreen(
     onOpenAbout: () -> Unit = {},
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
-
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-    val deniedCount by viewModel.deniedPermissionsCount.collectAsStateWithLifecycle()
-
+    val s = state.settings
+    val counts = state.counts
+    val c = FinanceTheme.colors
     val context = LocalContext.current
-
     val activity = context as? FragmentActivity
-
     val lifecycleOwner = LocalLifecycleOwner.current
-
-    val biometricHelper = remember(activity) {
-
-        activity?.let { BiometricHelper(it) }
-
-    }
+    val biometricHelper = remember(activity) { activity?.let { BiometricHelper(it) } }
 
     DisposableEffect(lifecycleOwner, activity) {
-
         val observer = LifecycleEventObserver { _, event ->
-
-            if (event == Lifecycle.Event.ON_RESUME) {
-
-                activity?.let { viewModel.refreshPermissions(it) }
-
-            }
-
+            if (event == Lifecycle.Event.ON_RESUME) activity?.let { viewModel.refreshPermissions(it) }
         }
-
         lifecycleOwner.lifecycle.addObserver(observer)
-
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-
     }
 
-    var showBiometricUnavailableDialog by remember { mutableStateOf(false) }
-    var showImportSheet by remember { mutableStateOf(false) }
+    var showCurrency by rememberSaveable { mutableStateOf(false) }
+    var showImport by rememberSaveable { mutableStateOf(false) }
+    var showExport by rememberSaveable { mutableStateOf(false) }
+    var showBiometricUnavailable by remember { mutableStateOf(false) }
 
-    if (showImportSheet) {
-        ImportPickerSheet(
-            navController = navController,
-            onDismiss = { showImportSheet = false },
+    if (showCurrency) {
+        CurrencyPickerSheet(
+            selectedCode = s.defaultCurrencyCode,
+            onSelect = {
+                viewModel.setCurrency(it)
+                showCurrency = false
+            },
+            onDismiss = { showCurrency = false },
+        )
+    }
+    if (showImport) ImportPickerSheet(navController = navController, onDismiss = { showImport = false })
+    if (showExport) {
+        val today = LocalDate.now()
+        val start = counts.firstOperation ?: today
+        ReportExportSheet(
+            kind = ReportKind.EXPORT,
+            range = DateRange(minOf(start, today), today),
+            isWholeMonth = false,
+            periodLabel = DateFmt.range(minOf(start, today), today),
+            onDismiss = { showExport = false },
+            onOpenBackup = {
+                showExport = false
+                onOpenExport()
+            },
+        )
+    }
+    if (showBiometricUnavailable) {
+        AlertDialog(
+            onDismissRequest = { showBiometricUnavailable = false },
+            containerColor = c.surface,
+            title = { Text(stringResource(R.string.biometric_unavailable_title)) },
+            text = { Text(stringResource(R.string.biometric_unavailable_body)) },
+            confirmButton = { TextButton(onClick = { showBiometricUnavailable = false }) { Text(stringResource(R.string.ok)) } },
         )
     }
 
-    val colors = MaterialTheme.colorScheme
-
-    val typography = MaterialTheme.typography
-
-
-
-    if (showBiometricUnavailableDialog) {
-
-        AlertDialog(
-
-            onDismissRequest = { showBiometricUnavailableDialog = false },
-
-            title = { Text(stringResource(R.string.biometric_unavailable_title)) },
-
-            text = { Text(stringResource(R.string.biometric_unavailable_body)) },
-
-            confirmButton = {
-
-                TextButton(onClick = { showBiometricUnavailableDialog = false }) {
-
-                    Text(stringResource(R.string.action_apply))
-
-                }
-
-            },
-
-            )
-
+    val reminderTime = LocalTime.of(s.reminderMinuteOfDay / 60, s.reminderMinuteOfDay % 60)
+    val openTimePicker = {
+        TimePickerDialog(
+            context,
+            { _, h, m -> viewModel.setReminderTime(h * 60 + m) },
+            reminderTime.hour,
+            reminderTime.minute,
+            DateFormat.is24HourFormat(context),
+        ).show()
     }
 
+    LazyColumn(
+        Modifier.fillMaxSize().background(c.bg),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = RootBottomInset),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        item {
+            Text(
+                stringResource(R.string.nav_settings),
+                style = FinanceType.headline,
+                color = c.textPrimary,
+                modifier = Modifier.statusBarsPadding().padding(top = 12.dp, bottom = 4.dp),
+            )
+        }
 
-    val openStore = { openStoreListing(context) }
-
-
-
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = colors.background,
-    ) { _ ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = Dimens.SpacingXs),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(colors.background)
-                        .padding(top = Dimens.SpacingXxl),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.settings),
-                            style = typography.titleLarge.copy(fontSize = 28.sp),
-                            fontWeight = FontWeight.Black,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                }
-            }
-
-            item {
-
-                SectionLabel(text = stringResource(R.string.settings_appearance))
-
-                AppCard(
-
-                    modifier = Modifier
-
-                        .fillMaxWidth()
-
-                        .padding(horizontal = Dimens.SpacingL),
-
-                    ) {
-
-                    SettingsRow(
-
-                        icon = Icons.Rounded.DarkMode,
-
-                        iconBackground = Color(0xFF5856D6),
-
-                        title = stringResource(R.string.theme),
-
-                        )
-
-                    ThemeToggle(
-
-                        selected = state.themeMode,
-
-                        onSelect = viewModel::setThemeMode,
-
-                        modifier = Modifier.padding(
-
-                            start = Dimens.SpacingL,
-
-                            end = Dimens.SpacingL,
-
-                            bottom = Dimens.SpacingM,
-
+        item { SectionHeader(stringResource(R.string.settings_group_appearance)) }
+        item {
+            Group {
+                SettingsRow(
+                    title = stringResource(R.string.settings_theme),
+                    tileIcon = R.drawable.ic_theme,
+                    tileColor = Tiles.Theme,
+                    showChevron = false,
+                    below = {
+                        SegmentedLight(
+                            options = listOf(
+                                stringResource(R.string.settings_theme_system),
+                                stringResource(R.string.settings_theme_light),
+                                stringResource(R.string.settings_theme_dark),
                             ),
-
+                            selectedIndex = when (s.themeMode) {
+                                ThemeMode.SYSTEM -> 0
+                                ThemeMode.LIGHT -> 1
+                                ThemeMode.DARK -> 2
+                            },
+                            onSelect = { viewModel.setThemeMode(listOf(ThemeMode.SYSTEM, ThemeMode.LIGHT, ThemeMode.DARK)[it]) },
+                            modifier = Modifier.padding(start = 62.dp, end = 14.dp, bottom = 12.dp),
                         )
-
-                    SettingsRowDivider()
-
-                    SettingsRow(
-
-                        icon = Icons.Rounded.Language,
-
-                        iconBackground = AccentBlue,
-
-                        title = stringResource(R.string.currency),
-
-                        trailing = {
-
-                            Text(
-
-                                text = currencyDisplayLabel(state.currencyCode),
-
-                                style = typography.bodyLarge,
-
-                                color = colors.primary,
-
-                                )
-
-                        },
-
-                        )
-
-                }
-
-            }
-
-
-
-            item {
-
-                SectionLabel(text = stringResource(R.string.settings_data))
-
-                AppCard(
-
-                    modifier = Modifier
-
-                        .fillMaxWidth()
-
-                        .padding(horizontal = Dimens.SpacingL),
-
-                    ) {
-
-                    SettingsNavRow(
-
-                        icon = Icons.Rounded.AccountBalance,
-
-                        iconBackground = AccentBlue,
-
-                        title = stringResource(R.string.accounts_title),
-
-                        onClick = onOpenAccounts,
-
-                        )
-
-                    SettingsRowDivider()
-
-                    SettingsNavRow(
-
-                        icon = Icons.Rounded.Category,
-
-                        iconBackground = IosOrange,
-
-                        title = stringResource(R.string.categories),
-
-                        onClick = onOpenCategories,
-
-                        )
-
-                    SettingsRowDivider()
-
-                    SettingsNavRow(
-
-                        icon = Icons.Rounded.PieChart,
-
-                        iconBackground = AccentBlue,
-
-                        title = stringResource(R.string.limits),
-
-                        onClick = onOpenLimits,
-
-                        )
-
-                    SettingsRowDivider()
-
-                    SettingsNavRow(
-
-                        icon = Icons.Rounded.Flag,
-
-                        iconBackground = Color(0xFF5856D6),
-
-                        title = stringResource(R.string.goals_title),
-
-                        onClick = onOpenGoals,
-
-                        )
-
-                    SettingsRowDivider()
-
-                    SettingsNavRow(
-
-                        icon = Icons.Rounded.EmojiEvents,
-
-                        iconBackground = Color(0xFFFFD700),
-
-                        title = stringResource(R.string.achievements_title),
-
-                        onClick = onOpenAchievements,
-
-                        )
-
-                    SettingsRowDivider()
-
-                    SettingsNavRow(
-
-                        icon = Icons.Rounded.Repeat,
-
-                        iconBackground = IncomeGreen,
-
-                        title = stringResource(R.string.recurring_transactions),
-
-                        onClick = onOpenRecurring,
-
-                        )
-
-                    SettingsRowDivider()
-
-                    SettingsNavRow(
-
-                        icon = Icons.Rounded.FileDownload,
-
-                        iconBackground = IosPurple,
-
-                        title = stringResource(R.string.export_data),
-
-                        onClick = onOpenExport,
-
-                        )
-
-                    SettingsRowDivider()
-
-                    SettingsNavRow(
-
-                        icon = Icons.Rounded.FileUpload,
-
-                        iconBackground = Color(0xFF5856D6),
-
-                        title = stringResource(R.string.import_data),
-
-                        onClick = { showImportSheet = true },
-
-                        )
-
-                }
-
-            }
-
-
-
-            item {
-
-                SectionLabel(text = stringResource(R.string.settings_security))
-
-                AppCard(
-
-                    modifier = Modifier
-
-                        .fillMaxWidth()
-
-                        .padding(horizontal = Dimens.SpacingL),
-
-                    ) {
-
-                    SettingsNavRow(
-
-                        icon = Icons.Rounded.AdminPanelSettings,
-
-                        iconBackground = Color(0xFF34C759),
-
-                        title = stringResource(R.string.permissions),
-
-                        onClick = onOpenPermissions,
-
-                        trailing = {
-
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-
-                                AnimatedVisibility(visible = deniedCount > 0) {
-
-                                    Box(
-
-                                        modifier = Modifier
-
-                                            .padding(end = Dimens.SpacingXs)
-
-                                            .size(20.dp)
-
-                                            .clip(CircleShape)
-
-                                            .background(colors.error),
-
-                                        contentAlignment = Alignment.Center,
-
-                                        ) {
-
-                                        Text(
-
-                                            text = deniedCount.toString(),
-
-                                            style = typography.labelSmall,
-
-                                            color = Color.White,
-
-                                            fontWeight = FontWeight.Bold,
-
-                                            )
-
-                                    }
-
-                                }
-
-                                Icon(
-
-                                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-
-                                    contentDescription = null,
-
-                                    tint = colors.onSurfaceVariant,
-
-                                    modifier = Modifier.size(Dimens.IconSizeS),
-
-                                    )
-
-                            }
-
-                        },
-
-                        )
-
-                    SettingsRowDivider()
-
-                    SettingsToggleRow(
-
-                        icon = Icons.Rounded.Fingerprint,
-
-                        iconBackground = TextPrimaryL,
-
-                        title = stringResource(R.string.biometrics),
-
-                        subtitle = stringResource(R.string.biometrics_desc),
-
-                        checked = state.biometricEnabled,
-
-                        onToggle = { enabled ->
-
-                            val helper = biometricHelper
-
-                            if (helper == null) return@SettingsToggleRow
-
-                            if (enabled) {
-
-                                if (helper.isAvailable()) {
-
-                                    helper.authenticate(
-
-                                        onSuccess = { viewModel.setBiometric(true) },
-
-                                        onError = { /* ignore */ },
-
-                                        )
-
-                                } else {
-
-                                    showBiometricUnavailableDialog = true
-
-                                }
-
-                            } else {
-
-                                helper.authenticate(
-
-                                    onSuccess = { viewModel.setBiometric(false) },
-
-                                    onError = { /* ignore cancel */ },
-
-                                    )
-
-                            }
-
-                        },
-
-                        enabled = biometricHelper?.isAvailable() != false,
-
-                        )
-
-                }
-
-            }
-
-
-
-            item {
-
-                SectionLabel(text = stringResource(R.string.settings_app))
-
-                AppCard(
-
-                    modifier = Modifier
-
-                        .fillMaxWidth()
-
-                        .padding(horizontal = Dimens.SpacingL),
-
-                    ) {
-
-                    if (BuildConfig.PLATFORM != 3) {
-                        SettingsNavRow(
-
-                            icon = Icons.Rounded.Star,
-
-                            iconBackground = IosOrange,
-
-                            title = stringResource(R.string.rate_app),
-
-                            onClick = { openStore() },
-
-                            )
-
-                        SettingsRowDivider()
-                    }
-
-                    SettingsNavRow(
-
-                        icon = Icons.Rounded.Info,
-
-                        iconBackground = AccentBlue,
-
-                        title = stringResource(R.string.about),
-
-                        onClick = onOpenAbout,
-
-                        )
-
-                }
-
-            }
-
-
-
-            item {
-
-                Column(
-
-                    modifier = Modifier
-
-                        .fillMaxWidth()
-
-                        .padding(horizontal = Dimens.SpacingL, vertical = Dimens.SpacingXl),
-
-                    horizontalAlignment = Alignment.CenterHorizontally,
-
-                    verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
-
-                    ) {
-
-                    Text(
-
-                        text = stringResource(R.string.data_stored_locally),
-
-                        style = typography.bodySmall,
-
-                        color = colors.onSurfaceVariant,
-
-                        textAlign = TextAlign.Center,
-
-                        )
-
-                    Text(
-
-                        text = stringResource(
-                            R.string.settings_version_label,
-                            BuildConfig.VERSION_NAME
-                        ),
-
-                        style = typography.labelSmall,
-
-                        color = colors.onSurfaceVariant,
-
-                        textAlign = TextAlign.Center,
-
-                        )
-
-                }
-
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(Dimens.SpacingXl))
+                    },
+                )
+                CardDivider()
+                val currency = SupportedCurrencies.find(s.defaultCurrencyCode)
+                SettingsRow(
+                    title = stringResource(R.string.settings_currency),
+                    tileIcon = R.drawable.ic_currency,
+                    tileColor = Tiles.Currency,
+                    value = "${Money.symbol(s.defaultCurrencyCode)} ${currency?.let { stringResource(it.nameRes) } ?: s.defaultCurrencyCode}",
+                    onClick = { showCurrency = true },
+                )
             }
         }
 
+        item { SectionHeader(stringResource(R.string.settings_group_data)) }
+        item {
+            Group {
+                SettingsRow(stringResource(R.string.settings_accounts), R.drawable.ic_accounts, Tiles.Accounts, value = counts.accounts.toString(), onClick = onOpenAccounts)
+                CardDivider()
+                SettingsRow(stringResource(R.string.settings_categories), R.drawable.ic_categories, Tiles.Categories, value = counts.categories.toString(), onClick = onOpenCategories)
+                CardDivider()
+                SettingsRow(
+                    stringResource(R.string.limits),
+                    R.drawable.ic_limits,
+                    Tiles.Limits,
+                    value = stringResource(R.string.home_quick_achievements, counts.limitsSet, counts.expenseCategories),
+                    onClick = onOpenLimits,
+                )
+                CardDivider()
+                SettingsRow(stringResource(R.string.goals_title), R.drawable.ic_goals, Tiles.Goals, value = counts.goals.toString(), onClick = onOpenGoals)
+                CardDivider()
+                SettingsRow(
+                    stringResource(R.string.achievements_title),
+                    R.drawable.ic_achievements,
+                    Tiles.Achievements,
+                    value = stringResource(R.string.home_quick_achievements, counts.achievements, AchievementId.entries.size),
+                    onClick = onOpenAchievements,
+                )
+                CardDivider()
+                SettingsRow(stringResource(R.string.settings_recurring), R.drawable.ic_recurring, Tiles.Recurring, value = counts.recurring.toString(), onClick = onOpenRecurring)
+                CardDivider()
+                SettingsRow(
+                    stringResource(R.string.export_sheet_data_title),
+                    R.drawable.ic_export,
+                    Tiles.Export,
+                    subtitle = stringResource(R.string.settings_export_sub),
+                    onClick = { showExport = true },
+                )
+                CardDivider()
+                SettingsRow(
+                    stringResource(R.string.settings_import),
+                    R.drawable.ic_import,
+                    Tiles.Import,
+                    subtitle = stringResource(R.string.settings_import_sub),
+                    onClick = { showImport = true },
+                )
+            }
+        }
+
+        item { SectionHeader(stringResource(R.string.settings_group_notifications)) }
+        item {
+            Group {
+                SettingsRow(
+                    stringResource(R.string.settings_reminder),
+                    R.drawable.ic_bell,
+                    Tiles.Bell,
+                    subtitle = stringResource(R.string.settings_reminder_sub, "%02d:%02d".format(reminderTime.hour, reminderTime.minute)),
+                    onSubtitleClick = openTimePicker,
+                    onClick = openTimePicker,
+                    switchChecked = s.reminderEnabled,
+                    onSwitchChange = viewModel::setReminder,
+                )
+                CardDivider()
+                SettingsRow(
+                    stringResource(R.string.limits),
+                    R.drawable.ic_alert,
+                    Tiles.Alert,
+                    subtitle = stringResource(R.string.settings_limits_notif_sub),
+                    switchChecked = s.limitNotificationsEnabled,
+                    onSwitchChange = viewModel::setLimitNotifications,
+                )
+                CardDivider()
+                SettingsRow(
+                    stringResource(R.string.settings_payments_notif),
+                    R.drawable.ic_calendar,
+                    Tiles.Calendar,
+                    subtitle = stringResource(R.string.settings_payments_notif_sub),
+                    switchChecked = s.recurringNotificationsEnabled,
+                    onSwitchChange = viewModel::setRecurringNotifications,
+                )
+            }
+        }
+
+        item { SectionHeader(stringResource(R.string.settings_group_security)) }
+        item {
+            Group {
+                SettingsRow(stringResource(R.string.settings_permissions), R.drawable.ic_permissions, Tiles.Permissions, onClick = onOpenPermissions)
+                CardDivider()
+                SettingsRow(
+                    stringResource(R.string.biometrics),
+                    R.drawable.ic_biometry,
+                    Tiles.Biometry,
+                    subtitle = stringResource(R.string.settings_biometry_sub),
+                    switchChecked = s.biometricEnabled,
+                    onSwitchChange = { enabled ->
+                        val helper = biometricHelper ?: return@SettingsRow
+                        if (enabled && !helper.isAvailable()) {
+                            showBiometricUnavailable = true
+                        } else {
+                            helper.authenticate(onSuccess = { viewModel.setBiometric(enabled) }, onError = {})
+                        }
+                    },
+                )
+                CardDivider()
+                SettingsRow(
+                    stringResource(R.string.settings_hide_amounts),
+                    R.drawable.ic_eye_off,
+                    Tiles.EyeOff,
+                    subtitle = stringResource(R.string.settings_hide_amounts_sub),
+                    switchChecked = s.hideAmountsOnLaunch,
+                    onSwitchChange = viewModel::setHideAmounts,
+                )
+            }
+        }
+
+        item { SectionHeader(stringResource(R.string.settings_group_app)) }
+        item {
+            Group {
+                SettingsRow(stringResource(R.string.settings_rate), R.drawable.ic_rate, Tiles.Rate, onClick = { openStoreListing(context) })
+                CardDivider()
+                SettingsRow(
+                    stringResource(R.string.settings_about),
+                    R.drawable.ic_about,
+                    Tiles.About,
+                    value = "v${BuildConfig.VERSION_NAME}",
+                    onClick = onOpenAbout,
+                )
+            }
+        }
+
+        item {
+            Column(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                KopiImage(Kopi.HAPPY, 56.dp)
+                VSpace(6.dp)
+                Text(stringResource(R.string.settings_footer), style = FinanceType.caption, color = c.textSecondary, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.about_version, BuildConfig.VERSION_NAME), style = FinanceType.caption, color = c.textSecondary)
+            }
+        }
     }
-
 }
 
-
-private fun currencyDisplayLabel(currencyCode: String): String = when (currencyCode.uppercase()) {
-
-    "RUB" -> "₽"
-
-    "USD" -> "$"
-
-    "EUR" -> "€"
-
-    "GBP" -> "£"
-
-    else -> currencyCode
-
+@Composable
+private fun Group(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(FinanceTheme.colors.surface),
+        content = content,
+    )
 }
-
-

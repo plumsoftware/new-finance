@@ -83,6 +83,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".data.notifications.NoSpendReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".widget.QuickAddWidgetProvider"
             android:exported="true"
             android:label="@string/widget_quick_add_name">

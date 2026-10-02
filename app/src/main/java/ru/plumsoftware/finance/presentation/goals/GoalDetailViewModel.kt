@@ -9,204 +9,131 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.Goal
 import ru.plumsoftware.finance.domain.model.GoalDeposit
 import ru.plumsoftware.finance.domain.model.remainingMinor
-import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.GoalRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
-import ru.plumsoftware.finance.presentation.common.MoneyFormat
-import ru.plumsoftware.finance.R
+import ru.plumsoftware.finance.presentation.common.DateFmt
+import java.time.LocalDate
+import java.time.YearMonth
+import java.time.temporal.ChronoUnit
+
+/** Прогноз достижения цели при заданном ежемесячном темпе (§6.9 п.3). */
+data class GoalPlan(
+    val paceMinor: Long,
+    val reachMonth: YearMonth?,
+    val deadlineMonth: YearMonth?,
+    /** > 0 — запас в месяцах, < 0 — опоздание. */
+    val slackMonths: Int?,
+    val neededPerMonthMinor: Long?,
+)
+
+object GoalPlanner {
+    const val PACE_MIN = 2_000_000L
+    const val PACE_MAX = 30_000_000L
+    const val PACE_STEP = 500_000L
+
+    fun plan(remaining: Long, pace: Long, deadline: LocalDate?, today: LocalDate): GoalPlan {
+        val now = YearMonth.from(today)
+        val months = if (remaining <= 0) 0L else if (pace <= 0) null else (remaining + pace - 1) / pace
+        val reach = months?.let { now.plusMonths(it) }
+        val deadlineMonth = deadline?.let { YearMonth.from(it) }
+        val slack = if (reach != null && deadlineMonth != null) ChronoUnit.MONTHS.between(reach, deadlineMonth).toInt() else null
+        val monthsToDeadline = deadlineMonth?.let { ChronoUnit.MONTHS.between(now, it).coerceAtLeast(1) }
+        val needed = monthsToDeadline?.let { (remaining + it - 1) / it }
+        return GoalPlan(pace, reach, deadlineMonth, slack, needed)
+    }
+
+    /** Темп по умолчанию — среднее пополнение за последние 3 месяца, в пределах слайдера. */
+    fun defaultPace(deposits: List<GoalDeposit>, today: LocalDate): Long {
+        val from = today.minusMonths(3)
+        val sum = deposits.filter { DateFmt.toLocalDate(it.createdAtMillis).isAfter(from) }.sumOf { it.amountMinor }
+        val avg = sum / 3
+        val snapped = ((avg + PACE_STEP / 2) / PACE_STEP) * PACE_STEP
+        return snapped.coerceIn(PACE_MIN, PACE_MAX)
+    }
+}
 
 data class GoalDetailUiState(
     val goal: Goal? = null,
-    val deposits: List<GoalDeposit> = emptyList(),
     val currencyCode: String = "RUB",
-    val selectedAccountId: Long = 1L,
-    val showDepositSheet: Boolean = false,
-    val amountDigits: String = "",
-    val depositNote: String = "",
-    val isSaving: Boolean = false,
-    val showCelebration: Boolean = false,
-    val selectedDeposit: GoalDeposit? = null,
-    val showDepositDetail: Boolean = false,
-    val accountNames: Map<Long, String> = emptyMap(),
+    val paceMinor: Long = GoalPlanner.PACE_MIN,
+    val plan: GoalPlan? = null,
+    val deleted: Boolean = false,
 )
 
 class GoalDetailViewModel(
     private val goalId: Long,
     private val goalRepository: GoalRepository,
-    private val accountRepository: AccountRepository,
     settingsRepository: SettingsRepository,
     private val context: Context,
 ) : ViewModel() {
-    private val mutableState = MutableStateFlow(GoalDetailUiState())
-    val transientState = mutableState.asStateFlow()
+
+    private val pace = MutableStateFlow<Long?>(null)
+    private val _deleted = MutableStateFlow(false)
+    private val _celebrate = MutableStateFlow(false)
+    val celebrate: StateFlow<Boolean> = _celebrate.asStateFlow()
+    private var selectedAccountId: Long = 1L
 
     val uiState: StateFlow<GoalDetailUiState> = combine(
         goalRepository.observeGoal(goalId),
         goalRepository.observeDeposits(goalId),
         settingsRepository.settings,
-        accountRepository.observeAllActive(),
-        mutableState,
-    ) { goal, deposits, settings, accounts, transient ->
-        transient.copy(
+        pace,
+        _deleted,
+    ) { goal, deposits, settings, p, deleted ->
+        selectedAccountId = settings.selectedAccountId
+        val today = LocalDate.now()
+        val effectivePace = p ?: GoalPlanner.defaultPace(deposits, today)
+        GoalDetailUiState(
             goal = goal,
-            deposits = deposits,
             currencyCode = goal?.currencyCode ?: settings.defaultCurrencyCode,
-            selectedAccountId = settings.selectedAccountId,
-            accountNames = accounts.associate { it.id to it.name },
+            paceMinor = effectivePace,
+            plan = goal?.let { GoalPlanner.plan(it.remainingMinor, effectivePace, it.deadline?.let(DateFmt::toLocalDate), today) },
+            deleted = deleted,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GoalDetailUiState())
 
-    fun openDepositSheet() {
+    fun setPace(value: Long) {
+        pace.value = value
+    }
+
+    /** Быстрое пополнение (§6.9 п.4). */
+    fun quickDeposit(amountMinor: Long) {
         val goal = uiState.value.goal ?: return
-        val defaultDigits = MoneyFormat.minorToMajorDigits(goal.remainingMinor, uiState.value.currencyCode)
-        mutableState.update {
-            it.copy(
-                showDepositSheet = true,
-                amountDigits = if (defaultDigits == "0") "" else defaultDigits,
-                depositNote = "",
-            )
-        }
-    }
-
-    fun closeDepositSheet() {
-        mutableState.update { it.copy(showDepositSheet = false) }
-    }
-
-    fun appendDepositDigit(digit: String) {
-        mutableState.update { state ->
-            val normalized = normalizeDigits(state.amountDigits + digit)
-            state.copy(amountDigits = normalized)
-        }
-    }
-
-    fun backspaceDeposit() {
-        mutableState.update { it.copy(amountDigits = it.amountDigits.dropLast(1)) }
-    }
-
-    fun setDepositAmount(amountMinor: Long) {
-        val digits = MoneyFormat.minorToMajorDigits(amountMinor, uiState.value.currencyCode)
-        mutableState.update { it.copy(amountDigits = digits) }
-    }
-
-    fun setDepositNote(note: String) {
-        mutableState.update { it.copy(depositNote = note.take(120)) }
-    }
-
-    fun confirmDeposit() {
-        val state = uiState.value
-        val goal = state.goal ?: return
-        val amountMinor = MoneyFormat.majorDigitsToMinor(state.amountDigits, state.currencyCode)
-            .coerceAtMost(goal.remainingMinor)
-        if (amountMinor <= 0L) return
+        val amount = amountMinor.coerceAtMost(goal.remainingMinor)
+        if (amount <= 0) return
         viewModelScope.launch {
-            mutableState.update { it.copy(isSaving = true) }
             val wasCompleted = goal.isCompleted
             runCatching {
-                val transactionNote = buildString {
-                    append(
-                        context.getString(
-                            R.string.goal_deposit_transaction_note_prefix,
-                            goal.name,
-                        ),
-                    )
-                    val userNote = state.depositNote.trim()
-                    if (userNote.isNotEmpty()) {
-                        append(" — ").append(userNote)
-                    }
-                }
                 goalRepository.addDeposit(
                     goalId = goalId,
-                    amountMinor = amountMinor,
-                    note = state.depositNote,
-                    currencyCode = state.currencyCode,
-                    accountId = state.selectedAccountId,
-                    transactionNote = transactionNote,
+                    amountMinor = amount,
+                    note = null,
+                    currencyCode = uiState.value.currencyCode,
+                    accountId = selectedAccountId,
+                    transactionNote = context.getString(R.string.goal_deposit_transaction_note_prefix, goal.name),
                 )
-            }.onSuccess { updated ->
-                mutableState.update {
-                    it.copy(
-                        showDepositSheet = false,
-                        isSaving = false,
-                        showCelebration = !wasCompleted && updated.isCompleted,
-                        amountDigits = "",
-                        depositNote = "",
-                    )
-                }
-            }.onFailure {
-                mutableState.update { it.copy(isSaving = false) }
-            }
+            }.onSuccess { updated -> if (!wasCompleted && updated.isCompleted) _celebrate.value = true }
         }
     }
 
-    fun dismissCelebration() {
-        mutableState.update { it.copy(showCelebration = false) }
+    fun consumeCelebration() {
+        _celebrate.value = false
     }
 
-    fun openDepositDetail(deposit: GoalDeposit) {
-        mutableState.update {
-            it.copy(selectedDeposit = deposit, showDepositDetail = true)
-        }
+    fun setShowOnHome(show: Boolean) {
+        val goal = uiState.value.goal ?: return
+        viewModelScope.launch { goalRepository.upsertGoal(goal.copy(showOnHome = show)) }
     }
 
-    fun closeDepositDetail() {
-        mutableState.update {
-            it.copy(selectedDeposit = null, showDepositDetail = false)
-        }
-    }
-
-    fun deleteDeposit(deposit: GoalDeposit) {
-        viewModelScope.launch {
-            mutableState.update { it.copy(isSaving = true) }
-            runCatching { goalRepository.deleteDeposit(deposit) }
-                .onSuccess {
-                    mutableState.update {
-                        it.copy(
-                            isSaving = false,
-                            showDepositDetail = false,
-                            selectedDeposit = null,
-                        )
-                    }
-                }
-                .onFailure {
-                    mutableState.update { it.copy(isSaving = false) }
-                }
-        }
-    }
-
-    fun deleteGoal(onDeleted: () -> Unit) {
+    fun delete() {
         viewModelScope.launch {
             goalRepository.deleteGoal(goalId)
-            onDeleted()
-        }
-    }
-
-    fun setShowOnHome(value: Boolean) {
-        val goal = uiState.value.goal ?: return
-        if (goal.showOnHome == value) return
-        viewModelScope.launch {
-            runCatching {
-                goalRepository.upsertGoal(goal.copy(showOnHome = value))
-            }
-        }
-    }
-
-    private fun normalizeDigits(raw: String): String {
-        val filtered = raw.filter { it.isDigit() || it == '.' }
-        if (filtered.isEmpty()) return ""
-        if (filtered == ".") return "0."
-        val dotIndex = filtered.indexOf('.')
-        return if (dotIndex >= 0) {
-            val intPart = filtered.substring(0, dotIndex).filter { c -> c.isDigit() }
-            val fracPart = filtered.substring(dotIndex + 1).filter { c -> c.isDigit() }.take(2)
-            val safeInt = intPart.ifEmpty { "0" }.trimStart('0').ifEmpty { "0" }.take(9)
-            "$safeInt.$fracPart"
-        } else {
-            filtered.filter { c -> c.isDigit() }.trimStart('0').ifEmpty { "0" }.take(9)
+            _deleted.value = true
         }
     }
 }

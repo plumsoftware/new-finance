@@ -12,6 +12,11 @@ import ru.plumsoftware.finance.BuildConfig
 import ru.plumsoftware.finance.data.firebase.InAppMessagingHandler
 import ru.plumsoftware.finance.data.firebase.NotificationDisplayHelper
 import ru.plumsoftware.finance.data.work.RecurringTransactionWorker
+import ru.plumsoftware.finance.data.notifications.DailyNotificationsWorker
+import ru.plumsoftware.finance.data.notifications.LocalNotifier
+import ru.plumsoftware.finance.data.config.CalcConfigRepository
+import ru.plumsoftware.finance.domain.repository.SettingsRepository
+import kotlinx.coroutines.flow.first
 import com.yandex.mobile.ads.common.YandexAds
 // import ru.plumsoftware.finance.ads.InterstitialAdManager
 // import ru.plumsoftware.finance.ads.InterstitialPlacement
@@ -46,5 +51,12 @@ class FinanceApplication : Application() {
         }
 
         RecurringTransactionWorker.schedule(this)
+
+        getKoin().get<LocalNotifier>().createChannels()
+        getKoin().get<CalcConfigRepository>().refresh()
+        appScope.launch {
+            val minute = getKoin().get<SettingsRepository>().settings.first().reminderMinuteOfDay
+            DailyNotificationsWorker.schedule(this@FinanceApplication, minute)
+        }
     }
 }

@@ -2,7 +2,10 @@ package ru.plumsoftware.finance.presentation
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -62,7 +65,9 @@ import ru.plumsoftware.finance.presentation.addtransaction.AddTransactionScreen
 import ru.plumsoftware.finance.presentation.analytics.AnalyticsScreen
 import ru.plumsoftware.finance.presentation.achievements.AchievementsScreen
 import ru.plumsoftware.finance.presentation.achievements.AchievementsViewModel
-import ru.plumsoftware.finance.presentation.achievements.OwlAchievementToast
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import ru.plumsoftware.finance.ui.ds.Kopi
 import ru.plumsoftware.finance.presentation.limits.LimitsScreen
 import ru.plumsoftware.finance.presentation.categories.CategoriesScreen
 import ru.plumsoftware.finance.presentation.categories.CategoryEditorScreen
@@ -85,6 +90,7 @@ import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsDetailScree
 import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsScreen
 import ru.plumsoftware.finance.presentation.smartsavings.SmartSavingsSnackbar
 import ru.plumsoftware.finance.navigation.NavDeepLinks
+import ru.plumsoftware.finance.navigation.SharedAxisX
 import ru.plumsoftware.finance.navigation.navigateAppDeepLink
 import ru.plumsoftware.finance.navigation.popBackStackOrHome
 import ru.plumsoftware.finance.presentation.tools.CreditCalculatorScreen
@@ -95,10 +101,24 @@ import ru.plumsoftware.finance.presentation.tools.MortgageCalculatorScreen
 import ru.plumsoftware.finance.presentation.tools.RentVsBuyScreen
 import ru.plumsoftware.finance.presentation.tools.SavingsAccountCalculatorScreen
 import ru.plumsoftware.finance.presentation.tools.ToolsScreen
+import ru.plumsoftware.finance.presentation.tools.SavedCalculationsScreen
 import ru.plumsoftware.finance.ui.AppRoute
 import ru.plumsoftware.finance.ui.nav.BottomNavItems
+import ru.plumsoftware.finance.ui.nav.FinanceBottomBar
+import ru.plumsoftware.finance.ui.ds.LocalMascotSnackbar
+import ru.plumsoftware.finance.ui.ds.AmountVisibility
+import ru.plumsoftware.finance.ui.ds.LocalAmountVisibility
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.first
+import ru.plumsoftware.finance.ui.ds.MascotSnackbarHost
+import ru.plumsoftware.finance.ui.ds.MascotSnackbarState
+import androidx.compose.runtime.CompositionLocalProvider
 import ru.plumsoftware.finance.ui.theme.Dimens
 import ru.plumsoftware.finance.ui.theme.FinanceTheme
+
+private val SheetEasing = CubicBezierEasing(0.2f, 0.8f, 0.2f, 1f)
 
 @SuppressLint("FlowOperatorInvokedInComposition")
 @Composable
@@ -184,107 +204,31 @@ fun FinanceApp(
             }
         }
 
+        val mascotSnackbar = remember { MascotSnackbarState() }
+        // Скрытие сумм: начальное значение — из настройки при запуске, далее — по касанию (§6.13).
+        var amountsHidden by rememberSaveable { mutableStateOf<Boolean?>(null) }
+        LaunchedEffect(Unit) {
+            if (amountsHidden == null) amountsHidden = settingsRepository.settings.first().hideAmountsOnLaunch
+        }
+        val amountVisibility = AmountVisibility(amountsHidden == true) { amountsHidden = amountsHidden != true }
+        CompositionLocalProvider(
+            LocalMascotSnackbar provides mascotSnackbar,
+            LocalAmountVisibility provides amountVisibility,
+        ) {
         Scaffold(
             modifier = modifier.fillMaxSize(),
             containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
-                AnimatedVisibility(visible = showBottomBar) {
-                    Box {
-                        HorizontalDivider(
-                            color = colors.outline,
-                            thickness = Dimens.dividerThickness,
-                        )
-                        NavigationBar(
-                            containerColor = colors.surface,
-                            tonalElevation = 0.dp,
-                            windowInsets = NavigationBarDefaults.windowInsets,
-                        ) {
-                            val homeItem = BottomNavItems[0]
-                            val toolsItem = BottomNavItems[1]
-                            val analyticsItem = BottomNavItems[2]
-                            val settingsItem = BottomNavItems[3]
-
-                            listOf(homeItem, toolsItem).forEach { item ->
-                                val isSelected =
-                                    navBackStackEntry?.destination?.hierarchy?.any { it.route == item.route } == true
-                                NavigationBarItem(
-                                    selected = isSelected,
-                                    onClick = { navigateFromBottomBar(item.route) },
-                                    icon = {
-                                        Icon(
-                                            item.icon,
-                                            contentDescription = stringResource(item.titleRes),
-                                        )
-                                    },
-                                    label = {
-                                        if (isSelected) {
-                                            Text(
-                                                text = stringResource(item.titleRes),
-                                                style = MaterialTheme.typography.titleSmall.copy(
-                                                    fontWeight = FontWeight.SemiBold,
-                                                ),
-                                            )
-                                        }
-                                    },
-                                    alwaysShowLabel = isSelected,
-                                    colors = navBarItemColors(isSelected),
-                                )
-                            }
-                            NavigationBarItem(
-                                selected = false,
-                                onClick = { navController.navigate(AppRoute.AddTransaction.route) },
-                                icon = {
-                                    Box(
-                                        modifier = Modifier
-                                            .offset(y = (-8).dp)
-                                            .size(Dimens.ButtonHeight)
-                                            .shadow(8.dp, CircleShape)
-                                            .background(colors.primary, CircleShape)
-                                            .clickable { navController.navigate(AppRoute.AddTransaction.route) },
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Rounded.Add,
-                                            contentDescription = stringResource(R.string.add_transaction),
-                                            tint = Color.White,
-                                            modifier = Modifier.size(28.dp),
-                                        )
-                                    }
-                                },
-                                label = {},
-                                alwaysShowLabel = false,
-                                colors = NavigationBarItemDefaults.colors(
-                                    indicatorColor = Color.Transparent,
-                                ),
-                            )
-                            listOf(analyticsItem, settingsItem).forEach { item ->
-                                val isSelected =
-                                    navBackStackEntry?.destination?.hierarchy?.any { it.route == item.route } == true
-                                NavigationBarItem(
-                                    selected = isSelected,
-                                    onClick = { navigateFromBottomBar(item.route) },
-                                    icon = {
-                                        Icon(
-                                            item.icon,
-                                            contentDescription = stringResource(item.titleRes),
-                                        )
-                                    },
-                                    label = {
-                                        if (isSelected) {
-                                            Text(
-                                                text = stringResource(item.titleRes),
-                                                style = MaterialTheme.typography.titleSmall.copy(
-                                                    fontWeight = FontWeight.SemiBold,
-                                                ),
-                                            )
-                                        }
-                                    },
-                                    alwaysShowLabel = isSelected,
-                                    colors = navBarItemColors(isSelected),
-                                )
-                            }
-                        }
-                    }
+                AnimatedVisibility(
+                    visible = showBottomBar,
+                    enter = fadeIn(tween(150)),
+                    exit = fadeOut(tween(100)),
+                ) {
+                    FinanceBottomBar(
+                        selectedRoute = currentRoute,
+                        onSelect = navigateFromBottomBar,
+                        onFab = { navController.navigate(AppRoute.addTransaction()) },
+                    )
                 }
             },
         ) { innerPadding ->
@@ -295,6 +239,10 @@ fun FinanceApp(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(bottom = if (showBottomBar) innerPadding.calculateBottomPadding() else 0.dp),
+                    enterTransition = SharedAxisX.enterTransition,
+                    exitTransition = SharedAxisX.exitTransition,
+                    popEnterTransition = SharedAxisX.popEnterTransition,
+                    popExitTransition = SharedAxisX.popExitTransition,
                 ) {
                     composable(route = AppRoute.Onboarding.route) {
                         OnboardingScreen(
@@ -310,13 +258,18 @@ fun FinanceApp(
                             onOpenSmartSavingsClick = { navController.navigate(AppRoute.SmartSavings.route) },
                             onOpenGoalsClick = { navController.navigate(AppRoute.Goals.route) },
                             onOpenHistoryClick = { navController.navigate(AppRoute.History.route) },
-                            onOpenAnalyticsClick = { navController.navigate(AppRoute.Analytics.route) },
                             onOpenLimitsClick = { navController.navigate(AppRoute.Limits.route) },
                             onOpenAchievementsClick = { navController.navigate(AppRoute.Achievements.route) },
                             onOpenNotificationsClick = { navController.navigate(AppRoute.Notifications.route) },
+                            onOpenRecurringClick = { navController.navigate(AppRoute.Recurring.route) },
+                            onOpenAccountsClick = { navController.navigate(AppRoute.Accounts.route) },
                             onCreateAssetClick = { navController.navigate(AppRoute.smartCreate(null)) },
                             onCreateGoalClick = { navController.navigate(AppRoute.goalCreate()) },
                             onGoalClick = { id -> navController.navigate(AppRoute.goalDetail(id)) },
+                            onAddTransaction = { scan, recent ->
+                                navController.navigate(AppRoute.addTransaction(scan = scan, recent = recent))
+                            },
+                            onEditTransaction = { id -> navController.navigate(AppRoute.addTransaction(editId = id)) },
                         )
                     }
                     composable(
@@ -331,7 +284,11 @@ fun FinanceApp(
                             onMortgageCalcClick = { navController.navigate(AppRoute.MortgageCalculator.route) },
                             onEarlyRepayClick = { navController.navigate(AppRoute.EarlyRepayCalculator.route) },
                             onRentVsBuyClick = { navController.navigate(AppRoute.RentVsBuyCalculator.route) },
+                            onSavedClick = { navController.navigate(AppRoute.SavedCalculations.route) },
                         )
+                    }
+                    composable(route = AppRoute.SavedCalculations.route) {
+                        SavedCalculationsScreen(onBack = { navController.popBackStackOrHome() })
                     }
                     composable(
                         route = AppRoute.CreditCalculator.route,
@@ -378,7 +335,8 @@ fun FinanceApp(
                     composable(route = AppRoute.History.route) {
                         HistoryScreen(
                             onBack = { navController.popBackStackOrHome() },
-                            onNavigateToAdd = { navController.navigate(AppRoute.AddTransaction.route) },
+                            onNavigateToAdd = { navController.navigate(AppRoute.addTransaction()) },
+                            onEdit = { id -> navController.navigate(AppRoute.addTransaction(editId = id)) },
                         )
                     }
                     composable(route = AppRoute.SmartSavings.route) { backStackEntry ->
@@ -586,35 +544,43 @@ fun FinanceApp(
                             onBack = { navController.popBackStackOrHome() },
                         )
                     }
-                    composable(route = AppRoute.ADD_TRANSACTION_WITH_ARGS) {
+                    composable(
+                        route = AppRoute.ADD_TRANSACTION_WITH_ARGS,
+                        arguments = listOf("quickCategory", "scan", "recent", "editId").map { name ->
+                            navArgument(name) {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            }
+                        },
+                        // Полноэкранная панель снизу вверх, 400ms cubic-bezier(.2,.8,.2,1) (§3.5, §6.2).
+                        enterTransition = { slideInVertically(tween(400, easing = SheetEasing)) { it } },
+                        exitTransition = { fadeOut(tween(150)) },
+                        popEnterTransition = { fadeIn(tween(150)) },
+                        popExitTransition = { slideOutVertically(tween(300, easing = SheetEasing)) { it } },
+                    ) {
                         AddTransactionScreen(
                             onBack = { navController.popBackStackOrHome() },
+                            onCreateCategory = { type ->
+                                navController.navigate(AppRoute.categoryEdit(type = type.name))
+                            },
                         )
                     }
                 }
-                pendingAchievement?.let { achievement ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = Dimens.statusBarInset),
-                        contentAlignment = Alignment.TopCenter,
-                    ) {
-                        OwlAchievementToast(
-                            achievement = achievement,
-                            onDismiss = achievementsViewModel::clearPending,
-                        )
+                MascotSnackbarHost(mascotSnackbar, Modifier.align(Alignment.TopCenter))
+                val achievementText = pendingAchievement?.let {
+                    stringResource(R.string.ach_unlocked_toast, it.title)
+                }
+                val haptics = LocalHapticFeedback.current
+                LaunchedEffect(pendingAchievement?.key) {
+                    if (achievementText != null) {
+                        mascotSnackbar.show(achievementText, Kopi.TROPHY)
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        achievementsViewModel.clearPending()
                     }
                 }
             }
         }
+        }
     }
 }
-
-@Composable
-private fun navBarItemColors(isSelected: Boolean) = NavigationBarItemDefaults.colors(
-    indicatorColor = Color.Transparent,
-    selectedIconColor = MaterialTheme.colorScheme.primary,
-    selectedTextColor = MaterialTheme.colorScheme.primary,
-    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-)

@@ -1,9 +1,6 @@
 package ru.plumsoftware.finance.presentation.notifications
 
 import androidx.annotation.StringRes
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,41 +8,27 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
-import androidx.compose.material.icons.rounded.BarChart
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.EmojiEvents
-import androidx.compose.material.icons.rounded.Error
-import androidx.compose.material.icons.rounded.LocalFireDepartment
-import androidx.compose.material.icons.rounded.NotificationsNone
-import androidx.compose.material.icons.rounded.Warning
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -53,38 +36,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import ru.plumsoftware.finance.navigation.deepLinkUri
-import ru.plumsoftware.finance.navigation.navigateNotificationDeepLink
-import ru.plumsoftware.finance.navigation.popBackStackOrHome
 import org.koin.androidx.compose.koinViewModel
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.domain.model.AppNotification
 import ru.plumsoftware.finance.domain.model.NotificationType
+import ru.plumsoftware.finance.navigation.navigateNotificationDeepLink
+import ru.plumsoftware.finance.navigation.parseNotificationDeepLink
+import ru.plumsoftware.finance.navigation.popBackStackOrHome
+import ru.plumsoftware.finance.presentation.common.DateFmt
 import ru.plumsoftware.finance.ui.AppRoute
-import ru.plumsoftware.finance.ui.components.AppCard
-import ru.plumsoftware.finance.ui.components.MascotEmptyState
-import ru.plumsoftware.finance.ui.components.ios.IosEditorTopBar
-import ru.plumsoftware.finance.ui.components.ios.IosTextButton
-import ru.plumsoftware.finance.ui.theme.Dimens
-import ru.plumsoftware.finance.ui.theme.MascotAssets
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
+import ru.plumsoftware.finance.ui.ds.CardDivider
+import ru.plumsoftware.finance.ui.ds.EmojiBadge
+import ru.plumsoftware.finance.ui.ds.EmptyState
+import ru.plumsoftware.finance.ui.ds.FChip
+import ru.plumsoftware.finance.ui.ds.HSpace
+import ru.plumsoftware.finance.ui.ds.Kopi
+import ru.plumsoftware.finance.ui.ds.SubScreenAppBar
+import ru.plumsoftware.finance.ui.ds.SwipeHint
+import ru.plumsoftware.finance.ui.ds.SwipeHintButton
+import ru.plumsoftware.finance.ui.ds.rememberSwipeHint
+import ru.plumsoftware.finance.ui.ds.TextAction
+import ru.plumsoftware.finance.ui.ds.VSpace
+import ru.plumsoftware.finance.ui.theme.FinanceTheme
+import ru.plumsoftware.finance.ui.theme.FinanceType
+import java.time.LocalDate
 import java.util.concurrent.TimeUnit
-
-private val StreakOrange = Color(0xFFFF6B35)
-private val WarningOrange = Color(0xFFFF9500)
 
 private enum class NotificationDateGroup(@StringRes val labelRes: Int) {
     TODAY(R.string.notif_group_today),
@@ -92,358 +75,212 @@ private enum class NotificationDateGroup(@StringRes val labelRes: Int) {
     EARLIER(R.string.notif_group_earlier),
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+private fun AppNotification.dateGroup(today: LocalDate): NotificationDateGroup = when (DateFmt.toLocalDate(receivedAtMillis)) {
+    today -> NotificationDateGroup.TODAY
+    today.minusDays(1) -> NotificationDateGroup.YESTERDAY
+    else -> NotificationDateGroup.EARLIER
+}
+
+/** Уведомления: «Все / Непрочитанные», группы по дням, «Прочитать все», «Очистить», удаление свайпом. */
 @Composable
 fun NotificationsScreen(
     navController: NavController,
     viewModel: NotificationsViewModel = koinViewModel(),
 ) {
     val notifications by viewModel.notifications.collectAsStateWithLifecycle()
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-
-    val filteredNotifications = remember(notifications, selectedTab) {
-        when (selectedTab) {
-            1 -> notifications.filter { !it.isRead }
-            else -> notifications
-        }
+    val c = FinanceTheme.colors
+    var tab by rememberSaveable { mutableIntStateOf(0) }
+    var confirmClear by remember { mutableStateOf(false) }
+    val showSwipeHint = rememberSwipeHint(SwipeHint.NOTIFICATIONS, hasItems = notifications.isNotEmpty())
+    val unread = notifications.count { !it.isRead }
+    val today = LocalDate.now()
+    val grouped = remember(notifications, tab, today) {
+        notifications
+            .filter { tab == 0 || !it.isRead }
+            .sortedByDescending { it.receivedAtMillis }
+            .groupBy { it.dateGroup(today) }
+            .toSortedMap(compareBy { it.ordinal })
     }
 
-    val grouped = remember(filteredNotifications) {
-        filteredNotifications
-            .groupBy { it.dateGroup() }
-            .toList()
-            .sortedBy { it.first.ordinal }
+    if (confirmClear) {
+        AlertDialog(
+            onDismissRequest = { confirmClear = false },
+            containerColor = c.surface,
+            title = { Text(stringResource(R.string.notif_clear_title), style = FinanceType.titleLarge, color = c.textPrimary) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.clearAll()
+                    confirmClear = false
+                }) { Text(stringResource(R.string.notif_clear), color = c.dangerText) }
+            },
+            dismissButton = { TextButton(onClick = { confirmClear = false }) { Text(stringResource(R.string.cancel), color = c.textSecondary) } },
+        )
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = colors.background,
-        topBar = {
-            IosEditorTopBar(
-                title = stringResource(R.string.notifications),
-                backLabel = stringResource(R.string.nav_home),
-                onBack = navController::popBackStackOrHome
-            )
-        },
-    ) { padding ->
+    Column(Modifier.fillMaxSize().background(c.bg)) {
+        SubScreenAppBar(
+            title = stringResource(R.string.notifications),
+            onBack = { navController.popBackStackOrHome() },
+            actions = {
+                if (notifications.isNotEmpty()) SwipeHintButton(showSwipeHint)
+                if (unread > 0) TextAction(stringResource(R.string.notif_read_all), viewModel::markAllRead)
+            },
+        )
         if (notifications.isEmpty()) {
-            NotificationsEmptyState(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+            EmptyState(
+                title = stringResource(R.string.no_notifications),
+                text = stringResource(R.string.no_notifications_desc),
+                pose = Kopi.SLEEPING,
+                modifier = Modifier.padding(top = 48.dp),
             )
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-            ) {
-                NotificationFilterTabs(
-                    selectedTab = selectedTab,
-                    onTabSelected = { selectedTab = it },
-                )
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        horizontal = Dimens.SpacingL,
-                        vertical = Dimens.SpacingXs,
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
-                ) {
-                    grouped.forEach { (group, items) ->
-                        stickyHeader {
-                            Text(
-                                text = stringResource(group.labelRes),
-                                style = typography.labelMedium,
-                                color = colors.onSurfaceVariant,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(colors.background)
-                                    .padding(vertical = Dimens.SpacingS),
-                            )
-                        }
-                        items(items, key = { it.id }) { notification ->
-                            NotificationCard(
-                                notification = notification,
+            return@Column
+        }
+        LazyColumn(
+            Modifier.fillMaxSize().navigationBarsPadding(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FChip(stringResource(R.string.notif_tab_all), selected = tab == 0, onClick = { tab = 0 })
+                    FChip(
+                        if (unread > 0) "${stringResource(R.string.notif_tab_unread)} · $unread" else stringResource(R.string.notif_tab_unread),
+                        selected = tab == 1,
+                        onClick = { tab = 1 },
+                    )
+                }
+            }
+            if (grouped.isEmpty()) {
+                item { EmptyState(title = stringResource(R.string.notif_all_read), pose = Kopi.HAPPY, mascotSize = 72.dp) }
+            }
+            grouped.forEach { (group, items) ->
+                item(key = "h_${group.name}") {
+                    Text(
+                        stringResource(group.labelRes),
+                        style = FinanceType.titleSection,
+                        color = c.textPrimary,
+                        modifier = Modifier.padding(top = 8.dp, start = 4.dp),
+                    )
+                }
+                item(key = "g_${group.name}") {
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(c.surface),
+                    ) {
+                        items.forEachIndexed { i, n ->
+                            if (i > 0) CardDivider(Modifier.padding(start = 70.dp))
+                            NotificationRow(
+                                notification = n,
                                 onTap = {
-                                    viewModel.markRead(notification.id)
-                                    when (notification.type) {
-                                        NotificationType.LIMIT_WARNING,
-                                        NotificationType.LIMIT_EXCEEDED,
-                                            -> navController.navigate(AppRoute.Limits.route)
-
-                                        NotificationType.SAVINGS_MILESTONE ->
-                                            navController.navigate(AppRoute.SmartSavings.route)
-
-                                        else -> Unit
+                                    viewModel.markRead(n.id)
+                                    val deepLink = parseNotificationDeepLink(n.data)
+                                    when {
+                                        deepLink != null -> navController.navigateNotificationDeepLink(deepLink)
+                                        n.type == NotificationType.LIMIT_WARNING || n.type == NotificationType.LIMIT_EXCEEDED ->
+                                            navController.navigate(AppRoute.Limits.route)
+                                        n.type == NotificationType.SAVINGS_MILESTONE -> navController.navigate(AppRoute.SmartSavings.route)
+                                        n.type == NotificationType.STREAK -> navController.navigate(AppRoute.Achievements.route)
+                                        n.type == NotificationType.MONTHLY_SUMMARY -> navController.navigate(AppRoute.Analytics.route)
                                     }
                                 },
-                                onOpenDeepLink = { uri ->
-                                    viewModel.markRead(notification.id)
-                                    navController.navigateNotificationDeepLink(uri)
-                                },
-                                onDismiss = { viewModel.delete(notification.id) },
+                                onDelete = { viewModel.delete(n.id) },
                             )
                         }
                     }
+                }
+            }
+            item {
+                VSpace(8.dp)
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    TextAction(stringResource(R.string.notif_clear), { confirmClear = true }, color = c.dangerText)
                 }
             }
         }
     }
 }
 
-@Composable
-private fun NotificationFilterTabs(
-    selectedTab: Int,
-    onTabSelected: (Int) -> Unit,
-) {
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val tabs = listOf(R.string.notif_tab_all, R.string.notif_tab_unread)
+private fun NotificationType.emoji(): String = when (this) {
+    NotificationType.LIMIT_WARNING -> "⚠️"
+    NotificationType.LIMIT_EXCEEDED -> "🚫"
+    NotificationType.SAVINGS_MILESTONE -> "🏆"
+    NotificationType.MONTHLY_SUMMARY -> "📊"
+    NotificationType.STREAK -> "🔥"
+}
 
-    Row(
-        modifier = Modifier.padding(
-            horizontal = Dimens.SpacingL,
-            vertical = Dimens.SpacingS,
-        ),
-        horizontalArrangement = Arrangement.spacedBy(Dimens.SpacingXs),
-    ) {
-        tabs.forEachIndexed { index, labelRes ->
-            val selected = selectedTab == index
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(Dimens.RadiusPill))
-                    .background(
-                        if (selected) colors.primary else Color.Transparent,
-                    )
-                    .clickable { onTabSelected(index) }
-                    .padding(
-                        horizontal = Dimens.SpacingM,
-                        vertical = Dimens.SpacingXs,
-                    ),
-            ) {
-                Text(
-                    text = stringResource(labelRes),
-                    style = typography.bodyMedium,
-                    color = if (selected) Color.White else colors.onSurfaceVariant,
-                )
-            }
-        }
+@Composable
+private fun NotificationType.tint(): Color {
+    val c = FinanceTheme.colors
+    return when (this) {
+        NotificationType.LIMIT_WARNING -> c.warning
+        NotificationType.LIMIT_EXCEEDED -> c.danger
+        NotificationType.SAVINGS_MILESTONE -> c.success
+        NotificationType.MONTHLY_SUMMARY -> c.primary
+        NotificationType.STREAK -> c.warning
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun NotificationCard(
-    notification: AppNotification,
-    onTap: () -> Unit,
-    onOpenDeepLink: (android.net.Uri) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val deepLinkUri = notification.deepLinkUri()
-    val colors = MaterialTheme.colorScheme
-    val typography = MaterialTheme.typography
-    val typeColor = notification.type.color()
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                onDismiss()
-                true
-            } else {
-                false
-            }
-        },
-        positionalThreshold = { fullWidth -> fullWidth * 0.35f },
-    )
-
+private fun NotificationRow(notification: AppNotification, onTap: () -> Unit, onDelete: () -> Unit) {
+    val c = FinanceTheme.colors
+    val swipe = rememberSwipeToDismissBoxState()
+    LaunchedEffect(swipe.currentValue) {
+        if (swipe.currentValue == SwipeToDismissBoxValue.EndToStart) onDelete()
+    }
+    val title = notification.titleRes?.let { stringResource(it) } ?: notification.title
+    val body = notification.bodyRes?.let { stringResource(it, *notification.bodyArgs.toTypedArray()) } ?: notification.body
     SwipeToDismissBox(
-        state = dismissState,
+        state = swipe,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(Dimens.RadiusL))
-                    .background(colors.error.copy(alpha = 0.1f))
-                    .padding(end = Dimens.SpacingL),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Delete,
-                    contentDescription = stringResource(R.string.delete),
-                    tint = colors.error,
-                    modifier = Modifier.size(Dimens.IconSizeM),
-                )
+            Box(Modifier.fillMaxSize().background(c.danger).padding(horizontal = 20.dp), contentAlignment = Alignment.CenterEnd) {
+                Text(stringResource(R.string.delete), style = FinanceType.title, color = Color.White)
             }
         },
     ) {
-        AppCard(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = onTap,
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .background(c.surface)
+                .heightIn(min = 72.dp)
+                .clickable(role = Role.Button, onClick = onTap)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.Top,
         ) {
-            Row(
-                modifier = Modifier.padding(Dimens.SpacingM),
-                verticalAlignment = Alignment.Top,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(Dimens.emojiPickerSize)
-                        .clip(RoundedCornerShape(Dimens.RadiusM))
-                        .background(typeColor.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = notification.type.icon(),
-                        contentDescription = null,
-                        tint = typeColor,
-                        modifier = Modifier.size(Dimens.IconSizeM),
-                    )
+            EmojiBadge(notification.type.emoji(), notification.type.tint(), size = 42.dp)
+            HSpace(12.dp)
+            Column(Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = FinanceType.bodyMedium.copy(fontWeight = if (notification.isRead) FontWeight.Medium else FontWeight.Bold),
+                    color = c.textPrimary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (body.isNotBlank()) {
+                    Text(body, style = FinanceType.bodySmall, color = c.textSecondary, maxLines = 3, overflow = TextOverflow.Ellipsis)
                 }
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = Dimens.SpacingM),
-                ) {
-                    Text(
-                        text = notificationTitle(notification),
-                        style = typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = colors.onSurface,
-                    )
-                    Spacer(modifier = Modifier.height(Dimens.SpacingXxs))
-                    Text(
-                        text = notificationBody(notification),
-                        style = typography.bodySmall,
-                        color = colors.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Spacer(modifier = Modifier.height(Dimens.SpacingXxs))
-                    Text(
-                        text = formatNotificationTime(notification.receivedAtMillis),
-                        style = typography.labelSmall,
-                        color = colors.onSurfaceVariant,
-                    )
-                    if (deepLinkUri != null) {
-                        Spacer(modifier = Modifier.height(Dimens.SpacingXs))
-                        IosTextButton(
-                            text = stringResource(R.string.notification_action_open),
-                            onClick = { onOpenDeepLink(deepLinkUri) },
-                        )
-                    }
-                }
-                if (!notification.isRead) {
-                    Box(
-                        modifier = Modifier
-                            .size(Dimens.notificationBadge)
-                            .clip(CircleShape)
-                            .background(colors.primary),
-                    )
-                }
+                Text(timeLabel(notification.receivedAtMillis), style = FinanceType.caption, color = c.textSecondary)
+            }
+            if (!notification.isRead) {
+                HSpace(8.dp)
+                Box(Modifier.padding(top = 6.dp).size(8.dp).background(c.primary, CircleShape))
             }
         }
     }
 }
 
 @Composable
-private fun NotificationsEmptyState(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center,
-    ) {
-        MascotEmptyState(
-            mascotRes = MascotAssets.emptyNotifications,
-            title = stringResource(R.string.no_notifications),
-            subtitle = stringResource(R.string.no_notifications_desc),
-            mascotPhrase = stringResource(R.string.mascot_phrase_no_notifications),
-        )
-    }
-}
-
-@Composable
-private fun notificationTitle(notification: AppNotification): String {
-    val titleRes = notification.titleRes
-    return if (titleRes != null) {
-        stringResource(titleRes)
-    } else {
-        notification.title
-    }
-}
-
-@Composable
-private fun notificationBody(notification: AppNotification): String {
-    val bodyRes = notification.bodyRes
-    return if (bodyRes != null) {
-        stringResource(bodyRes, *notification.bodyArgs.toTypedArray())
-    } else {
-        notification.body
-    }
-}
-
-@Composable
-private fun NotificationType.color(): Color {
-    val colors = MaterialTheme.colorScheme
-    return when (this) {
-        NotificationType.LIMIT_WARNING -> WarningOrange
-        NotificationType.LIMIT_EXCEEDED -> colors.error
-        NotificationType.SAVINGS_MILESTONE -> colors.secondary
-        NotificationType.MONTHLY_SUMMARY -> colors.primary
-        NotificationType.STREAK -> StreakOrange
-    }
-}
-
-private fun NotificationType.icon(): ImageVector = when (this) {
-    NotificationType.LIMIT_WARNING -> Icons.Rounded.Warning
-    NotificationType.LIMIT_EXCEEDED -> Icons.Rounded.Error
-    NotificationType.SAVINGS_MILESTONE -> Icons.Rounded.EmojiEvents
-    NotificationType.MONTHLY_SUMMARY -> Icons.Rounded.BarChart
-    NotificationType.STREAK -> Icons.Rounded.LocalFireDepartment
-}
-
-private fun AppNotification.dateGroup(): NotificationDateGroup {
-    val dayKey = SimpleDateFormat("yyyyMMdd", Locale.US)
-    val today = dayKey.format(Date())
-    val yesterday = Calendar.getInstance()
-        .apply { add(Calendar.DAY_OF_YEAR, -1) }
-        .time
-        .let(dayKey::format)
-    val value = dayKey.format(Date(receivedAtMillis))
-    return when (value) {
-        today -> NotificationDateGroup.TODAY
-        yesterday -> NotificationDateGroup.YESTERDAY
-        else -> NotificationDateGroup.EARLIER
-    }
-}
-
-@Composable
-private fun formatNotificationTime(timestampMillis: Long): String {
-    val now = System.currentTimeMillis()
-    val diff = now - timestampMillis
+private fun timeLabel(millis: Long): String {
+    val diff = System.currentTimeMillis() - millis
+    val date = DateFmt.toLocalDate(millis)
+    val today = LocalDate.now()
     return when {
         diff < TimeUnit.MINUTES.toMillis(1) -> stringResource(R.string.notif_time_just_now)
-        diff < TimeUnit.HOURS.toMillis(1) -> {
-            val minutes = TimeUnit.MILLISECONDS.toMinutes(diff).toInt()
-            stringResource(R.string.notif_time_minutes_ago, minutes)
-        }
-
-        else -> {
-            val dayKey = SimpleDateFormat("yyyyMMdd", Locale.US)
-            val today = dayKey.format(Date())
-            val yesterday = Calendar.getInstance()
-                .apply { add(Calendar.DAY_OF_YEAR, -1) }
-                .time
-                .let(dayKey::format)
-            val value = dayKey.format(Date(timestampMillis))
-            val time = SimpleDateFormat("HH:mm", Locale("ru")).format(Date(timestampMillis))
-            when (value) {
-                today -> time
-                yesterday -> "${stringResource(R.string.yesterday)}, $time"
-                else -> SimpleDateFormat("d MMM, HH:mm", Locale("ru"))
-                    .format(Date(timestampMillis))
-                    .lowercase(Locale.getDefault())
-            }
-        }
+        diff < TimeUnit.HOURS.toMillis(1) -> stringResource(R.string.notif_time_minutes_ago, TimeUnit.MILLISECONDS.toMinutes(diff).toInt())
+        date == today || date == today.minusDays(1) -> DateFmt.time(millis)
+        else -> "${DateFmt.dayMonthShort(date)}, ${DateFmt.time(millis)}"
     }
 }

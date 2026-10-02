@@ -47,6 +47,12 @@ import ru.plumsoftware.finance.domain.model.ExportDataBuilder
 import ru.plumsoftware.finance.domain.model.PdfExporter
 import ru.plumsoftware.finance.domain.model.XlsxExporter
 import ru.plumsoftware.finance.domain.notifications.LimitNotificationsEngine
+import ru.plumsoftware.finance.data.notifications.LimitAlertService
+import ru.plumsoftware.finance.data.notifications.LocalNotifier
+import ru.plumsoftware.finance.data.report.ReportBuilder
+import ru.plumsoftware.finance.data.config.CalcConfigRepository
+import ru.plumsoftware.finance.data.config.SavedCalculationsRepository
+import ru.plumsoftware.finance.data.report.ReportService
 import ru.plumsoftware.finance.domain.repository.ExportRepository
 import kotlin.math.sin
 
@@ -87,6 +93,12 @@ val dataModule = module {
     single<PermissionsRepository> { PermissionsRepositoryImpl(androidContext()) }
     single { InsightsEngine() }
     single { LimitNotificationsEngine(get()) }
+    single { LocalNotifier(androidContext()) }
+    single { ReportBuilder(androidContext(), get(), get(), get(), get()) }
+    single { ReportService(androidContext(), get(), get()) }
+    single { CalcConfigRepository() }
+    single { SavedCalculationsRepository(androidContext()) }
+    single { LimitAlertService(androidContext(), get(), get(), get(), get(), get()) }
 
     // Внедрение зависимостей для модулей экспорта
     single { ExportDataBuilder(androidContext(), get(), get(), get()) }

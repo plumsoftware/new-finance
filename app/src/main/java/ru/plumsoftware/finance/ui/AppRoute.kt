@@ -29,6 +29,7 @@ sealed class AppRoute(val route: String) {
     object EarlyRepayCalculator : AppRoute("calculator/early_repay")
     object RentVsBuyCalculator : AppRoute("calculator/rent_vs_buy")
     object SavingsAccountCalculator : AppRoute("calculator/savings_account")
+    object SavedCalculations : AppRoute("calculator/saved")
 
     object ImportPreview : AppRoute("import_preview/{encodedPath}") {
         fun route(encodedPath: String) =
@@ -50,10 +51,27 @@ sealed class AppRoute(val route: String) {
         fun goalCreate(goalId: Long? = null) =
             if (goalId != null) "goals/create?goalId=$goalId" else "goals/create"
 
-        const val ADD_TRANSACTION_WITH_ARGS = "add_transaction?quickCategory={quickCategory}"
-        fun addTransaction(quickCategory: String? = null): String =
-            if (quickCategory.isNullOrBlank()) "add_transaction"
-            else "add_transaction?quickCategory=${android.net.Uri.encode(quickCategory)}"
+        const val ADD_TRANSACTION_WITH_ARGS =
+            "add_transaction?quickCategory={quickCategory}&scan={scan}&recent={recent}&editId={editId}"
+
+        /**
+         * Новая операция (§6.2). [scan] — сразу запустить сканер чека, [recent] — развернуть недавние,
+         * [editId] — редактирование существующей операции.
+         */
+        fun addTransaction(
+            quickCategory: String? = null,
+            scan: Boolean = false,
+            recent: Boolean = false,
+            editId: Long? = null,
+        ): String {
+            val params = buildList {
+                if (!quickCategory.isNullOrBlank()) add("quickCategory=${android.net.Uri.encode(quickCategory)}")
+                if (scan) add("scan=true")
+                if (recent) add("recent=true")
+                if (editId != null) add("editId=$editId")
+            }
+            return if (params.isEmpty()) "add_transaction" else "add_transaction?" + params.joinToString("&")
+        }
 
         const val ACCOUNT_EDIT = "settings/accounts/edit?accountId={accountId}"
         fun accountEdit(accountId: Long? = null): String =

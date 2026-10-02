@@ -37,6 +37,7 @@ import com.yandex.mobile.ads.nativeads.NativeAdView
 import kotlinx.coroutines.delay
 import ru.plumsoftware.finance.R
 import ru.plumsoftware.finance.ui.theme.Dimens
+import kotlin.time.Duration.Companion.milliseconds
 
 private const val CLOSE_DELAY_MS = 3_000L
 private const val EXIT_ANIMATION_MS = 200L
@@ -125,7 +126,7 @@ fun NativeAdContainer(
         val steps = 30
         val stepDelay = CLOSE_DELAY_MS / steps
         repeat(steps) { step ->
-            delay(stepDelay)
+            delay(stepDelay.milliseconds)
             closeProgress = (step + 1) / steps.toFloat()
         }
         NativeAdSession.closeDelayCompleted = true
@@ -134,7 +135,7 @@ fun NativeAdContainer(
 
     LaunchedEffect(visible) {
         if (!visible) {
-            delay(EXIT_ANIMATION_MS)
+            delay(EXIT_ANIMATION_MS.milliseconds)
             NativeAdSession.dismiss()
         }
     }
@@ -152,7 +153,6 @@ fun NativeAdContainer(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = Dimens.SpacingL),
         ) {
             AndroidView(
                 modifier = Modifier

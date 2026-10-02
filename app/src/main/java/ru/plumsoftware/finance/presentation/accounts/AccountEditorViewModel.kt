@@ -12,7 +12,6 @@ import ru.plumsoftware.finance.domain.model.Account
 import ru.plumsoftware.finance.domain.model.AccountType
 import ru.plumsoftware.finance.domain.repository.AccountRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
-import ru.plumsoftware.finance.presentation.common.MoneyFormat
 
 data class AccountEditorUiState(
     val accountId: Long = 0L,
@@ -20,7 +19,8 @@ data class AccountEditorUiState(
     val type: AccountType = AccountType.DEBIT,
     val currencyCode: String = "RUB",
     val emoji: String = "💳",
-    val initialBalanceDigits: String = "",
+    val colorHex: String = "#007AFF",
+    val initialBalanceMinor: Long = 0L,
     val isDefault: Boolean = false,
     val isSaving: Boolean = false,
     val saved: Boolean = false,
@@ -46,10 +46,8 @@ class AccountEditorViewModel(
                         type = account.type,
                         currencyCode = account.currencyCode,
                         emoji = account.emoji,
-                        initialBalanceDigits = MoneyFormat.minorToMajorDigits(
-                            account.initialBalanceMinor,
-                            account.currencyCode,
-                        ),
+                        colorHex = account.colorHex,
+                        initialBalanceMinor = account.initialBalanceMinor,
                         isDefault = account.isDefault,
                     )
                 }
@@ -63,28 +61,30 @@ class AccountEditorViewModel(
     fun setType(type: AccountType) = _uiState.update { it.copy(type = type) }
     fun setCurrency(code: String) = _uiState.update { it.copy(currencyCode = code) }
     fun setEmoji(value: String) = _uiState.update { it.copy(emoji = value.take(2)) }
-    fun setInitialBalanceDigits(value: String) = _uiState.update { it.copy(initialBalanceDigits = value) }
+    fun setColor(hex: String) = _uiState.update { it.copy(colorHex = hex) }
+    fun setInitialBalance(minor: Long) = _uiState.update { it.copy(initialBalanceMinor = minor) }
 
     fun save(onSaved: () -> Unit) {
         val state = _uiState.value
         if (state.name.isBlank()) return
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
-            val initialMinor = MoneyFormat.majorDigitsToMinor(
-                state.initialBalanceDigits.ifBlank { "0" },
-                state.currencyCode,
+            // При редактировании сохраняем остальные поля счёта (порядок, дату создания, архив).
+            val original = state.accountId.takeIf { it > 0 }?.let { accountRepository.getById(it) }
+            val base = original ?: Account(
+                name = "",
+                type = state.type,
+                currencyCode = state.currencyCode,
+                createdAtMillis = System.currentTimeMillis(),
             )
             accountRepository.upsert(
-                Account(
-                    id = state.accountId,
+                base.copy(
                     name = state.name.trim(),
                     type = state.type,
                     currencyCode = state.currencyCode,
                     emoji = state.emoji.ifBlank { "💳" },
-                    initialBalanceMinor = initialMinor,
-                    isDefault = state.isDefault,
-                    sortOrder = 0,
-                    createdAtMillis = System.currentTimeMillis(),
+                    colorHex = state.colorHex,
+                    initialBalanceMinor = state.initialBalanceMinor,
                 ),
             )
             _uiState.update { it.copy(isSaving = false, saved = true) }

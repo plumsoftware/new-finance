@@ -27,11 +27,11 @@ finance://app/{path}?{query}
 | Экран | URI | Маршрут |
 |-------|-----|---------|
 | Главная | `finance://app/home` | `home` |
-| Инструменты | `finance://app/tools` | `tools` |
+| Расчёты | `finance://app/tools` | `tools` |
 | Аналитика | `finance://app/analytics` | `analytics` |
 | Настройки | `finance://app/settings` | `settings` |
 
-### Калькуляторы (вкладка «Инструменты»)
+### Калькуляторы (вкладка «Расчёты»)
 
 | Экран | URI | Маршрут |
 |-------|-----|---------|
@@ -41,12 +41,16 @@ finance://app/{path}?{query}
 | Ипотечный калькулятор | `finance://app/calculator/mortgage` | `calculator/mortgage` |
 | Досрочное погашение | `finance://app/calculator/early_repay` | `calculator/early_repay` |
 | Аренда или ипотека | `finance://app/calculator/rent_vs_buy` | `calculator/rent_vs_buy` |
+| Накопительный счёт | `finance://app/calculator/savings_account` | `calculator/savings_account` |
+| Мои расчёты | `finance://app/calculator/saved` | `calculator/saved` |
 
 ### Операции и уведомления
 
 | Экран | URI | Маршрут |
 |-------|-----|---------|
 | Добавить транзакцию | `finance://app/add_transaction` | `add_transaction` |
+| Новая операция + сразу скан чека | `finance://app/add_transaction?scan=true` | `add_transaction?scan=true` |
+| Новая операция с развёрнутыми недавними | `finance://app/add_transaction?recent=true` | `add_transaction?recent=true` |
 | Уведомления | `finance://app/notifications` | `notifications` |
 | Лимиты | `finance://app/limits` | `limits` |
 | Достижения | `finance://app/achievements` | `achievements` |
