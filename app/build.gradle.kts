@@ -23,8 +23,8 @@ android {
         applicationId = "ru.plumsoftware.finance"
         minSdk = 26
         targetSdk = 37
-        versionCode = 15
-        versionName = "2.0.0"
+        versionCode = 16
+        versionName = "2.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -97,6 +97,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.process)
 
     // Navigation
     implementation(libs.androidx.navigation.compose)

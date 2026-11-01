@@ -2,9 +2,12 @@ package ru.plumsoftware.finance.presentation.dashboard
 
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -23,6 +26,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -39,8 +43,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -216,9 +225,19 @@ fun HomeScreen(
             )
         }
         item(key = "hero") {
-            val b = state.budget
-            if (b != null) HeroBlock(b, state.dayColors, state.currencyCode, state.today)
-            else NoBudgetHero(onSet = onOpenLimitsClick)
+            BalanceHero(
+                balance = state.totalBalanceMinor,
+                monthlyChange = state.monthlyNetMinor,
+                currency = state.currencyCode,
+                onOpen = onOpenAccountsClick,
+            )
+        }
+        item(key = "monthly-summary") {
+            MonthlyIncomeExpenseRow(
+                income = state.monthlyIncomeMinor,
+                expenses = state.monthlyExpenseMinor,
+                currency = state.currencyCode,
+            )
         }
         item(key = "quick") {
             QuickActions(
@@ -311,143 +330,211 @@ private fun HomeHeader(streak: Int, hasUnread: Boolean, onStreak: () -> Unit, on
     }
 }
 
-// region Hero (§6.1.2)
-
+// Карточка общего баланса на главном экране.
 @Composable
-private fun HeroBlock(b: DailyBudget, dayColors: List<BudgetMath.DayColor>, currency: String, today: java.time.LocalDate) {
+private fun BalanceHero(
+    balance: Long,
+    monthlyChange: Long,
+    currency: String,
+    onOpen: () -> Unit,
+) {
     val c = FinanceTheme.colors
-    InkCard(radius = 28.dp) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                stringResource(if (b.exhausted) R.string.home_budget_exhausted else R.string.home_can_spend_today),
-                style = FinanceType.bodySmall,
-                color = c.onInkSecondary,
-                modifier = Modifier.weight(1f),
-            )
-            Box(
-                Modifier
-                    .background(Color.White.copy(alpha = 0.10f), RoundedCornerShape(10.dp))
-                    .padding(horizontal = 10.dp, vertical = 5.dp),
-            ) {
+    val primary = c.primary
+    // Второй оттенок выводится из primary темы, а не задаётся отдельным цветом.
+    val lighterPrimary = Color(
+        red = primary.red + (1f - primary.red) * 0.12f,
+        green = primary.green + (1f - primary.green) * 0.12f,
+        blue = primary.blue + (1f - primary.blue) * 0.12f,
+        alpha = primary.alpha,
+    )
+    val visibility = LocalAmountVisibility.current
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(Brush.horizontalGradient(listOf(primary, lighterPrimary)))
+            .clickable(role = Role.Button, onClick = onOpen)
+            .padding(start = 20.dp, top = 18.dp, end = 16.dp, bottom = 18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
+        ) {
+            val balanceText = masked(Money.formatRounded(balance, currency))
+            // Подбираем размер по доступной ширине и длине форматированной суммы.
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val baseSize = FinanceType.displayHero.fontSize.value
+                val estimatedTextWidth = balanceText.length * baseSize * 0.57f
+                val fittedSize = if (estimatedTextWidth > maxWidth.value) {
+                    (baseSize * maxWidth.value / estimatedTextWidth).coerceAtLeast(18f)
+                } else baseSize
                 Text(
-                    pluralStringResource(R.plurals.pl_days_to_month_end, b.daysLeft, b.daysLeft),
-                    style = FinanceType.caption.copy(fontWeight = FontWeight.SemiBold),
+                    text = balanceText,
+                    modifier = Modifier.clickable(
+                        enabled = visibility.hidden,
+                        onClickLabel = stringResource(R.string.home_show),
+                        onClick = visibility.toggle,
+                    ),
+                    style = FinanceType.displayHero.copy(fontSize = fittedSize.sp),
                     color = Color.White,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Clip,
                 )
             }
+            VSpace(5.dp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (monthlyChange >= 0L) "▲" else "▼",
+                    style = FinanceType.caption.copy(fontWeight = FontWeight.Bold),
+                    color = if (monthlyChange >= 0L) c.onInkSuccess else Color.White.copy(alpha = 0.9f),
+                )
+                HSpace(4.dp)
+                Text(
+                    text = buildString {
+                        append(if (monthlyChange > 0L) "+" else if (monthlyChange < 0L) "−" else "")
+                        append(Money.formatRounded(kotlin.math.abs(monthlyChange), currency))
+                        append(" за месяц")
+                    },
+                    style = FinanceType.bodySmall.copy(fontWeight = FontWeight.Medium),
+                    color = if (monthlyChange >= 0L) c.onInkSuccess else Color.White.copy(alpha = 0.9f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .width(112.dp)
+                .height(76.dp),
+        ) {
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp)
+                    .align(Alignment.BottomStart)
+                    .padding(start = 2.dp, end = 1.dp, top = 4.dp),
+            ) {
+                val points = listOf(
+                    0.02f to 0.88f,
+                    0.16f to 0.78f,
+                    0.29f to 0.58f,
+                    0.42f to 0.34f,
+                    0.55f to 0.43f,
+                    0.68f to 0.28f,
+                    0.82f to 0.20f,
+                    0.98f to 0.06f,
+                )
+                val path = Path().apply {
+                    points.forEachIndexed { index, point ->
+                        val x = size.width * point.first
+                        val y = size.height * point.second
+                        if (index == 0) moveTo(x, y) else lineTo(x, y)
+                    }
+                }
+                drawPath(
+                    path = path,
+                    color = Color.White.copy(alpha = 0.78f),
+                    style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
+                )
+                val last = points.last()
+                drawCircle(
+                    color = Color.White.copy(alpha = 0.95f),
+                    radius = 2.5.dp.toPx(),
+                    center = androidx.compose.ui.geometry.Offset(size.width * last.first, size.height * last.second),
+                )
+            }
+
+        }
+    }
+}
+
+@Composable
+private fun MonthlyIncomeExpenseRow(income: Long, expenses: Long, currency: String) {
+    val c = FinanceTheme.colors
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        MonthlySummaryCard(
+            title = "Доходы",
+            amount = income,
+            currency = currency,
+            symbol = "↓",
+            symbolColor = c.successText,
+            symbolBackground = c.successText.copy(alpha = 0.13f),
+            modifier = Modifier.weight(1f),
+        )
+        MonthlySummaryCard(
+            title = "Расходы",
+            amount = expenses,
+            currency = currency,
+            symbol = "↑",
+            symbolColor = c.primary,
+            symbolBackground = c.primary.copy(alpha = 0.13f),
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun MonthlySummaryCard(
+    title: String,
+    amount: Long,
+    currency: String,
+    symbol: String,
+    symbolColor: Color,
+    symbolBackground: Color,
+    modifier: Modifier = Modifier,
+) {
+    val c = FinanceTheme.colors
+    Column(
+        modifier = modifier
+            .heightIn(min = 76.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(c.surface)
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(symbolBackground),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(symbol, color = symbolColor, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+            HSpace(7.dp)
+            Text(
+                text = title,
+                style = FinanceType.caption,
+                color = c.textSecondary,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
         VSpace(6.dp)
-        val heroAmount = if (b.exhausted) -b.monthOverspend else b.left
-        val visibility = LocalAmountVisibility.current
-        Text(
-            masked(Money.formatRounded(heroAmount, currency)),
-            modifier = Modifier.clickable(
-                enabled = visibility.hidden,
-                onClickLabel = stringResource(R.string.home_show),
-                onClick = visibility.toggle,
-            ),
-            style = FinanceType.displayHero,
-            color = if (heroAmount < 0) c.onInkDangerText else Color.White,
-        )
-        Text(
-            if (b.exhausted) {
-                stringResource(R.string.home_month_overspend, masked(Money.formatRounded(b.monthOverspend, currency)))
-            } else {
-                stringResource(
-                    R.string.home_spent_of_daily,
-                    masked(Money.formatRounded(b.spentToday, currency)),
-                    masked(Money.formatRounded(b.daily.coerceAtLeast(0), currency)),
-                )
-            },
-            style = FinanceType.bodySmall,
-            color = c.onInkSecondary,
-        )
-        VSpace(12.dp)
-        val ratio = b.todayRatio
-        FProgressBar(
-            progress = ratio,
-            color = when {
-                ratio > 1f || b.exhausted -> c.onInkDanger
-                ratio >= 0.75f -> c.onInkWarning
-                else -> c.onInkBar
-            },
-            track = Color.White.copy(alpha = 0.14f),
-            height = 6.dp,
-        )
-        VSpace(14.dp)
-        DayStrip(
-            days = dayColors.map {
-                when (it) {
-                    BudgetMath.DayColor.NORMAL -> DayState.NORMAL
-                    BudgetMath.DayColor.OVER -> DayState.OVER
-                    BudgetMath.DayColor.TODAY -> DayState.TODAY
-                    BudgetMath.DayColor.FUTURE -> DayState.FUTURE
-                }
-            },
-            labels = Triple(
-                "1 ${DateFmt.monthShort(today)}",
-                stringResource(R.string.home_today_lower),
-                b.daysInMonth.toString(),
-            ),
-            summary = stringResource(
-                R.string.a11y_day_strip,
-                b.dayOfMonth,
-                b.daysInMonth,
-                dayColors.count { it == BudgetMath.DayColor.OVER },
-            ),
-        )
-        VSpace(14.dp)
-        CardDivider(color = Color.White.copy(alpha = 0.12f))
-        VSpace(14.dp)
-        Row(Modifier.fillMaxWidth()) {
-            Column(Modifier.weight(1f)) {
-                Text(DateFmt.monthStandalone(today).replaceFirstChar { it.titlecase() }, style = FinanceType.caption, color = c.onInkSecondary)
-                Text(masked(Money.formatRounded(b.spentMonth, currency)), style = FinanceType.titleBold, color = Color.White)
-                Text(
-                    stringResource(R.string.home_of_budget, masked(Money.formatRounded(b.budget, currency))),
-                    style = FinanceType.caption,
-                    color = c.onInkSecondary,
-                )
-            }
-            HSpace(12.dp)
-            Column(Modifier.weight(1f)) {
-                Text(
-                    stringResource(R.string.home_forecast_on, DateFmt.dayMonthShort(today.withDayOfMonth(b.daysInMonth))),
-                    style = FinanceType.caption,
-                    color = c.onInkSecondary,
-                )
-                Text(masked(Money.formatRounded(b.forecast, currency)), style = FinanceType.titleBold, color = Color.White)
-                Text(
-                    if (b.diff >= 0) stringResource(R.string.home_forecast_ok, masked(Money.formatRounded(b.diff, currency)))
-                    else stringResource(R.string.home_forecast_over, masked(Money.formatRounded(-b.diff, currency))),
-                    style = FinanceType.caption.copy(fontWeight = FontWeight.SemiBold),
-                    color = if (b.diff >= 0) c.onInkSuccess else c.onInkDangerText,
-                )
-            }
+        val amountText = masked(Money.formatRounded(amount, currency))
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val baseSize = FinanceType.body.fontSize.value
+            val estimatedTextWidth = amountText.length * baseSize * 0.56f
+            val fittedSize = if (estimatedTextWidth > maxWidth.value) {
+                (baseSize * maxWidth.value / estimatedTextWidth).coerceAtLeast(11f)
+            } else baseSize
+            Text(
+                text = amountText,
+                style = FinanceType.body.copy(fontWeight = FontWeight.Bold, fontSize = fittedSize.sp),
+                color = c.textPrimary,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Clip,
+            )
         }
     }
 }
-
-@Composable
-private fun NoBudgetHero(onSet: () -> Unit) {
-    val c = FinanceTheme.colors
-    InkCard(radius = 28.dp) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.home_can_spend_today), style = FinanceType.bodySmall, color = c.onInkSecondary)
-                VSpace(6.dp)
-                Text(stringResource(R.string.home_no_budget_title), style = FinanceType.titleLarge.copy(fontWeight = FontWeight.Bold), color = Color.White)
-                VSpace(4.dp)
-                Text(stringResource(R.string.home_no_budget_text), style = FinanceType.bodySmall, color = c.onInkSecondary)
-            }
-            KopiImage(Kopi.THINKING, 64.dp)
-        }
-        VSpace(14.dp)
-        ButtonTonal(stringResource(R.string.home_no_budget_action), onSet, Modifier.fillMaxWidth())
-    }
-}
-
-// endregion
 
 @Composable
 private fun QuickActions(
@@ -458,11 +545,11 @@ private fun QuickActions(
     onAchievements: () -> Unit,
 ) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        QuickTile("📷", stringResource(R.string.home_quick_scan), onScan, Modifier.weight(1f))
-        QuickTile("🔁", stringResource(R.string.home_quick_repeat), onRepeat, Modifier.weight(1f))
-        QuickTile("🧭", stringResource(R.string.limits), onLimits, Modifier.weight(1f))
+        QuickTile(R.drawable.ic_quick_receipt, stringResource(R.string.home_quick_scan), onScan, Modifier.weight(1f))
+        QuickTile(R.drawable.ic_quick_repeat, stringResource(R.string.home_quick_repeat), onRepeat, Modifier.weight(1f))
+        QuickTile(R.drawable.ic_quick_limits, stringResource(R.string.limits), onLimits, Modifier.weight(1f))
         QuickTile(
-            "🏆",
+            R.drawable.ic_quick_awards,
             stringResource(R.string.home_quick_achievements, achievementsUnlocked, AchievementId.entries.size),
             onAchievements,
             Modifier.weight(1f),
@@ -471,7 +558,7 @@ private fun QuickActions(
 }
 
 @Composable
-private fun QuickTile(emoji: String, label: String, onClick: () -> Unit, modifier: Modifier) {
+private fun QuickTile(iconRes: Int, label: String, onClick: () -> Unit, modifier: Modifier) {
     val c = FinanceTheme.colors
     Column(
         modifier
@@ -483,7 +570,12 @@ private fun QuickTile(emoji: String, label: String, onClick: () -> Unit, modifie
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(emoji, fontSize = 22.sp)
+        Icon(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            tint = c.primary,
+            modifier = Modifier.size(22.dp),
+        )
         VSpace(4.dp)
         FitText(label, style = FinanceType.caption.copy(fontWeight = FontWeight.Medium), color = c.textPrimary)
     }

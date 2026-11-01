@@ -18,6 +18,7 @@ import ru.plumsoftware.finance.data.config.CalcConfigRepository
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.first
 import com.yandex.mobile.ads.common.YandexAds
+import ru.plumsoftware.finance.ads.AppOpenAdManager
 // import ru.plumsoftware.finance.ads.InterstitialAdManager
 // import ru.plumsoftware.finance.ads.InterstitialPlacement
 import ru.plumsoftware.finance.di.adsModule
@@ -36,7 +37,10 @@ class FinanceApplication : Application() {
             modules(dataModule, presentationModule, adsModule)
         }
 
+        getKoin().get<AppOpenAdManager>().register()
+
         YandexAds.initialize(this) {
+            getKoin().get<AppOpenAdManager>().preload()
             // getKoin().get<InterstitialAdManager>()
             //     .preload(InterstitialPlacement.TRANSACTION.adUnitId())
         }

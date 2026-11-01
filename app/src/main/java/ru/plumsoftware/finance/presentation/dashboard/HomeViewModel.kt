@@ -68,6 +68,10 @@ data class HomeUiState(
     val todayOps: List<TxItem> = emptyList(),
     val accountsCount: Int = 0,
     val totalBalanceMinor: Long = 0,
+    /** Чистый денежный поток с начала текущего месяца: доходы минус расходы. */
+    val monthlyNetMinor: Long = 0,
+    val monthlyIncomeMinor: Long = 0,
+    val monthlyExpenseMinor: Long = 0,
     val hasAnyTransactions: Boolean = false,
 )
 
@@ -228,6 +232,21 @@ class HomeViewModel(
             todayOps = todayOps,
             accountsCount = s.accounts.size,
             totalBalanceMinor = s.accounts.sumOf { it.calculatedBalanceMinor },
+            monthlyNetMinor = s.tx
+                .filter { YearMonth.from(DateFmt.toLocalDate(it.dateMillis)) == ym }
+                .sumOf { tx ->
+                    when (tx.type) {
+                        TransactionType.INCOME -> tx.amountMinor
+                        TransactionType.EXPENSE -> -tx.amountMinor
+                        else -> 0L
+                    }
+                },
+            monthlyIncomeMinor = s.tx
+                .filter { it.type == TransactionType.INCOME && YearMonth.from(DateFmt.toLocalDate(it.dateMillis)) == ym }
+                .sumOf { it.amountMinor },
+            monthlyExpenseMinor = s.tx
+                .filter { it.type == TransactionType.EXPENSE && YearMonth.from(DateFmt.toLocalDate(it.dateMillis)) == ym }
+                .sumOf { it.amountMinor },
             hasAnyTransactions = s.tx.isNotEmpty(),
         )
     }

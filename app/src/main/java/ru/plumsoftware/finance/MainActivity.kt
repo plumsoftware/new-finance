@@ -24,8 +24,10 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.compose.koinInject
+import ru.plumsoftware.finance.ads.AppOpenAdManager
 import ru.plumsoftware.finance.domain.model.AppSettings
 import ru.plumsoftware.finance.domain.repository.SettingsRepository
 import ru.plumsoftware.finance.data.firebase.NotificationDisplayHelper
@@ -49,6 +51,8 @@ class MainActivity : FragmentActivity() {
 
     private lateinit var importPickerLauncher: ActivityResultLauncher<Uri?>
 
+    private val appOpenAdManager: AppOpenAdManager by inject()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         initOOXML()
@@ -70,6 +74,8 @@ class MainActivity : FragmentActivity() {
                 onPendingDeepLinkConsumed = { pendingDeepLinkIntent.value = null },
             )
         }
+
+        if (savedInstanceState == null) appOpenAdManager.showOnLaunch(this)
 
         handleIntent(intent)
     }

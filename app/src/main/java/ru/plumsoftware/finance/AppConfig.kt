@@ -31,6 +31,7 @@ object AppConfig {
         const val INTERSTITIAL = "demo-interstitial-yandex"
         const val BANNER = "demo-banner-yandex"
         const val NATIVE = "demo-native-content-yandex"
+        const val OPEN = "demo-appopenad-yandex"
     }
 
     private object RuStore {
@@ -45,6 +46,7 @@ object AppConfig {
         const val NATIVE_HOME = "R-M-19374501-8"
         const val NATIVE_TOOLS = "R-M-19374501-9"
         const val NATIVE_ANALYTICS = "R-M-19374501-10"
+        const val APP_OPEN_ADS = "R-M-19374501-12"
     }
 
     private object GooglePlay {
@@ -64,7 +66,14 @@ object AppConfig {
         const val NATIVE_HOME = "R-M-19390613-8"
         const val NATIVE_TOOLS = "R-M-19390613-9"
         const val NATIVE_ANALYTICS = "R-M-19390613-10"
+        const val APP_OPEN_ADS = "R-M-19374501-12"
     }
+
+    val appOpenAds: String = adUnit(
+        rustoreId = RuStore.APP_OPEN_ADS,
+        huaweiId = HuaweiAppStore.APP_OPEN_ADS,
+        demoId = Demo.OPEN
+    )
 
     val interstitialAfterCreateTransaction: String = adUnit(
         rustoreId = RuStore.INTERSTITIAL_TRANSACTION,
